@@ -1,13 +1,13 @@
-Name: Build QiLong-Dynamic-Whitelist IPA
+name: Build QiLong-Dynamic-Whitelist IPA
 
 on:
   push:
-    branches: [ main, master ]
-  workflow_dispatch:
+    branches: [ main, master ] # 當你推送到 main 或 master 分支時自動觸發
+  workflow_dispatch: # 支援在網頁上點擊按鈕手動觸發打包
 
 jobs:
   build:
-    runs-on: macos-latest
+    runs-on: macos-latest # 啟動蘋果官方最新的 Mac 雲端伺服器
 
     steps:
       - name: 1. 拉取本地代碼庫
@@ -39,7 +39,7 @@ jobs:
           mv QiLong-Dynamic-Whitelist.app Payload/
           zip -r QiLong-Dynamic-Whitelist.ipa Payload
 
-      - name: 6. 將編編譯好的 IPA 吐出到網頁提供下載
+      - name: 6. 將編譯好的 IPA 吐出到網頁提供下載
         uses: actions/upload-artifact@v4
         with:
           name: QiLong-Dynamic-Whitelist-Release
