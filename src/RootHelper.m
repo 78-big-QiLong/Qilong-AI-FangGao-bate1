@@ -2,7 +2,7 @@
 #import <sys/stat.h>
 #import <sys/sysctl.h>
 #import <spawn.h>
-#import <sys/wait.h> //  加上 sys/ 前缀这才是 iOS 底层的正确路径！
+#import <sys/wait.h> // ✅ 加上 sys/ 前缀，iOS 底层标准正确路径
 #import <sqlite3.h>
 #import <notify.h>   
 #import <signal.h>   
@@ -122,7 +122,8 @@ void safeCleanDirectory(NSString *dirPath, NSArray *targetBundleIDs) {
         if (!attrs) continue;
 
         // 铁律红线一：大文件强行熔断锁 (>100MB 资产直接放行，不损坏大包)
-        unsigned longLong fileSize = [attrs fileSize];
+        // ✅ 已完美校准为 C 语言标准关键字：unsigned long long
+        unsigned long long fileSize = [attrs fileSize];
         if (fileSize > 100 * 1024 * 1024) { 
             printRealLog(@"[保护熔断] 拦截到超大资产文件, 已跳过: %@ (%llu MB)", fileName, fileSize / 1024 / 1024);
             continue;
@@ -154,9 +155,9 @@ void safeCleanDirectory(NSString *dirPath, NSArray *targetBundleIDs) {
             if (deleteAllowed) {
                 // 铁律红线二：对目标 App 文件夹只做删除（减法），绝不注入 any 伪装补丁或 .pak 文件
                 NSError *deleteError = nil;
-                [fm removeItemAtPath:fullPath error:&deleteError];
-                if (!deleteError) {
-                    NSLog(@"[物理清除] 已干掉残留文件: %@", fileName);
+                if ([fm removeItemAtPath:fullPath error:&deleteError]) {
+                    // ✅ 已优化至前端日志总线，实时弹幕式回显被干掉的缓存文件名
+                    printRealLog(@"[物理清除] 已干掉残留文件: %@", fileName);
                 }
             }
         }
@@ -212,7 +213,7 @@ int main(int argc, const char * argv[]) {
                 
                 round++;
                 
-                // 【Watchdog卡点 B】将 60 秒睡眠精细切碎为 60 次 1 秒试探
+                // 【Watchdog卡点 B】将 60 秒睡眠精细切碎为 60 次 1秒试探
                 // 确保用户只要在任意时间点划掉后台，进程在 1 秒内做出响应并执行物理毁灭
                 for (int i = 0; i < 60; i++) {
                     sleep(1);
