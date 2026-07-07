@@ -1,5 +1,4 @@
 #import <Foundation/Foundation.h>
-#import <posix_spawn.h>
 #import <sys/stat.h>
 #import <sys/sysctl.h>
 #import <spawn.h>
