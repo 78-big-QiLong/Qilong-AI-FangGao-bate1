@@ -1,534 +1,276 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>TrollClean Pro UI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TrollCleanPro Panel</title>
     <style>
-        /* ── 全局深色极客流光底色 ── */
         * {
             box-sizing: border-box;
-            margin: 0;
-            padding: 0;
             -webkit-user-select: none;
             user-select: none;
-            -webkit-touch-callout: none;
         }
         body {
-            background-color: #0a0a0c;
-            color: #e0e0e6;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            overflow: hidden;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        /* ── 特效一：全屏边缘2秒狂飙跑马灯 ── */
-        .marquee-border {
-            position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            pointer-events: none;
-            z-index: 9999;
-            box-shadow: inset 0 0 20px rgba(0, 255, 102, 0.2);
-        }
-        .marquee-border::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            border: 4px solid transparent;
-            border-image: linear-gradient(90deg, #00ff66, #00ffff, #ff007f, #7f00ff, #00ff66) 1;
-            animation: borderMove 2s linear infinite;
-            filter: drop-shadow(0 0 8px rgba(0,255,102,0.8));
-        }
-        @keyframes borderMove {
-            0% { filter: hue-rotate(0deg) drop-shadow(0 0 5px rgba(0,255,102,0.5)); }
-            50% { filter: hue-rotate(180deg) drop-shadow(0 0 12px rgba(255,0,127,0.8)); }
-            100% { filter: hue-rotate(360deg) drop-shadow(0 0 5px rgba(0,255,102,0.5)); }
-        }
-
-        /* ── 特效二：3秒全屏击碎开屏页 ── */
-        #splash {
-            position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            background: radial-gradient(circle at center, #141419 0%, #050508 100%);
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            transition: all 0.6s cubic-bezier(0.25, 1, 0.5, 1);
-            cursor: pointer;
-        }
-        .fly-in-big {
-            font-size: 3rem;
-            font-weight: 900;
-            letter-spacing: 4px;
-            color: #ffffff;
-            text-shadow: 0 0 20px rgba(255,255,255,0.4);
-            transform: translateY(-50px);
-            opacity: 0;
-            animation: flyIn 0.8s ease-out forwards;
-        }
-        .fly-in-small {
-            font-size: 1rem;
+            margin: 0;
+            padding: 15px;
+            background-color: #0a0c10;
             color: #00ff66;
-            margin-top: 15px;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Mono", "Courier New", monospace;
+            overflow-x: hidden;
+        }
+        
+        /* 🚀 2秒超高速流光跑馬燈線條 */
+        .marquee-border {
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, #ff0055, #00ff66, #00e5ff, #ff0055);
+            background-size: 300% 100%;
+            animation: flow 2s linear infinite;
+            border-radius: 2px;
+            margin-bottom: 15px;
+        }
+        @keyframes flow {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 100% 50%; }
+        }
+
+        /* 標題區 */
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 22px;
             letter-spacing: 2px;
-            transform: translateY(50px);
-            opacity: 0;
-            animation: flyIn 0.8s ease-out 0.3s forwards;
-            text-transform: uppercase;
+            color: #ffffff;
+            text-shadow: 0 0 10px #00ff66;
         }
-        .splash-disclaimer {
-            position: absolute;
-            bottom: 45px;
-            font-size: 0.72rem;
-            color: #4a4a52;
-            letter-spacing: 1px;
-            opacity: 0;
-            animation: fadeInDisclaimer 1s ease-out 0.6s forwards;
+        .header p {
+            margin: 5px 0 0 0;
+            font-size: 11px;
+            color: #8899a6;
         }
-        @keyframes flyIn { to { transform: translateY(0); opacity: 1; } }
-        @keyframes fadeInDisclaimer { to { opacity: 1; } }
 
-        /* ── 核心页面：硬核首页控制中心 ── */
-        #homepage {
-            width: 100%; height: 100%; padding: 25px;
-            display: flex; flex-direction: column; justify-content: space-between;
-            opacity: 0; transform: scale(0.92);
-            transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        #homepage.active { opacity: 1; transform: scale(1); }
-
-        /* 硬件状态自检看板 */
-        .info-board {
+        /* 硬體探針看板 */
+        .panel-box {
             background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 16px; padding: 15px;
-            backdrop-filter: blur(20px);
-            display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 15px;
+            border: 1px solid #1f3d24;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 15px;
         }
-        .info-item { display: flex; flex-direction: column; }
-        .info-label { font-size: 0.75rem; color: #888892; margin-bottom: 2px; }
-        .info-value { font-size: 0.9rem; font-weight: 600; color: #ffffff; }
-        .highlight-status { color: #00ff66; text-shadow: 0 0 10px rgba(0,255,102,0.3); }
+        .panel-title {
+            font-size: 12px;
+            color: #00e5ff;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            font-size: 12px;
+        }
+        .info-item span {
+            color: #8899a6;
+        }
 
-        /* ── 三核心主按钮：独立流光跑马灯外边框 ── */
-        .button-group { display: flex; gap: 10px; margin: 15px 0; }
+        /* App 名單勾選區 */
+        .app-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 5px;
+        }
+        .app-item {
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid #222;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+        .app-item input {
+            margin-right: 8px;
+            accent-color: #00ff66;
+        }
+
+        /* 控制大底座按鈕 */
         .btn {
-            flex: 1; padding: 14px 4px; border-radius: 14px; font-size: 0.82rem; font-weight: 800;
-            border: none; cursor: pointer; position: relative; overflow: hidden;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.4); z-index: 1;
-            transition: transform 0.12s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.1s ease;
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 14px;
+            font-family: inherit;
+            cursor: pointer;
+            margin-bottom: 10px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
-        .btn::before {
-            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
-            background: conic-gradient(#00ff66, #00ffff, #ff007f, #7f00ff, #00ff66);
-            animation: rotateBtnBorder 2.5s linear infinite; z-index: -2;
+        .btn-clean {
+            background-color: #ff0055;
+            color: #ffffff;
+            text-shadow: 0 0 5px #000;
+            box-shadow: 0 4px 12px rgba(255, 0, 85, 0.3);
         }
-        .btn::after {
-            content: ''; position: absolute; inset: 2px; border-radius: 12px; z-index: -1;
-        }
+        .btn-clean:active { background-color: #cc0044; transform: scale(0.98); }
         
-        .btn-select { color: #ffffff; }
-        .btn-select::after { background: linear-gradient(135deg, #25252d 0%, #14141a 100%); }
-        
-        .btn-dynamic { color: #00ffff; text-shadow: 0 0 6px rgba(0,255,255,0.5); }
-        .btn-dynamic::after { background: linear-gradient(135deg, #09232c 0%, #031014 100%); }
-
-        .btn-execute { color: #00ff66; text-shadow: 0 0 6px rgba(0,255,102,0.6); }
-        .btn-execute::after { background: linear-gradient(135deg, #092c15 0%, #031409 100%); }
-
-        /* 重度机械按压物理反馈反馈 */
-        .btn:active {
-            transform: scale(0.88) !important;
-            filter: brightness(0.7) contrast(1.3);
+        .btn-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
         }
-        @keyframes rotateBtnBorder { 100% { transform: rotate(360deg); } }
+        .btn-start {
+            background-color: #00ff66;
+            color: #0a0c10;
+            box-shadow: 0 4px 12px rgba(0, 255, 102, 0.2);
+        }
+        .btn-start:active { background-color: #00cc52; transform: scale(0.98); }
+        
+        .btn-stop {
+            background-color: #ffaa00;
+            color: #0a0c10;
+            box-shadow: 0 4px 12px rgba(255, 170, 0, 0.2);
+        }
+        .btn-stop:active { background-color: #cc8800; transform: scale(0.98); }
 
-        /* 0伪装：纯真实终端日志说明区 */
-        .log-panel {
-            flex: 1; background: #000000; border: 1px solid rgba(255,255,255,0.05);
-            border-radius: 14px; padding: 15px; font-family: monospace; font-size: 0.8rem;
-            color: #a0a0b0; overflow-y: auto; text-align: left; line-height: 1.5;
+        /* 終端日誌面板 */
+        .console-box {
+            background: #000000;
+            border: 1px solid #222;
+            border-radius: 8px;
+            padding: 10px;
+            height: 180px;
+            overflow-y: auto;
+            font-size: 11px;
+            line-height: 1.4;
+            color: #add8e6;
             box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
         }
-        .log-line { margin-bottom: 4px; word-break: break-all; }
-        .log-success { color: #00ff66; }
-        .log-warn { color: #ffaa00; }
-        .log-system { color: #00ffff; }
-
-        /* 三连并发次级功能按钮组 */
-        .link-group { display: flex; gap: 8px; margin-top: 15px; }
-        .btn-link {
-            flex: 1; padding: 12px 5px; border-radius: 10px; font-size: 0.78rem; font-weight: 600;
-            background: rgba(255, 255, 255, 0.04); color: #b0b0bc;
-            border: 1px solid rgba(255, 255, 255, 0.08); cursor: pointer;
-            transition: transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.1), background 0.1s;
-            display: flex; justify-content: center; align-items: center; gap: 4px;
+        .log-line {
+            margin-bottom: 4px;
+            word-break: break-all;
         }
-        .btn-link:active {
-            transform: scale(0.91);
-            background: rgba(255, 255, 255, 0.1); color: #ffffff; filter: brightness(0.8);
-        }
-
-        /* 底部常驻声明小字 */
-        .footer-declaration { font-size: 0.7rem; color: #55555e; text-align: center; margin-top: 12px; letter-spacing: 0.5px; line-height: 1.4; }
-
-        /* ── 弹窗矩阵与精细列表 ── */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(12px);
-            z-index: 10000; display: flex; justify-content: center; align-items: center;
-            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
-        }
-        .modal-overlay.open { opacity: 1; pointer-events: auto; }
-        .modal-box {
-            width: 85%; max-width: 340px; background: #141419;
-            border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px;
-            padding: 20px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        .modal-overlay.open .modal-box { transform: scale(1); }
-        .modal-title { font-size: 1.1rem; font-weight: 800; margin-bottom: 15px; color: #ffffff; letter-spacing: 1px; }
-        .modal-list { display: flex; flex-direction: column; gap: 10px; max-height: 260px; overflow-y: auto; padding-right: 2px; }
-        
-        .modal-item {
-            width: 100%; padding: 12px; background: rgba(255,255,255,0.04);
-            border: 1px solid rgba(255,255,255,0.06); border-radius: 12px;
-            color: #e0e0e6; font-size: 0.9rem; font-weight: 600; text-align: center;
-            cursor: pointer; transition: transform 0.1s ease, background 0.1s;
-        }
-        .modal-item:active {
-            transform: scale(0.93); background: #00ff66; color: #021a0a; filter: brightness(0.8);
-        }
-        .modal-item-qq { border-left: 4px solid #00ffff; text-align: left; padding-left: 15px; font-family: monospace; font-size: 0.85rem; }
-        
-        /* ✨ 新增：名单列表单项勾选框样式 */
-        .app-check-item {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 12px 15px; background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; text-align: left;
-        }
-        .app-name-label { font-size: 0.88rem; font-weight: 600; color: #ffffff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px; }
-        .app-checkbox {
-            width: 18px; height: 18px; accent-color: #00ff66; cursor: pointer; transform: scale(1.1);
-        }
-
-        .btn-close { margin-top: 15px; width: 100%; padding: 10px; background: transparent; border: none; color: #888892; font-size: 0.85rem; cursor: pointer; }
+        .log-time { color: #555; margin-right: 5px; }
+        .log-tag-ui { color: #ff0055; }
+        .log-tag-root { color: #00ff66; }
     </style>
 </head>
 <body>
 
     <div class="marquee-border"></div>
 
-    <div id="splash" onclick="dismissSplash()">
-        <div class="fly-in-big" id="splash-big">留空</div>
-        <div class="fly-in-small" id="splash-small">留空</div>
-        <div class="splash-disclaimer">这里填开屏最下方小字</div>
+    <div class="header">
+        <h1>TROLLCLEANPRO</h1>
+        <p>巨魔特權級 var 緩存重置內核 v1.0.5</p>
     </div>
 
-    <div id="homepage">
-        <div>
-            <div style="font-size: 1.2rem; font-weight: 800; letter-spacing: 1px;">TROLLCLEAN PRO</div>
-            <div class="info-board">
-                <div class="info-item"><div class="info-label" id="lbl-version">系统版本</div><div class="info-value" id="sys-version">加载中...</div></div>
-                <div class="info-item"><div class="info-label" id="lbl-model">机型名称</div><div class="info-value" id="dev-model">加载中...</div></div>
-                <div class="info-item"><div class="info-label" id="lbl-sn">硬件序列号</div><div class="info-value" id="dev-sn">加载中...</div></div>
-                <div class="info-item"><div class="info-label" id="lbl-cpu">处理器</div><div class="info-value" id="dev-cpu">加载中...</div></div>
-                <div class="info-item"><div class="info-label" id="lbl-troll">巨魔状态</div><div class="info-value highlight-status" id="status-troll">检测中...</div></div>
-                <div class="info-item"><div class="info-label" id="lbl-jb">越狱状态</div><div class="info-value highlight-status" id="status-jb">检测中...</div></div>
-            </div>
-        </div>
-
-        <div class="button-group">
-            <button class="btn btn-select" id="btn-select" onclick="clickSelect()">选择</button>
-            <button class="btn btn-dynamic" id="btn-dynamic" onclick="clickDynamicRefresh()">动态刷新IDFA</button>
-            <button class="btn btn-execute" id="btn-execute" onclick="clickExecute()">执行</button>
-        </div>
-
-        <div class="log-panel" id="log-container">
-            <div class="log-line log-system" id="log-init-line">[系统] 等待数据链载入...</div>
-        </div>
-
-        <div class="link-group">
-            <button class="btn-link" id="btn-tutorial" onclick="openExternal('这里填教程的地址')">使用教程</button>
-            <button class="btn-link" id="btn-lang" onclick="toggleModal('modal-lang', true)">🌐 语言</button>
-            <button class="btn-link" id="btn-channel" onclick="toggleModal('modal-channel', true)">官方频道</button>
-        </div>
-
-        <div class="footer-declaration" id="text-footer">
-            声明：本工具对目标应用仅执行减法清理，不进行任何内存伪装、环境Hook及文件注入。请依法合规测试。
+    <div class="panel-box">
+        <div class="panel-title">📡 核心設備狀態探針</div>
+        <div class="info-grid">
+            <div class="info-item"><span>機型:</span> <b id="dev-model">iPhone Arm64</b></div>
+            <div class="info-item"><span>系統:</span> <b id="dev-os">iOS 15.0+</b></div>
+            <div class="info-item"><span>特權環境:</span> <span style="color:#00ff66;">TrollStore (Root)</span></div>
+            <div class="info-item"><span>沙盒攔截:</span> <span style="color:#00e5ff;">已繞過 (0沙盒)</span></div>
         </div>
     </div>
 
-    <div class="modal-overlay" id="modal-apps" onclick="closeModalOnOverlay(event, 'modal-apps')">
-        <div class="modal-box" style="max-width: 360px; width: 90%;">
-            <div class="modal-title" id="mdl-apps-title">选择清洗目标名单</div>
-            <div class="modal-list" id="apps-container">
-                <div style="color:#666; font-size:0.85rem; padding:20px 0;" id="text-loading-apps">暂未载入真实 App 名单...</div>
-            </div>
-            <button class="btn-close" id="mdl-apps-save" onclick="saveAppSelection()">✕ 确认选择</button>
+    <div class="panel-box">
+        <div class="panel-title">🎯 選擇定點爆破目標 (Keychain/var 減法)</div>
+        <div class="app-list">
+            <label class="app-item"><input type="checkbox" value="com.tencent.xin" checked> 微信 (WeChat)</label>
+            <label class="app-item"><input type="checkbox" value="com.ss.iphone.ugc.Aweme" checked> 抖音 (TikTok)</label>
+            <label class="app-item"><input type="checkbox" value="com.xingin.xhs"> 小紅書 (XHS)</label>
+            <label class="app-item"><input type="checkbox" value="com.alipay.iphoneclient"> 支付寶</label>
         </div>
     </div>
 
-    <div class="modal-overlay" id="modal-lang" onclick="closeModalOnOverlay(event, 'modal-lang')">
-        <div class="modal-box">
-            <div class="modal-title">SELECT LANGUAGE</div>
-            <div class="modal-list">
-                <div class="modal-item" onclick="changeLanguage('zh_CN')">简体中文</div>
-                <div class="modal-item" onclick="changeLanguage('zh_TW')">繁體中文</div>
-                <div class="modal-item" onclick="changeLanguage('en')">English</div>
-                <div class="modal-item" onclick="changeLanguage('ja')">日本語</div>
-                <div class="modal-item" onclick="changeLanguage('ru')">Русский</div>
-                <div class="modal-item" onclick="changeLanguage('za')">Vahcuengh (壮语)</div>
-            </div>
-            <button class="btn-close" onclick="toggleModal('modal-lang', false)">✕ CLOSE</button>
-        </div>
+    <button class="btn btn-clean" onclick="triggerClean()">🚀 執行重度深清 (清除後重啟用戶空間)</button>
+    
+    <div class="btn-group">
+        <button class="btn btn-start" onclick="triggerStartIDFA()">▶️ 啟動無限快刷</button>
+        <button class="btn btn-stop" onclick="triggerStopIDFA()">⏸️ 暫停快刷</button>
     </div>
 
-    <div class="modal-overlay" id="modal-channel" onclick="closeModalOnOverlay(event, 'modal-channel')">
-        <div class="modal-box">
-            <div class="modal-title" id="mdl-channel-title">官方频道矩阵</div>
-            <div class="modal-list">
-                <div class="modal-item" onclick="openExternal('这里填快手的地址')">官方快手 (Kuaishou)</div>
-                <div class="modal-item" onclick="openExternal('这里填tiktok的地址')">官方TikTok (International)</div>
-                <div class="modal-item" onclick="openExternal('这里填谷歌云盘的地址')">官方Google云盘分享</div>
-                <div class="modal-item" onclick="openExternal('这里填github的地址')">官方GitHub开源仓库</div>
-                <div class="modal-item modal-item-qq" onclick="copyQQ('123456789')">官方Q群1：123456789 <span style="float:right;font-size:0.65rem;color:#888;">[点击复制]</span></div>
-                <div class="modal-item modal-item-qq" onclick="copyQQ('987654321')">官方Q群2：987654321 <span style="float:right;font-size:0.65rem;color:#888;">[点击复制]</span></div>
-            </div>
-            <button class="btn-close" id="mdl-channel-close" onclick="toggleModal('modal-channel', false)">✕ 关闭</button>
-        </div>
+    <div class="panel-title" style="margin-top: 15px; margin-left: 2px;">📟 提權總線實時日誌</div>
+    <div class="console-box" id="console">
+        <div class="log-line"><span class="log-time">[00:00:00]</span><span class="log-tag-ui">[MAIN_UI]</span> 終端管道監聽已就緒，等待指令...</div>
     </div>
 
     <script>
-        // 全语种精细本地化字典（同步追加名单标题与确认项）
-        const langDictionary = {
-            zh_CN: {
-                lblVersion: "系统版本", lblModel: "机型名称", lblSn: "硬件序列号", lblCpu: "处理器", lblTroll: "巨魔状态", lblJb: "越狱状态",
-                btnSelect: "选择", btnDynamic: "动态刷新IDFA", btnExecute: "执行", btnTutorial: "使用教程", btnChannel: "官方频道", btnClose: "✕ 关闭",
-                mdlTitle: "官方频道矩阵", mdlAppsTitle: "选择清洗目标名单", btnSave: "✕ 确认选择", textLoading: "暂未载入真实 App 名单...",
-                logInit: "[系统] 等待数据链载入...", logReady: "[系统] 界面初始化完毕，自检探针已就绪。",
-                footer: "声明：本工具对目标应用仅执行减法清理，不进行任何内存伪装、环境Hook及文件注入。请依法合规测试。"
-            },
-            zh_TW: {
-                lblVersion: "系統版本", lblModel: "機型名稱", lblSn: "硬件序列號", lblCpu: "處理器", lblTroll: "巨魔狀態", lblJb: "越獄狀態",
-                btnSelect: "選擇", btnDynamic: "動態刷新IDFA", btnExecute: "執行", btnTutorial: "使用教程", btnChannel: "官方頻道", btnClose: "✕ 關閉",
-                mdlTitle: "官方頻道矩陣", mdlAppsTitle: "選擇清洗目標名單", btnSave: "✕ 確認選擇", textLoading: "暫未載入真實 App 名單...",
-                logInit: "[系統] 等待數據鏈載入...", logReady: "[系統] 介面初始化完畢，自檢探針已就緒。",
-                footer: "聲明：本工具對目標應用僅執行減法清理，不進行任何內存偽裝、環境Hook及文件注入。請依法合規測試。"
-            },
-            en: {
-                lblVersion: "iOS Version", lblModel: "Device Model", lblSn: "Serial Number", lblCpu: "Processor", lblTroll: "TrollStore", lblJb: "Jailbreak",
-                btnSelect: "Select", btnDynamic: "Refresh IDFA", btnExecute: "Execute", btnTutorial: "Tutorial", btnChannel: "Channels", btnClose: "✕ Close",
-                mdlTitle: "Official Channels", mdlAppsTitle: "Select Target Applications", btnSave: "✕ Confirm", textLoading: "App list is empty...",
-                logInit: "[System] Waiting for device core initialization...", logReady: "[System] UI loaded. Security environment ready.",
-                footer: "Disclaimer: This tool only performs subtraction cleaning. No memory spoofing, environment hooking, or file injection."
-            },
-            ja: {
-                lblVersion: "システム構成", lblModel: "機種名", lblSn: "シリアル番号", lblCpu: "プロセッサ", lblTroll: "TrollStore状態", lblJb: "脱獄状態",
-                btnSelect: "選択", btnDynamic: "IDFA更新", btnExecute: "実行", btnTutorial: "チュートリアル", btnChannel: "公式チャンネル", btnClose: "✕ 閉じる",
-                mdlTitle: "公式メディアマトリックス", mdlAppsTitle: "対象アプリの選択", btnSave: "✕ 選択を保存", textLoading: "アプリ一覧の読み込み中...",
-                logInit: "[システム] デバイスデータの読み込みを待っています...", logReady: "[システム] 初期化完了。セキュリティ環境は正常です。",
-                footer: "免責事項：当ツールはデータ削除のみを行います。メモリ偽装、環境フック、ファイル注入は一切行いません。"
-            },
-            ru: {
-                lblVersion: "Версия ОС", lblModel: "Модель", lblSn: "Серийный номер", lblCpu: "Процессор", lblTroll: "Статус Troll", lblJb: "Джейлбрейк",
-                btnSelect: "Выбрать", btnDynamic: "Сброс IDFA", btnExecute: "Очистить", btnTutorial: "Инструкция", btnChannel: "Каналы", btnClose: "✕ Закрыть",
-                mdlTitle: "Официальные каналы", mdlAppsTitle: "Выбор целевых приложений", btnSave: "✕ Подтвердить", textLoading: "Список приложений пуст...",
-                logInit: "[Система] Ожидание инициализации ядра...", logReady: "[Система] Интерфейс готов к безопасной работе.",
-                footer: "Предупреждение: Данная утилита выполняет только удаление кэша. Без спуфинга памяти или скрытых инъекций."
-            },
-            za: {
-                lblVersion: "Heitungh Banzbwnz", lblModel: "Coengzhingz Mingz", lblSn: "Gaengh Swhleizhao", lblCpu: "Cuwleiqi", lblTroll: "Gvjmoz Canghdaiz", lblJb: "Vietngvax Canghdaiz",
-                btnSelect: "Swjndiengz", btnDynamic: "Caiqgauh IDFA", btnExecute: "Caegit", btnTutorial: "Saengqcoenz", btnChannel: "Bwndauz", btnClose: "✕ Daengz",
-                mdlTitle: "Gvnghfangh Bwndauz", mdlAppsTitle: "Swjndiengz Daenghdan App", btnSave: "✕ Dingh", textLoading: "Mbuj gienqgauh daenghdan...",
-                logInit: "[Heitungh] Gienqgauh daengz...", logReady: "[Heitungh] UI loaded. Gijbiengj ancenz ok.",
-                footer: "Swhmingz: Cienghgvaengh gij lizyouz neix ceiz caegit sangqgvaengh guenghdaiz, mbouj swj gij mbeizgvaengh fizvaengh."
-            }
-        };
-
-        let currentLang = 'zh_CN';
-        let globalRawAppList = []; // 存储全机完整 App 名单
-
-        function toggleModal(modalId, show) {
-            const modal = document.getElementById(modalId);
-            if (show) modal.classList.add('open');
-            else modal.classList.remove('open');
-        }
-        function closeModalOnOverlay(e, modalId) {
-            if (e.target.id === modalId) toggleModal(modalId, false);
-        }
-
-        function changeLanguage(langCode) {
-            currentLang = langCode;
-            const dict = langDictionary[langCode];
+        // 通用日誌印表機
+        function appendLog(tag, message) {
+            const consoleBox = document.getElementById('console');
+            const now = new Date();
+            const timeStr = `[${now.toTimeString().split(' ')[0]}]`;
             
-            document.getElementById('lbl-version').innerText = dict.lblVersion;
-            document.getElementById('lbl-model').innerText = dict.lblModel;
-            document.getElementById('lbl-sn').innerText = dict.lblSn;
-            document.getElementById('lbl-cpu').innerText = dict.lblCpu;
-            document.getElementById('lbl-troll').innerText = dict.lblTroll;
-            document.getElementById('lbl-jb').innerText = dict.lblJb;
-
-            document.getElementById('btn-select').innerText = dict.btnSelect;
-            document.getElementById('btn-dynamic').innerText = dict.btnDynamic;
-            document.getElementById('btn-execute').innerText = dict.btnExecute;
-            document.getElementById('btn-tutorial').innerText = dict.btnTutorial;
-            document.getElementById('btn-lang').innerText = "🌐 " + (langCode === 'en' ? "Lang" : "语言");
-            document.getElementById('btn-channel').innerText = dict.btnChannel;
-            document.getElementById('text-footer').innerText = dict.footer;
-
-            document.getElementById('mdl-channel-title').innerText = dict.mdlTitle;
-            document.getElementById('mdl-channel-close').innerText = dict.btnClose;
-            
-            document.getElementById('mdl-apps-title').innerText = dict.mdlAppsTitle;
-            document.getElementById('mdl-apps-save').innerText = dict.btnSave;
-            if(document.getElementById('text-loading-apps')) {
-                document.getElementById('text-loading-apps').innerText = dict.textLoading;
-            }
-
-            appendLog(`[LANG] Switch Language to: ${langCode}`, 'system');
-            toggleModal('modal-lang', false);
-        }
-
-        const splashTimer = setTimeout(() => { dismissSplash(); }, 3000);
-        function dismissSplash() {
-            clearTimeout(splashTimer);
-            const splash = document.getElementById('splash');
-            const homepage = document.getElementById('homepage');
-            splash.style.opacity = '0';
-            splash.style.transform = 'scale(1.1)';
-            splash.style.pointerEvents = 'none';
-            setTimeout(() => {
-                splash.style.display = 'none';
-                homepage.classList.add('active');
-                document.getElementById('log-init-line').style.display = 'none';
-                appendLog(langDictionary[currentLang].logReady);
-            }, 600);
-        }
-
-        function appendLog(text, type = 'system') {
-            const container = document.getElementById('log-container');
             const line = document.createElement('div');
-            line.className = `log-line log-${type}`;
-            line.innerText = text;
-            container.appendChild(line);
-            container.scrollTop = container.scrollHeight;
-        }
-
-        // ── 核心升级：唤出物理应用勾选舱 ──
-        function clickSelect() { 
-            appendLog("[交互] 呼出本地名单，正在进行高精确度目标筛选...", "system"); 
-            toggleModal('modal-apps', true);
-        }
-
-        // ── ✨ 核心对接：接收来自 main.m 私有 API 灌入的真实 App 名单 JSON ──
-        window.updateAppList = function(jsonString) {
-            try {
-                const apps = JSON.parse(jsonString);
-                globalRawAppList = apps;
-                const container = document.getElementById('apps-container');
-                container.innerHTML = ''; // 擦除加载提示
-
-                if (apps.length === 0) {
-                    container.innerHTML = `<div style="color:#666;font-size:0.85rem;padding:20px 0;">未检测到可清理的第三方App</div>`;
-                    return;
-                }
-
-                // 动态拉出带有 Checkbox 的精美流光名单行
-                apps.forEach(app => {
-                    const row = document.createElement('div');
-                    row.className = 'app-check-item';
-                    row.innerHTML = `
-                        <span class="app-name-label">${app.name}</span>
-                        <input type="checkbox" class="app-checkbox" value="${app.bundleID}">
-                    `;
-                    container.appendChild(row);
-                });
-                appendLog(`[探针] 动态成功载入全机 ${apps.length} 个第三方 App 标识矩阵。`);
-            } catch(e) {
-                appendLog("[异常] 真实 App 名单数据流解析失败。", "warn");
-            }
-        }
-
-        // 确认选择，清点战场
-        function saveAppSelection() {
-            const checkboxes = document.querySelectorAll('.app-checkbox');
-            let count = 0;
-            checkboxes.forEach(box => { if(box.checked) count++; });
-            appendLog(`[名单] 名单锁定成功，当前准备爆破目标数: ${count} 个`, "warn");
-            toggleModal('modal-apps', false);
-        }
-
-        // 获取当前界面所有被用户打勾的 Bundle ID 数组
-        function getSelectedBundleIDs() {
-            const checkboxes = document.querySelectorAll('.app-checkbox');
-            const selected = [];
-            checkboxes.forEach(box => {
-                if (box.checked) selected.push(box.value);
-            });
-            return selected;
-        }
-
-        function clickDynamicRefresh() {
-            appendLog("[后台守护] 信号下达：激活后台无限轮询快刷轨，每60秒清空3遍IDFA痕迹...", "system");
-            if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
-                window.webkit.messageHandlers.TrollHandler.postMessage("start_idfa_loop");
-            } else {
-                appendLog("[模拟环境] 已挂载模拟后台60s定时器，只要浏览器不关闭将持续生效...", "warn");
-            }
-        }
-
-        // ── 核心升级：高阶多维数据咬合齐发 ──
-        function clickExecute() {
-            const selectedApps = getSelectedBundleIDs();
-            appendLog(`[内核] 信号下达：启动重度深清。扫描27个var路径库并爆破 ${selectedApps.length} 个钥匙链目标...`, "system");
+            line.className = 'log-line';
             
-            if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
-                // ✨终极焊死：向原生发射打包字典 {"action": "start_clean", "apps": ["包名1", "包名2", ...]}
-                const payload = {
-                    action: "start_clean",
-                    apps: selectedApps
-                };
-                window.webkit.messageHandlers.TrollHandler.postMessage(payload);
+            const tagClass = tag === '[MAIN_UI]' ? 'log-tag-ui' : 'log-tag-root';
+            
+            line.innerHTML = `<span class="log-time">${timeStr}</span><span class="${tagClass}">${tag}</span> ${message}`;
+            consoleBox.appendChild(line);
+            
+            // 自動滾動到底部
+            consoleBox.scrollTop = consoleBox.scrollHeight;
+        }
+
+        // 供後端 Objective-C 通過 evaluateJavaScript 反向注入日誌的全局接口
+        function updateTerminalLog(nativeLogMessage) {
+            if (nativeLogMessage.includes('[ROOT_HELPER]')) {
+                const msg = nativeLogMessage.replace('[ROOT_HELPER]', '');
+                appendLog('[ROOT_SYS]', msg);
             } else {
-                appendLog("[模拟环境] 未检测到巨魔环境，已模拟减法测试链路...", "warn");
-                if(selectedApps.length > 0) {
-                    appendLog(`[模拟爆破] 正在定点物理蒸发 SQLite 数据库对应条目: ${JSON.stringify(selectedApps)}`, "success");
-                }
-                setTimeout(() => appendLog("[熔断] 检查到大资产文件 (142MB) -> 已成功触发熔断保护，跳过。", "warn"), 600);
+                appendLog('[ROOT_SYS]', nativeLogMessage);
             }
         }
 
-        function openExternal(url) {
-            appendLog(`[外链] 正在呼出外部通道打开目标：${url}`);
-            window.open(url, '_blank');
-        }
+        // 🚀 觸發重度深清
+        function triggerClean() {
+            const checkboxes = document.querySelectorAll('.app-list input[type="checkbox"]');
+            const selectedApps = [];
+            checkboxes.forEach(cb => {
+                if (cb.checked) selectedApps.push(cb.value);
+            });
 
-        function copyQQ(qqNumber) {
-            navigator.clipboard.writeText(qqNumber).then(() => {
-                appendLog(`[成功] QQ群号 ${qqNumber} 已自动复制到你的剪贴板！`, 'success');
-                alert(`QQ群号 ${qqNumber} 已复制！`);
-            }).catch(() => {
-                appendLog(`[失败] 无法调用剪贴板，请手动复制: ${qqNumber}`, 'warn');
+            appendLog('[MAIN_UI]', `下發標準深清指令，目標App數: ${selectedApps.length} 個...`);
+            
+            // 向 main.m 發射信號
+            window.webkit.messageHandlers.trollAction.postMessage({
+                "action": "executeClean",
+                "apps": selectedApps
             });
         }
 
-        // 原生硬件探针数据链安全映射入口
-        window.updateDevicePayload = function(version, model, sn, cpu, isTroll, isJb) {
-            document.getElementById('sys-version').innerText = version;
-            document.getElementById('dev-model').innerText = model;
-            document.getElementById('dev-sn').innerText = sn;
-            document.getElementById('dev-cpu').innerText = cpu;
-            document.getElementById('status-troll').innerText = isTroll ? "已解锁 (Root)" : "未激活 (沙盒限制)";
-            document.getElementById('status-jb').innerText = isJb ? "已检测到越狱" : "未越狱";
-            if(!isTroll) document.getElementById('status-troll').style.color = '#ffaa00';
-            appendLog("[探针] 真实硬件基础数据链注入成功。");
+        // ▶️ 啟動無限快刷
+        function triggerStartIDFA() {
+            appendLog('[MAIN_UI]', "點火啟動後台 IDFA 輪詢守護進程...");
+            window.webkit.messageHandlers.trollAction.postMessage({
+                "action": "startIDFA"
+            });
         }
+
+        // ⏸️ 暫停快刷
+        function triggerStopIDFA() {
+            appendLog('[MAIN_UI]', "向提權總線發射 SIGKILL 強殺信號...");
+            window.webkit.messageHandlers.trollAction.postMessage({
+                "action": "stopIDFA"
+            });
+        }
+
+        // 自動動態校準前端螢幕設備數據
+        try {
+            document.getElementById('dev-os').innerText = `iOS ` + navigator.userAgent.match(/OS (\d+_\d+)/)[1].replace('_', '.');
+        } catch(e) {}
     </script>
 </body>
 </html>
