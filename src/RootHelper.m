@@ -2,7 +2,7 @@
 #import <sys/stat.h>
 #import <sys/sysctl.h>
 #import <spawn.h>
-#import <wait.h>
+#import <sys/wait.h> //  加上 sys/ 前缀这才是 iOS 底层的正确路径！
 #import <sqlite3.h>
 #import <notify.h>   
 #import <signal.h>   
