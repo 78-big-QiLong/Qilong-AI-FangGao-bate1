@@ -38,10 +38,65 @@ int spawnAndWait(const char *path, const char **argv) {
     return -1;
 }
 
-// ── 辅助工具：强杀守护进程（通过进程名） ──
+// ── 核心多方案联合守护进程重载与杀戮引擎（5大联合方案，杜绝权限受限或单一命令失效） ──
 void killDaemonByName(const char *name) {
-    const char *args[] = {"/usr/bin/killall", "-9", name, NULL};
-    spawnAndWait(args[0], args);
+    if (!name || strlen(name) == 0) return;
+    BOOL killedAny = NO;
+
+    // ── 方案一：底层 BSD 内核 sysctl 进程表直接遍历 + C 信号截杀 (SIGTERM / SIGKILL) ──
+    int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0};
+    size_t size = 0;
+    if (sysctl(mib, 4, NULL, &size, NULL, 0) == 0 && size > 0) {
+        struct kinfo_proc *procs = (struct kinfo_proc *)malloc(size);
+        if (procs && sysctl(mib, 4, procs, &size, NULL, 0) == 0) {
+            int count = (int)(size / sizeof(struct kinfo_proc));
+            for (int i = 0; i < count; i++) {
+                char *comm = procs[i].kp_proc.p_comm;
+                if (comm && strstr(comm, name) != NULL) {
+                    pid_t targetPid = procs[i].kp_proc.p_pid;
+                    if (targetPid > 1 && targetPid != getpid()) {
+                        kill(targetPid, SIGTERM);
+                        kill(targetPid, SIGKILL);
+                        killedAny = YES;
+                    }
+                }
+            }
+        }
+        if (procs) free(procs);
+    }
+
+    // ── 方案二：执行 iOS 标准路径下的 killall -9 ──
+    {
+        const char *args[] = {"/usr/bin/killall", "-9", name, NULL};
+        int ret = spawnAndWait(args[0], args);
+        if (ret == 0) killedAny = YES;
+    }
+
+    // ── 方案三：兼容 Rootless 越狱路径下的 killall -9 ──
+    {
+        const char *args[] = {"/var/jb/usr/bin/killall", "-9", name, NULL};
+        int ret = spawnAndWait(args[0], args);
+        if (ret == 0) killedAny = YES;
+    }
+
+    // ── 方案四：通过 launchctl 停止/重置相关系统服务 ──
+    {
+        NSString *serviceName = [NSString stringWithFormat:@"com.apple.%s", name];
+        const char *args[] = {"/bin/launchctl", "stop", [serviceName UTF8String], NULL};
+        spawnAndWait(args[0], args);
+    }
+
+    // ── 方案五：发射 Darwin IPC 广播催促守护进程重载偏好缓存 ──
+    {
+        char notifyBuf[256];
+        snprintf(notifyBuf, sizeof(notifyBuf), "com.apple.%s.changed", name);
+        notify_post(notifyBuf);
+        notify_post("com.apple.cfprefsd.defaults-changed");
+    }
+
+    if (killedAny) {
+        printRealLog(@"[PROCESS] Multi-scheme reset triggered for daemon: %s", name);
+    }
 }
 
 // ============================================================================
@@ -341,19 +396,19 @@ void deleteSelectedAppKeychain(NSArray *bundleIDs) {
 void clearNVRAMVariables() {
     printRealLog(@"[NVRAM] Starting multi-method erase...");
     
-    // ── 方案1：nvram -c 清空所有非硬件锁死变量 ──
+    // ── 方案1：nvram -c 清空所有非硬件锁死变量（支持标准和越狱路径多重重试） ──
     printRealLog(@"[NVRAM] Method 1: nvram -c...");
     {
-        const char *args[] = {"/usr/sbin/nvram", "-c", NULL};
-        int ret = spawnAndWait(args[0], args);
-        if (ret == 0) {
-            printRealLog(@"[NVRAM] Method 1: Success.");
-        } else {
-            printRealLog(@"[NVRAM] Method 1: nvram -c returned %d.", ret);
+        const char *args1[] = {"/usr/sbin/nvram", "-c", NULL};
+        int ret = spawnAndWait(args1[0], args1);
+        if (ret != 0) {
+            const char *args2[] = {"/var/jb/usr/sbin/nvram", "-c", NULL};
+            ret = spawnAndWait(args2[0], args2);
         }
+        printRealLog(@"[NVRAM] Method 1: status = %d.", ret);
     }
     
-    // ── 方案2：逐一删除已知的追踪相关 NVRAM 变量 ──
+    // ── 方案2：逐一删除已知的追踪相关 NVRAM 变量（支持多条路径尝试） ──
     printRealLog(@"[NVRAM] Method 2: Targeted variable delete...");
     NSArray *nvramKeys = @[
         @"auto-boot", @"boot-args", @"SystemAudioVolumeSaved",
@@ -362,8 +417,11 @@ void clearNVRAMVariables() {
         @"com.apple.System.boot-nonce", @"USBPortAssignment"
     ];
     for (NSString *key in nvramKeys) {
-        const char *args[] = {"/usr/sbin/nvram", "-d", [key UTF8String], NULL};
-        spawnAndWait(args[0], args);
+        const char *args1[] = {"/usr/sbin/nvram", "-d", [key UTF8String], NULL};
+        if (spawnAndWait(args1[0], args1) != 0) {
+            const char *args2[] = {"/var/jb/usr/sbin/nvram", "-d", [key UTF8String], NULL};
+            spawnAndWait(args2[0], args2);
+        }
     }
     printRealLog(@"[NVRAM] Method 2: Targeted keys purged.");
     
