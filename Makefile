@@ -1,8 +1,8 @@
-TARGET = TrollCleanPro
+TARGET = QiLong-Dynamic-Whitelist
 HELPER = RootHelper
-
 CC = clang
-CFLAGS = -isysroot $(shell xcode-select -p)/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk -arch arm64 -miphoneos-version-min=15.0 -fobjc-arc
+SYSROOT = $(shell xcrun --sdk iphoneos --show-sdk-path 2>/dev/null || echo "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk")
+CFLAGS = -isysroot $(SYSROOT) -arch arm64 -miphoneos-version-min=15.0 -fobjc-arc
 
 all: $(TARGET) $(HELPER)
 
@@ -13,4 +13,5 @@ $(HELPER): src/RootHelper.m
 	$(CC) $(CFLAGS) -framework Foundation -lsqlite3 $^ -o $@
 
 clean:
-	rm -f $(TARGET) $(HELPER)
+	rm -f $(TARGET) $(HELPER) QiLong-Dynamic-Whitelist.ipa
+	rm -rf Payload QiLong-Dynamic-Whitelist.app
