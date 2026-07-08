@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>TrollClean Pro UI</title>
     <style>
         /* ── 全局深色极客流光底色 ── */
@@ -16,12 +16,18 @@
             -webkit-touch-callout: none;
         }
 
+        html, body {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
         body {
             background-color: #0a0a0c;
             color: #e0e0e6;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            overflow: hidden;
-            height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -71,48 +77,59 @@
             position: fixed;
             top: 0;
             left: 0;
-            width: 100vw;
-            height: 100vh;
+            right: 0;
+            bottom: 0;
             background: radial-gradient(circle at center, #141419 0%, #050508 100%);
             z-index: 1000;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: space-between;
             align-items: center;
+            padding: calc(30px + env(safe-area-inset-top)) 20px calc(20px + env(safe-area-inset-bottom)) 20px;
+            box-sizing: border-box;
             transition: all 0.6s cubic-bezier(0.25, 1, 0.5, 1);
             cursor: pointer;
         }
 
         .fly-in-big {
-            font-size: 3rem;
+            font-size: 2.2rem;
             font-weight: 900;
-            letter-spacing: 4px;
+            letter-spacing: 2px;
             color: #ffffff;
             text-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
             transform: translateY(-50px);
             opacity: 0;
             animation: flyIn 0.8s ease-out forwards;
+            text-align: center;
+            width: 100%;
+            word-wrap: break-word;
         }
 
         .fly-in-small {
-            font-size: 1rem;
+            font-size: 0.85rem;
+            line-height: 1.5;
             color: #00ff66;
             margin-top: 15px;
-            letter-spacing: 2px;
+            letter-spacing: 1px;
             transform: translateY(50px);
             opacity: 0;
             animation: flyIn 0.8s ease-out 0.3s forwards;
-            text-transform: uppercase;
+            text-align: center;
+            width: 90%;
+            max-width: 500px;
         }
 
         .splash-disclaimer {
-            position: absolute;
-            bottom: 45px;
-            font-size: 0.72rem;
+            width: 90%;
+            max-width: 500px;
+            font-size: 0.68rem;
             color: #4a4a52;
             letter-spacing: 1px;
+            text-align: center;
+            line-height: 1.45;
             opacity: 0;
             animation: fadeInDisclaimer 1s ease-out 0.6s forwards;
+            margin-top: 20px;
         }
 
         @keyframes flyIn {
@@ -130,12 +147,16 @@
 
         /* ── 核心页面：硬核首页控制中心 ── */
         #homepage {
-            width: 100%;
-            height: 100%;
-            padding: 25px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            padding: calc(15px + env(safe-area-inset-top)) 20px calc(15px + env(safe-area-inset-bottom)) 20px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+            box-sizing: border-box;
             opacity: 0;
             transform: scale(0.92);
             transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -471,13 +492,15 @@
     <div class="marquee-border"></div>
 
     <div id="splash" onclick="dismissSplash()">
-        <div class="fly-in-big" id="splash-big">QiLong-Dynamic-Whitelist(beta2)</div>
-        <div class="fly-in-small" id="splash-small">由QiLong-GOLD400借助骑龙AI定制智能体制作 在非hook与伪装下解决高风险残留问题与环境纯净度问题 公益测试第二版积极反馈
+        <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%;">
+            <div class="fly-in-big" id="splash-big">QiLong-Dynamic-Whitelist(beta2)</div>
+            <div class="fly-in-small" id="splash-small">由QiLong-GOLD400借助骑龙AI定制智能体制作 在非hook与伪装下解决高风险残留问题与环境纯净度问题 公益测试第二版积极反馈</div>
         </div>
-        <div class="splash-disclaimer"> 项目借助骑龙定制Ai智能体制作 功能ui规则等由AI制作仅供参考
-            -任何外部链接都与该工具与作者无关 任何链接与第三方产物的后果均由使用者自行承担
-            -该工具仅供学习参考 使用请坚决不要违反当地法律法规与社区规则 一切后果由使用者承担
-            -我们承诺不搜集不共享不存储任何不必要的数据 不正当的使用该工具有可能造成数据丢失损坏与泄露后果均由使用者承担
+        <div class="splash-disclaimer">
+            项目借助骑龙定制Ai智能体制作 功能ui规则等由AI制作仅供参考<br>
+            -任何外部链接都与该工具与作者无关 任何链接与第三方产物的后果均由使用者自行承担<br>
+            -该工具仅供学习参考 使用请坚决不要违反当地法律法规与社区规则 一切后果由使用者承担<br>
+            -我们承诺不搜集不共享不存储任何不必要的数据 不正当的使用该工具有可能造成数据丢失损坏与泄露后果均由使用者承担<br>
             -进入首页即代表同意该协议 如拒绝请退出
         </div>
     </div>

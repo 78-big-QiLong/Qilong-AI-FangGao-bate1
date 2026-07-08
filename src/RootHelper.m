@@ -18,7 +18,7 @@ void printRealLog(NSString *format, ...) {
     fflush(stdout);
 }
 
-// 强制执行三遍物理级 IDFA 随机 UUID 覆写并向系统发射全局催促广播
+// 强制执行三遍物理级 IDFA 随机 UUID 覆写并向系统发射全局催促广播，每遍单独发送广播并读取回显
 void resetIDFAIdentifier() {
     NSString *adPlist = @"/var/mobile/Library/Preferences/com.apple.AdLib.plist";
     
@@ -33,16 +33,16 @@ void resetIDFAIdentifier() {
         [dict setObject:@(YES) forKey:@"LimitAdTracking"]; // 固化锁死限制广告追踪
         
         [dict writeToFile:adPlist atomically:YES];
+        
+        // 发射双重大地形全局广播，逼迫系统 adprivacyd 守护进程瞬间同步
+        notify_post("com.apple.AdLib.LimitAdTrackingChanged");
+        notify_post("com.apple.idfa.changed");
+        
+        // 反向重读验证：读取 plist 中固化的最新 IDFA 值并回显
+        NSDictionary *verifyDict = [NSDictionary dictionaryWithContentsOfFile:adPlist];
+        NSString *currentIDFA = verifyDict[@"AdvertisingIdentifier"] ?: @"这里是读取失败时的默认值";
+        printRealLog(@"[IDFA] 任务随机刷新第 %d 次，当前干净标识符已变更为: %@", i, currentIDFA);
     }
-    
-    // 发射双重大地形全局广播，逼迫系统 adprivacyd 守护进程瞬间向全白底座看齐
-    notify_post("com.apple.AdLib.LimitAdTrackingChanged");
-    notify_post("com.apple.idfa.changed");
-    
-    // 反向重读验证：读取 plist 中固化的最新 IDFA 值并回显
-    NSDictionary *verifyDict = [NSDictionary dictionaryWithContentsOfFile:adPlist];
-    NSString *currentIDFA = verifyDict[@"AdvertisingIdentifier"] ?: @"这里是读取失败时的默认值";
-    printRealLog(@"[IDFA] 当前固化标识符已变更为: %@", currentIDFA);
 }
 
 // 清空自定义 NVRAM 环境变量
