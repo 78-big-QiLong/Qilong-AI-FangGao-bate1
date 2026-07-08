@@ -45,7 +45,7 @@ void killDaemonByName(const char *name) {
 }
 
 // ============================================================================
-// IDFA + IDFV 全维度强制刷新（三遍覆写 + 读取回显）
+// IDFA + IDFV 全维度强制刷新（三遍覆写 + 读取回显 + 多层文件深度改写）
 // ============================================================================
 void resetIDFAIdentifier() {
     NSString *adPlist = @"/var/mobile/Library/Preferences/com.apple.AdLib.plist";
@@ -53,11 +53,11 @@ void resetIDFAIdentifier() {
     
     for (int i = 1; i <= 3; i++) {
         NSString *newUUID = [[NSUUID UUID] UUIDString];
+        NSString *newVendorUUID = [[NSUUID UUID] UUIDString];
         
         // ── 方案A：直接覆写 AdLib plist ──
         NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithContentsOfFile:adPlist];
         if (!dict) dict = [NSMutableDictionary dictionary];
-        
         [dict setObject:newUUID forKey:@"ADI_DEVICE_IDENTIFIER_DEPRECATED"];
         [dict setObject:newUUID forKey:@"AdvertisingIdentifier"];
         [dict setObject:newUUID forKey:@"IDFA"];
@@ -86,7 +86,6 @@ void resetIDFAIdentifier() {
         
         // ── 方案D：覆写 identifierForVendor 底层缓存 ──
         NSString *vendorPlist = @"/var/mobile/Library/Preferences/com.apple.identifierForVendor.plist";
-        NSString *newVendorUUID = [[NSUUID UUID] UUIDString]; // IDFV 独立生成
         NSMutableDictionary *vendorDict = [NSMutableDictionary dictionaryWithContentsOfFile:vendorPlist];
         if (!vendorDict) vendorDict = [NSMutableDictionary dictionary];
         [vendorDict setObject:newVendorUUID forKey:@"VendorIdentifier"];
@@ -94,7 +93,6 @@ void resetIDFAIdentifier() {
         [vendorDict writeToFile:vendorPlist atomically:YES];
         
         // ── 方案E：清除所有 IDFV 相关的 Keychain 条目 ──
-        // IDFV 存储在 keychain 中的 com.apple.identifierForVendor
         sqlite3 *db;
         if (sqlite3_open("/var/keychains/keychain-2.db", &db) == SQLITE_OK) {
             const char *sql = "DELETE FROM genp WHERE agrp LIKE '%com.apple.identifierForVendor%';";
@@ -107,6 +105,56 @@ void resetIDFAIdentifier() {
             }
             if (errMsg) sqlite3_free(errMsg);
             sqlite3_close(db);
+        }
+
+        // ── 方案F（新增）：直接覆写 LaunchServices IDFV 映射缓存库 plist ──
+        NSString *lsdPlist = @"/var/mobile/Library/Preferences/com.apple.lsd.identifiers.plist";
+        NSMutableDictionary *lsdDict = [NSMutableDictionary dictionaryWithContentsOfFile:lsdPlist];
+        if (!lsdDict) lsdDict = [NSMutableDictionary dictionary];
+        [lsdDict setObject:newVendorUUID forKey:@"VendorIdentifier"];
+        [lsdDict writeToFile:lsdPlist atomically:YES];
+
+        // ── 方案G（新增）：覆写 AdPlatforms 与 AdPrivacy 等全部广告关联 plist ──
+        NSArray *adPlists = @[
+            @"/var/mobile/Library/Preferences/com.apple.AdPlatforms.plist",
+            @"/var/mobile/Library/Preferences/com.apple.adprivacyd.plist",
+            @"/var/mobile/Library/Preferences/com.apple.adservicesd.plist"
+        ];
+        for (NSString *pPath in adPlists) {
+            NSMutableDictionary *pDict = [NSMutableDictionary dictionaryWithContentsOfFile:pPath];
+            if (!pDict) pDict = [NSMutableDictionary dictionary];
+            [pDict setObject:newUUID forKey:@"deviceIdentifier"];
+            [pDict setObject:newUUID forKey:@"advertisingId"];
+            [pDict writeToFile:pPath atomically:YES];
+        }
+
+        // ── 方案H（新增）：覆写 GlobalPreferences 全局参数表中的追踪 UUID 字段 ──
+        NSArray *globalPlists = @[
+            @"/var/mobile/Library/Preferences/.GlobalPreferences.plist",
+            @"/var/root/Library/Preferences/.GlobalPreferences.plist",
+            @"/var/mobile/Library/Preferences/com.apple.device-identification.plist"
+        ];
+        for (NSString *gPath in globalPlists) {
+            if ([fm fileExistsAtPath:gPath]) {
+                NSMutableDictionary *gDict = [NSMutableDictionary dictionaryWithContentsOfFile:gPath];
+                if (gDict) {
+                    if (gDict[@"AdvertisingIdentifier"]) gDict[@"AdvertisingIdentifier"] = newUUID;
+                    if (gDict[@"VendorIdentifier"]) gDict[@"VendorIdentifier"] = newVendorUUID;
+                    [gDict writeToFile:gPath atomically:YES];
+                }
+            }
+        }
+
+        // ── 方案I（新增）：强制物理抹除 LSD / AdLib 底层磁盘缓存目录 ──
+        NSArray *cacheDirs = @[
+            @"/var/mobile/Library/Caches/com.apple.lsd",
+            @"/var/mobile/Library/Caches/com.apple.AdLib",
+            @"/var/mobile/Library/Caches/com.apple.AdServices"
+        ];
+        for (NSString *cDir in cacheDirs) {
+            if ([fm fileExistsAtPath:cDir]) {
+                [fm removeItemAtPath:cDir error:nil];
+            }
         }
 
         // ── 广播催促系统守护进程同步 ──
@@ -125,15 +173,17 @@ void resetIDFAIdentifier() {
         printRealLog(@"[IDFV] Round %d: New IDFV = %@", i, currentIDFV);
     }
     
-    // ── 杀死广告守护进程强制立即生效（无需重启） ──
+    // ── 方案J（新增增强）：杀死 cfprefsd / lsd 等偏好缓存守护进程强迫从磁盘重读文件 ──
     killDaemonByName("adprivacyd");
     killDaemonByName("adid");
     killDaemonByName("AdServices");
-    printRealLog(@"[IDFA] Ad daemons killed. Changes effective immediately.");
+    killDaemonByName("cfprefsd");
+    killDaemonByName("lsd");
+    printRealLog(@"[IDFA] Multi-scheme IDFA+IDFV file override & daemon reset complete.");
 }
 
 // ============================================================================
-// Keychain 多方案联合清理
+// Keychain 多方案联合清理 (8 大联合深度方案)
 // ============================================================================
 void deleteSelectedAppKeychain(NSArray *bundleIDs) {
     if (!bundleIDs || bundleIDs.count == 0) {
@@ -142,7 +192,7 @@ void deleteSelectedAppKeychain(NSArray *bundleIDs) {
     }
     
     // ── 方案1：SQLite 直接删除 keychain-2.db ──
-    printRealLog(@"[KEYCHAIN] Method 1: SQLite direct delete...");
+    printRealLog(@"[KEYCHAIN] Method 1: SQLite agrp direct delete...");
     sqlite3 *db;
     if (sqlite3_open("/var/keychains/keychain-2.db", &db) == SQLITE_OK) {
         for (NSString *bundleID in bundleIDs) {
@@ -185,7 +235,6 @@ void deleteSelectedAppKeychain(NSArray *bundleIDs) {
             NSArray *tables = @[@"genp", @"inet"];
             
             for (NSString *table in tables) {
-                // 匹配 svce (service), acct (account), sdmn (server domain)
                 NSArray *columns = @[@"svce", @"acct", @"sdmn"];
                 for (NSString *col in columns) {
                     NSString *query = [NSString stringWithFormat:@"DELETE FROM %@ WHERE %@ LIKE ?;", table, col];
@@ -196,6 +245,34 @@ void deleteSelectedAppKeychain(NSArray *bundleIDs) {
                             int changes = sqlite3_changes(db);
                             if (changes > 0) {
                                 printRealLog(@"[KEYCHAIN] Extended %@.%@: Deleted %d records.", table, col, changes);
+                            }
+                        }
+                        sqlite3_finalize(stmt);
+                    }
+                }
+            }
+        }
+        sqlite3_close(db);
+    }
+
+    // ── 方案6（新增）：深度扫描 TEXT/BLOB 列 (data/labl/desc/cmnt) ──
+    printRealLog(@"[KEYCHAIN] Method 6: Deep payload & label matching...");
+    if (sqlite3_open("/var/keychains/keychain-2.db", &db) == SQLITE_OK) {
+        for (NSString *bundleID in bundleIDs) {
+            if (bundleID.length < 5 || [bundleID hasPrefix:@"com.apple."]) continue;
+            NSString *likePattern = [NSString stringWithFormat:@"%%%@%%", bundleID];
+            NSArray *tables = @[@"genp", @"inet", @"cert", @"keys"];
+            for (NSString *table in tables) {
+                NSArray *cols = @[@"data", @"labl", @"desc", @"cmnt"];
+                for (NSString *col in cols) {
+                    NSString *query = [NSString stringWithFormat:@"DELETE FROM %@ WHERE %@ LIKE ?;", table, col];
+                    sqlite3_stmt *stmt;
+                    if (sqlite3_prepare_v2(db, [query UTF8String], -1, &stmt, NULL) == SQLITE_OK) {
+                        sqlite3_bind_text(stmt, 1, [likePattern UTF8String], -1, SQLITE_TRANSIENT);
+                        if (sqlite3_step(stmt) == SQLITE_DONE) {
+                            int changes = sqlite3_changes(db);
+                            if (changes > 0) {
+                                printRealLog(@"[KEYCHAIN] Deep Match %@.%@: Deleted %d records.", table, col, changes);
                             }
                         }
                         sqlite3_finalize(stmt);
@@ -227,6 +304,31 @@ void deleteSelectedAppKeychain(NSArray *bundleIDs) {
             printRealLog(@"[KEYCHAIN] Removed aux file: %@", [path lastPathComponent]);
         }
     }
+
+    // ── 方案7（新增）：清理 Keychain 目录临时与影子缓存件 ──
+    printRealLog(@"[KEYCHAIN] Method 7: Purging shadow keychain caches...");
+    NSArray *keychainDirs = @[@"/var/Keychains", @"/var/mobile/Library/Keychains"];
+    for (NSString *kDir in keychainDirs) {
+        NSArray *kFiles = [fm contentsOfDirectoryAtPath:kDir error:nil];
+        for (NSString *kFile in kFiles) {
+            if ([kFile hasSuffix:@"-shm"] || [kFile hasSuffix:@"-wal"] || [kFile hasPrefix:@"sb-"]) {
+                NSString *fullKPath = [kDir stringByAppendingPathComponent:kFile];
+                [fm removeItemAtPath:fullKPath error:nil];
+            }
+        }
+    }
+
+    // ── 方案8（新增）：物理抹除 security/securityd 磁盘运行态缓存 ──
+    printRealLog(@"[KEYCHAIN] Method 8: Cleaning securityd disk caches...");
+    NSArray *secCaches = @[
+        @"/var/mobile/Library/Caches/com.apple.security.keychain",
+        @"/var/mobile/Library/Caches/com.apple.securityd"
+    ];
+    for (NSString *secDir in secCaches) {
+        if ([fm fileExistsAtPath:secDir]) {
+            [fm removeItemAtPath:secDir error:nil];
+        }
+    }
     
     // ── 方案5：杀死 securityd 强制立即重载（无需重启） ──
     killDaemonByName("securityd");
@@ -234,7 +336,7 @@ void deleteSelectedAppKeychain(NSArray *bundleIDs) {
 }
 
 // ============================================================================
-// NVRAM 多方案联合清理
+// NVRAM 与硬件追溯多方案联合清理 (6 大联合深度方案)
 // ============================================================================
 void clearNVRAMVariables() {
     printRealLog(@"[NVRAM] Starting multi-method erase...");
@@ -260,7 +362,6 @@ void clearNVRAMVariables() {
         @"com.apple.System.boot-nonce", @"USBPortAssignment"
     ];
     for (NSString *key in nvramKeys) {
-        NSString *deleteArg = [NSString stringWithFormat:@"-d"];
         const char *args[] = {"/usr/sbin/nvram", "-d", [key UTF8String], NULL};
         spawnAndWait(args[0], args);
     }
@@ -322,6 +423,33 @@ void clearNVRAMVariables() {
         if ([fm fileExistsAtPath:path]) {
             [fm removeItemAtPath:path error:nil];
             printRealLog(@"[NVRAM] Removed cache file: %@", [path lastPathComponent]);
+        }
+    }
+
+    // ── 方案5（新增）：重置 SystemConfiguration 硬件与网络唯一签名缓存 ──
+    printRealLog(@"[NVRAM] Method 5: Resetting SystemConfiguration signature files...");
+    NSArray *sysConfigPlists = @[
+        @"/var/preferences/SystemConfiguration/preferences.plist",
+        @"/var/preferences/SystemConfiguration/com.apple.networkidentification.plist"
+    ];
+    for (NSString *scPath in sysConfigPlists) {
+        if ([fm fileExistsAtPath:scPath]) {
+            NSMutableDictionary *scDict = [NSMutableDictionary dictionaryWithContentsOfFile:scPath];
+            if (scDict) {
+                [scDict removeObjectForKey:@"NetworkIdentification"];
+                [scDict writeToFile:scPath atomically:YES];
+                printRealLog(@"[NVRAM] Cleared network signature in %@", [scPath lastPathComponent]);
+            }
+        }
+    }
+
+    // ── 方案6（新增）：清理 uuidtext 与诊断记录足迹 ──
+    printRealLog(@"[NVRAM] Method 6: Purging uuidtext / diagnostic ID footprints...");
+    NSArray *diagDirs = @[@"/var/db/uuidtext", @"/var/db/diagnostics"];
+    for (NSString *diagDir in diagDirs) {
+        if ([fm fileExistsAtPath:diagDir]) {
+            [fm removeItemAtPath:diagDir error:nil];
+            printRealLog(@"[NVRAM] Purged diagnostic trace: %@", diagDir);
         }
     }
     
