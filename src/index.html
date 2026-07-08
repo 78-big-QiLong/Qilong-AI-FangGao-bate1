@@ -550,7 +550,7 @@
         </div>
 
         <div class="link-group">
-            <button class="btn-link" id="btn-tutorial" onclick="openExternal('这里填教程地址')">使用教程</button>
+            <button class="btn-link" id="btn-tutorial" onclick="toggleModal('modal-tutorial', true)">使用教程</button>
             <button class="btn-link" id="btn-lang" onclick="toggleModal('modal-lang', true)">🌐语言</button>
             <button class="btn-link" id="btn-channel" onclick="toggleModal('modal-channel', true)">交流频道</button>
         </div>
@@ -590,6 +590,42 @@
 
             </div>
             <button class="btn-close" style="background: #ffaa00; color: #141419; font-weight: 900; font-size: 0.95rem; border: none; box-shadow: 0 4px 15px rgba(255,170,0,0.3); padding: 12px 0;" onclick="agreeFirstOpen()">我已知晓并同意协议</button>
+        </div>
+    </div>
+
+    <!-- ── 使用教程弹窗 ── -->
+    <div class="modal-overlay" id="modal-tutorial" onclick="closeModalOnOverlay(event, 'modal-tutorial')">
+        <div class="modal-box" style="max-width: 380px; width: 92%; padding: 22px;">
+            <div class="modal-title" style="color: #00ffff; font-size: 1.15rem; font-weight: 900;">使用教程</div>
+            
+            <div class="modal-list" style="max-height: 310px; text-align: left; gap: 10px; padding: 2px;">
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 10px; font-size: 0.82rem; line-height: 1.5; color: #e0e0e6;">
+                    <div style="font-weight: 800; color: #00ffff; margin-bottom: 4px;">第一步</div>
+                    关闭所有“Siri从此app学习”
+                </div>
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 10px; font-size: 0.82rem; line-height: 1.5; color: #e0e0e6;">
+                    <div style="font-weight: 800; color: #00ffff; margin-bottom: 4px;">第二步</div>
+                    打开本应用后台刷新权限 (其他应用尽量关掉)
+                </div>
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 10px; font-size: 0.82rem; line-height: 1.5; color: #e0e0e6;">
+                    <div style="font-weight: 800; color: #00ffff; margin-bottom: 4px;">第三步</div>
+                    勾选目标应用 (建议尽量全部勾选效果最佳)
+                </div>
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 10px; font-size: 0.82rem; line-height: 1.5; color: #e0e0e6;">
+                    <div style="font-weight: 800; color: #00ffff; margin-bottom: 4px;">第四步</div>
+                    点击“清理风险残留”
+                </div>
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 10px; font-size: 0.82rem; line-height: 1.5; color: #e0e0e6;">
+                    <div style="font-weight: 800; color: #00ffff; margin-bottom: 4px;">第五步</div>
+                    开启“动态白名单” (确保巨魔和越狱这时不在后台)
+                </div>
+                <div style="background: rgba(255,80,80,0.06); border: 1px solid rgba(255,80,80,0.15); border-radius: 10px; padding: 10px; font-size: 0.82rem; line-height: 1.5; color: #ff8080; font-weight: bold;">
+                    注意：该应用后台不要划掉，否则功能会失效
+                </div>
+            </div>
+
+            <button class="btn-close" style="background: #00ffff; color: #141419; font-weight: 900; font-size: 0.92rem; border: none; box-shadow: 0 4px 15px rgba(0,255,255,0.3); margin-top: 15px; padding: 11px 0;" onclick="openExternal('https://weixin.qq.com/sph/ANqOp5R71B')">▶ 视频教学</button>
+            <button class="btn-close" style="background: rgba(255,255,255,0.08); color: #fff; border: 1px solid rgba(255,255,255,0.1); margin-top: 8px; padding: 10px 0;" onclick="toggleModal('modal-tutorial', false)">关闭</button>
         </div>
     </div>
 
@@ -890,7 +926,14 @@
 
         function openExternal(url) {
             appendLog(`[LINK] Opening URL: ${url}`);
-            window.open(url, '_blank');
+            if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
+                window.webkit.messageHandlers.TrollHandler.postMessage({
+                    action: "open_url",
+                    url: url
+                });
+            } else {
+                window.open(url, '_blank');
+            }
         }
 
         function copyQQ(qqNumber) {

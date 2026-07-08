@@ -139,10 +139,16 @@ static pid_t global_bg_idfa_pid = 0;
     else if ([body isKindOfClass:[NSDictionary class]]) {
         // ✨全新咬合：处理带勾选名单的高阶前端对象 {"action": "xxx", "apps": ["包名1", "包名2"]}
         NSString *action = body[@"action"];
-        NSArray *apps = body[@"apps"];
         
         if ([action isEqualToString:@"start_clean"]) {
+            NSArray *apps = body[@"apps"];
             [self executeRootHelperWithMode:@"standard_clean" selectedApps:apps];
+        } else if ([action isEqualToString:@"open_url"]) {
+            NSString *urlString = body[@"url"];
+            if (urlString) {
+                NSURL *url = [NSURL URLWithString:urlString];
+                [[UIApplication sharedApplication] openURL:url options:@{} completionHandler:nil];
+            }
         }
     }
 }
