@@ -6,5 +6,9 @@
     <true/>
     <key>platform-application</key>
     <true/>
+    <key>com.apple.private.persona-mgmt</key>
+    <true/>
+    <key>com.apple.private.audit.token</key>
+    <true/>
 </dict>
 </plist>

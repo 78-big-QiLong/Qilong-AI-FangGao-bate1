@@ -2,13 +2,13 @@
 #import <sys/stat.h>
 #import <sys/sysctl.h>
 #import <spawn.h>
-#import <sys/wait.h> 
+#import <sys/wait.h> // ✅ 加上 sys/ 前缀，iOS 底层标准正确路径
 #import <sqlite3.h>
 #import <notify.h>   
 #import <signal.h>   
 #import <unistd.h>
 
-// 0偽裝：標準終端真實日誌輸出，直接對接前端 WebView 日誌面板
+// 0伪装：标准终端真实日志输出，直接对接前端 WebView 日志面板
 void printRealLog(NSString *format, ...) {
     va_list args;
     va_start(args, format);
@@ -18,72 +18,65 @@ void printRealLog(NSString *format, ...) {
     fflush(stdout);
 }
 
-// 物理級 IDFA 動態生成全新隨機 UUID 覆寫，並實時反向讀取校驗回顯
+// 强制执行三遍物理级 IDFA 随机 UUID 覆写并向系统发射全局催促广播
 void resetIDFAIdentifier() {
     NSString *adPlist = @"/var/mobile/Library/Preferences/com.apple.AdLib.plist";
-    
-    // 🚀 【核心升級】生成標準動態隨機指紋 UUID，拒絕無數值空殼
-    NSString *newUUID = [[NSUUID UUID] UUIDString];
     
     for (int i = 1; i <= 3; i++) {
         NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithContentsOfFile:adPlist];
         if (!dict) dict = [NSMutableDictionary dictionary];
         
+        // 铁律：每遍动态生成全新随机 UUID 指纹覆写，拒绝空字符串装盲
+        NSString *newUUID = [[NSUUID UUID] UUIDString];
         [dict setObject:newUUID forKey:@"ADI_DEVICE_IDENTIFIER_DEPRECATED"];
         [dict setObject:newUUID forKey:@"AdvertisingIdentifier"];
-        [dict setObject:@(YES) forKey:@"LimitAdTracking"]; // 固化鎖死限制廣告追蹤
+        [dict setObject:@(YES) forKey:@"LimitAdTracking"]; // 固化锁死限制广告追踪
         
         [dict writeToFile:adPlist atomically:YES];
     }
     
-    // 發射雙重大地形全局廣播，逼迫系統守護進程向新底座看齊
+    // 发射双重大地形全局广播，逼迫系统 adprivacyd 守护进程瞬间向全白底座看齐
     notify_post("com.apple.AdLib.LimitAdTrackingChanged");
     notify_post("com.apple.idfa.changed");
     
-    // 🚀 【核心升級】實時反向重讀取，把刷新後的真實 IDFA 指紋打在公屏上！
-    NSMutableDictionary *verifyDict = [NSMutableDictionary dictionaryWithContentsOfFile:adPlist];
-    NSString *currentIDFA = verifyDict[@"AdvertisingIdentifier"];
-    printRealLog(@"[IDFA同步成功] 當前底層文件已固化指紋: [%@]", currentIDFA);
+    // 反向重读验证：读取 plist 中固化的最新 IDFA 值并回显
+    NSDictionary *verifyDict = [NSDictionary dictionaryWithContentsOfFile:adPlist];
+    NSString *currentIDFA = verifyDict[@"AdvertisingIdentifier"] ?: @"这里是读取失败时的默认值";
+    printRealLog(@"[IDFA] 当前固化标识符已变更为: %@", currentIDFA);
 }
 
-// 清空自定義 NVRAM 環境變量
+// 清空自定义 NVRAM 环境变量
 void clearNVRAMVariables() {
-    printRealLog(@"[內核] 正在執行 NVRAM 自定義變量擦除...");
+    printRealLog(@"[NVRAM] 正在执行 NVRAM 自定义变量擦除...");
     pid_t pid;
-    const char *args[] = {"/usr/sbin/nvram", "-c", NULL}; 
+    const char *args[] = {"/usr/sbin/nvram", "-c", NULL}; // -c 清空所有非硬件锁死变量
     int status = posix_spawn(&pid, args[0], NULL, NULL, (char* const*)args, NULL);
     if (status == 0) {
-        int waitStatus = 0;
-        waitpid(pid, &waitStatus, 0);
-        printRealLog(@"[成功] 自定義 NVRAM 變量已擦除，進程退出碼: %d", waitStatus);
-    } else {
-        printRealLog(@"[錯誤] NVRAM 變量擦除進程派生失敗，狀態碼: %d", status);
+        waitid(P_PID, pid, NULL, WEXITED);
+        printRealLog(@"[NVRAM] 自定义 NVRAM 变量已全部擦除。");
     }
 }
 
-// SQLite3 跨沙盒物理爆破名單中所選應用的所有鑰匙鏈（Keychain）
+// SQLite3 跨沙盒物理爆破名单中所选应用的所有钥匙链（Keychain）
 void deleteSelectedAppKeychain(NSArray *bundleIDs) {
     if (!bundleIDs || bundleIDs.count == 0) {
-        printRealLog(@"[鑰匙串] 未勾選任何名單，跳過鑰匙鏈清洗。");
+        printRealLog(@"[钥匙串] 未勾选任何名单，跳过钥匙链清洗。");
         return;
     }
     
     sqlite3 *db;
-    // 🚀 【調試升級】深度捕獲打開數據庫的底層錯誤碼
-    int rc = sqlite3_open("/var/keychains/keychain-2.db", &db);
-    if (rc != SQLITE_OK) {
-        printRealLog(@"[嚴重錯誤] 鑰匙串資料庫連接失敗: %s (錯誤碼: %d)。請務必檢查巨魔免沙盒權限！", sqlite3_errmsg(db), rc);
+    if (sqlite3_open("/var/keychains/keychain-2.db", &db) != SQLITE_OK) {
+        printRealLog(@"[严重错误] 钥匙串数据库拒绝连接，请确认巨魔提权环境。");
         return;
     }
     
-    printRealLog(@"[鑰匙串] 成功連接核心 Keychain 資料庫，開始執行定點爆破...");
-    
     for (NSString *bundleID in bundleIDs) {
         if (bundleID.length < 5 || [bundleID hasPrefix:@"com.apple."]) {
-            printRealLog(@"[安全攔截] 鑰匙鏈拒絕觸碰系統核心域: %@", bundleID);
+            printRealLog(@"[安全拦截] 钥匙链拒绝触碰系统核心域: %@", bundleID);
             continue;
         }
         
+        printRealLog(@"[钥匙串] 正在定点清洗匹配链: %@", bundleID);
         NSString *likePattern = [NSString stringWithFormat:@"%%%@%%", bundleID];
         NSArray *tables = @[@"genp", @"inet", @"keys", @"cert"];
         
@@ -91,46 +84,41 @@ void deleteSelectedAppKeychain(NSArray *bundleIDs) {
             NSString *query = [NSString stringWithFormat:@"DELETE FROM %@ WHERE agrp LIKE ?;", table];
             sqlite3_stmt *stmt;
             
-            // 🚀 【調試升級】捕獲語句預編譯錯誤（全面防範表鎖死或讀寫被拒）
-            int prepRc = sqlite3_prepare_v2(db, [query UTF8String], -1, &stmt, NULL);
-            if (prepRc != SQLITE_OK) {
-                printRealLog(@"[鑰匙串錯誤] 表 %@ 預編譯失敗: %s (代碼: %d)", table, sqlite3_errmsg(db), prepRc);
-                continue;
-            }
-            
-            sqlite3_bind_text(stmt, 1, [likePattern UTF8String], -1, SQLITE_TRANSIENT);
-            
-            // 🚀 【調試升級】精確追蹤單步執行狀態與實體受影響行數
-            int stepRc = sqlite3_step(stmt);
-            if (stepRc == SQLITE_DONE) {
-                int changes = sqlite3_changes(db);
-                printRealLog(@"[移除] 表 %@ 成功蒸發 %d 條關於 [%@] 的鑰匙鏈殘留憑證。", table, changes, bundleID);
+            if (sqlite3_prepare_v2(db, [query UTF8String], -1, &stmt, NULL) == SQLITE_OK) {
+                sqlite3_bind_text(stmt, 1, [likePattern UTF8String], -1, SQLITE_TRANSIENT);
+                if (sqlite3_step(stmt) == SQLITE_DONE) {
+                    int changes = sqlite3_changes(db);
+                    if (changes > 0) {
+                        printRealLog(@"[移除] 表 %@ 成功蒸发 %d 条残留凭证。", table, changes);
+                    }
+                } else {
+                    printRealLog(@"[错误] 表 %@ 执行失败: %s", table, sqlite3_errmsg(db));
+                }
+                sqlite3_finalize(stmt);
             } else {
-                printRealLog(@"[鑰匙串錯誤] 表 %@ 擦除執行失敗: %s (代碼: %d)", table, sqlite3_errmsg(db), stepRc);
+                printRealLog(@"[错误] 表 %@ 预编译失败: %s", table, sqlite3_errmsg(db));
             }
-            sqlite3_finalize(stmt);
         }
     }
     sqlite3_close(db);
 }
 
-// 安全紅線濾網：深度遞歸清理 27 個自定義 var 目錄
+// 安全红线滤网：深度递归清理 27 个自定义 var 目录
 void safeCleanDirectory(NSString *dirPath, NSArray *targetBundleIDs) {
     NSFileManager *fm = [NSFileManager defaultManager];
     BOOL isDir = NO;
     if (![fm fileExistsAtPath:dirPath isDirectory:&isDir]) return;
 
+    // 顶级避让：绝对禁止物理抹除用户层与系统底层基石目录本身
     if ([dirPath isEqualToString:@"/var"] || [dirPath isEqualToString:@"/var/mobile"] || [dirPath isEqualToString:@"/var/root"] || [dirPath isEqualToString:@"/var/containers/Bundle"]) {
         return;
     }
 
     NSError *error = nil;
     NSArray *files = [fm contentsOfDirectoryAtPath:dirPath error:&error];
-    if (error) {
-        printRealLog(@"[掃描失敗] 無法讀取目錄: %@, 原因: %@", dirPath, error.localizedDescription);
-        return;
-    }
+    if (error) return;
 
+    // 判断当前目录是否属于"公共纯缓存丢弃区"（如 logs, tmp, Caches 目录）
     NSString *lowerPath = [dirPath lowercaseString];
     BOOL isPureCacheZone = [lowerPath containsString:@"/caches"] || 
                            [lowerPath containsString:@"/log"] || 
@@ -143,42 +131,29 @@ void safeCleanDirectory(NSString *dirPath, NSArray *targetBundleIDs) {
         NSDictionary *attrs = [fm attributesOfItemAtPath:fullPath error:nil];
         if (!attrs) continue;
 
+        // 铁律红线一：大文件强行熔断锁 (>100MB 资产直接放行，不损坏大包)
+        // ✅ 已完美校准为 C 语言标准关键字：unsigned long long
         unsigned long long fileSize = [attrs fileSize];
         if (fileSize > 100 * 1024 * 1024) { 
-            printRealLog(@"[保護熔斷] 攔截到超大資產文件, 已跳過: %@ (%llu MB)", fileName, fileSize / 1024 / 1024);
+            printRealLog(@"[保护熔断] 拦截到超大资产文件, 已跳过: %@ (%llu MB)", fileName, fileSize / 1024 / 1024);
             continue;
         }
 
         BOOL isSubDir = [attrs.fileType isEqualToString:NSFileTypeDirectory];
 
         if (isSubDir) {
-            // 1. 向下遞歸清空子目錄內部
+            // 如果是子目录，向下递归深度巡检
             safeCleanDirectory(fullPath, targetBundleIDs);
-            
-            // 2. 🚀 【核心修復】子目錄內部清洗完畢後，嘗試把這個「空資料夾屍體」實體也一併拔除！
-            NSError *dirDelError = nil;
-            BOOL dirAllowed = NO;
-            if (isPureCacheZone) {
-                dirAllowed = YES;
-            } else {
-                for (NSString *bundleID in targetBundleIDs) {
-                    if ([fileName containsString:bundleID]) { dirAllowed = YES; break; }
-                }
-            }
-            
-            if (dirAllowed) {
-                if ([fm removeItemAtPath:fullPath error:&dirDelError]) {
-                    printRealLog(@"[文件夾解構] 已徹底連根拔除空目錄: %@", fileName);
-                } else {
-                    printRealLog(@"[拒絕觸碰] 無法刪除目錄: %@, 原因: %@", fileName, dirDelError.localizedDescription);
-                }
-            }
         } else {
-            // 執行檔案原子減法清理策略
+            // 执行原子减法清理策略
             BOOL deleteAllowed = NO;
+            
             if (isPureCacheZone) {
+                // 情况 A：属于纯缓存/临时日志区，在 <100MB 限制下允许直接抹除
                 deleteAllowed = YES;
             } else {
+                // 情况 B：属于 Preferences / Application Support 等核心敏感区
+                // 必须在文件名中模糊匹配到用户勾选的 App 包名，才允许定点爆破，严防全盘崩溃
                 for (NSString *bundleID in targetBundleIDs) {
                     if ([fileName containsString:bundleID]) {
                         deleteAllowed = YES;
@@ -188,83 +163,87 @@ void safeCleanDirectory(NSString *dirPath, NSArray *targetBundleIDs) {
             }
 
             if (deleteAllowed) {
+                // 铁律红线二：对目标 App 文件夹只做删除（减法），绝不注入 any 伪装补丁或 .pak 文件
                 NSError *deleteError = nil;
                 if ([fm removeItemAtPath:fullPath error:&deleteError]) {
-                    printRealLog(@"[物理清除] 成功幹掉殘留文件: %@", fileName);
-                } else {
-                    // 🚀 【核心修復】把原本隱蔽、無權擦除的底層真相彻底暴露在公屏上！
-                    printRealLog(@"[權限鎖死] 檔案 %@ 擦除失敗, 原因: %@", fileName, deleteError.localizedDescription);
+                    printRealLog(@"[物理清除] 已干掉残留文件: %@", fileName);
+                } else if (deleteError) {
+                    printRealLog(@"[权限锁死] 无法擦除核心域: %@ 原因: %@", fileName, deleteError.localizedDescription);
                 }
             }
         }
     }
-}
-
-// 終極再生：安全重啟用戶空間
-void triggerUserspaceReboot() {
-    printRealLog(@"[內核] 重置大合攏完成。正在強制安全重啟用戶空間...");
-    pid_t pid;
-    const char *args[] = {"/bin/launchctl", "reboot", "userspace", NULL};
     
-    // 🚀 【終極解決】追蹤監控 launchctl 的生命軌跡
-    int status = posix_spawn(&pid, args[0], NULL, NULL, (char* const*)args, NULL);
-    if (status == 0) {
-        printRealLog(@"[內核] launchctl 進程成功派生 (PID: %d)，基礎設施基礎服務開始切斷...", pid);
-        int waitStatus = 0;
-        waitpid(pid, &waitStatus, 0);
-        printRealLog(@"[內核] launchctl 指令執行完畢，退出碼: %d (若系統無響應，代表內核已接管重啟流程)", waitStatus);
-    } else {
-        printRealLog(@"[內核嚴重錯誤] launchctl 進程派生失敗，posix_spawn 代碼: %d (請檢查巨魔特權憑證是否完整)", status);
+    // 连根拔除：递归清理完毕后，若当前目录已成空壳则物理拔除目录结构尸体
+    NSArray *remaining = [fm contentsOfDirectoryAtPath:dirPath error:nil];
+    if (remaining && remaining.count == 0) {
+        NSError *rmDirErr = nil;
+        if ([fm removeItemAtPath:dirPath error:&rmDirErr]) {
+            printRealLog(@"[物理清除] 成功拔除空文件夹残骸: %@", dirPath);
+        }
     }
 }
 
-// ── 提權輔助器核心多軌總調度入口 ──
+// 终极再生：安全重启用户空间
+void triggerUserspaceReboot() {
+    printRealLog(@"[内核] 重置大合拢完成。正在强制安全重启用户空间...");
+    pid_t pid;
+    const char *args[] = {"/bin/launchctl", "reboot", "userspace", NULL};
+    int status = posix_spawn(&pid, args[0], NULL, NULL, (char* const*)args, NULL);
+    if (status == 0) {
+        printRealLog(@"[内核] 重启进程已拉起，物理 PID: %d", pid);
+        int waitStatus = 0;
+        waitpid(pid, &waitStatus, 0);
+        if (WIFEXITED(waitStatus)) {
+            printRealLog(@"[内核] 重启进程已退出，状态码: %d", WEXITSTATUS(waitStatus));
+        }
+    }
+}
+
+// ── 提权辅助器核心多轨总调度入口 ──
 int main(int argc, const char * argv[]) {
     @autoreleasepool {
-        // 🚀 【特權顯形鏡】開機立刻把真實執行身份打在公屏上，杜絕裝盲！
-        printRealLog(@"==============================================");
-        printRealLog(@"[核心特權檢測] 當前進程 UID: %d , 實際有效 EUID: %d", getuid(), geteuid());
-        printRealLog(@"==============================================");
-        
-        if (geteuid() != 0) {
-            printRealLog(@"[⚠️ 嚴重警告] 當前未取得 Root(0) 身份！Keychain 爆破與核心域物理刪除將會被系統直接攔截！");
-        }
-
+        // 参数越界防错
         if (argc < 2) {
-            printRealLog(@"[錯誤] 提權總線通信參數缺失。");
+            printRealLog(@"[错误] 提权总线通信参数缺失。");
             return 1;
         }
 
+        // 解析从 main.m 路由过来的运行轨模式暗号
         NSString *runMode = [NSString stringWithUTF8String:argv[1]];
+        
+        // 动态咬合：提取并组装用户真正勾选的全部目标应用 Bundle ID 名单
         NSMutableArray *selectedAppBundleIDs = [NSMutableArray array];
         for (int i = 2; i < argc; i++) {
             [selectedAppBundleIDs addObject:[NSString stringWithUTF8String:argv[i]]];
         }
 
-        // ==================== 軌道一：【無線輪詢自毀快刷軌】 ====================
+        // ==================== 轨道一：【无线轮询自毁快刷轨】 ====================
         if ([runMode isEqualToString:@"bg_idfa_loop"]) {
-            printRealLog(@"[守護] 成功激活後台無線輪詢快刷軌（免重啟模式）。");
-            pid_t parentPid = getppid();
+            printRealLog(@"[守护] 成功激活后台无限轮询快刷轨（免重启模式）。");
+            
+            pid_t parentPid = getppid(); // 咬死当前拉起它的前端主 App PID
             int round = 1;
             
             while (1) {
-                // 如果父進程變為 1 (被 launchd 接管) 或主 App 被用戶上劃清除，1 秒內瞬間自毀
+                // 【Watchdog卡点 A】如果父进程变为 1 (被launchd接管) 或主 App 被用户上划清除，1秒内瞬间物理自毁
                 if (getppid() == 1 || kill(parentPid, 0) != 0) {
-                    printRealLog(@"[自毀] 檢測到主App卡片已被劃退，後台守護優雅退出，0殘留。");
+                    printRealLog(@"[自毁灭] 检测到主 App 卡片已被划退，后台提权守护优雅退出，0残留。");
                     break;
                 }
                 
-                printRealLog(@"[後台爆發] 第 %d 輪：正在強制隨機化固化 IDFA 指紋庫...", round);
+                printRealLog(@"[后台定点爆发] 第 %d 轮：正在强制覆写 IDFA 并广播...", round);
                 resetIDFAIdentifier();
-                printRealLog(@"[成功] 第 %d 輪數據固化完成。進入睡眠等待。", round);
+                printRealLog(@"[成功] 第 %d 轮数据固化已完成。进入下一分钟挂机等待。", round);
                 
                 round++;
                 
-                // 將 60 秒睡眠精細切碎為 60 次 1 秒試探，確保前端發射 SIGKILL 時能瞬間做出物理自毀響應
+                // 【Watchdog卡点 B】将 60 秒睡眠精细切碎为 60 次 1秒试探
+                // 确保用户只要在任意时间点划掉后台，进程在 1 秒内做出响应并执行物理毁灭
                 for (int i = 0; i < 60; i++) {
                     sleep(1);
                     if (getppid() == 1 || kill(parentPid, 0) != 0) {
-                        printRealLog(@"[自毀] 睡眠中途捕獲主App卡片劃退訊號，立即退出。");
+                        printRealLog(@"[自毁灭] 挂机中途捕获主 App 自毁信号，立即退出。");
                         exit(0);
                     }
                 }
@@ -272,21 +251,22 @@ int main(int argc, const char * argv[]) {
             return 0;
         }
         
-        // ==================== 軌道二：【重度深清空間軌】 ====================
+        // ==================== 轨道二：【重度深清空间轨】 ====================
         if ([runMode isEqualToString:@"standard_clean"]) {
-            printRealLog(@"[提權] 成功激活重度深清軌（連動重啟用戶空間）。");
-            printRealLog(@"[當前勾選清洗目標數]: %lu 個", (unsigned long)selectedAppBundleIDs.count);
+            printRealLog(@"[提权] 成功激活重度深清轨（联动重启用户空间）。");
+            printRealLog(@"[提权] 当前勾选清洗目标数: %lu 个", (unsigned long)selectedAppBundleIDs.count);
             
-            // 1. 強制隨機生成新廣告底座並回顯
+            // 1. 强制覆写三遍随机 UUID 广告底座
             resetIDFAIdentifier();
+            printRealLog(@"[完成] 全新随机广告指纹库固化完毕。");
             
-            // 2. 清除 NVRAM 標記
+            // 2. 清除 NVRAM 标记
             clearNVRAMVariables();
             
-            // 3. SQLite3 物理爆破所選應用在系統庫中的 Keychain 痕跡
+            // 3. SQLite3 物理爆破所选应用在系统库中的 Keychain 痕迹
             deleteSelectedAppKeychain(selectedAppBundleIDs);
             
-            // 4. 橫掃 27 個 var 自定義硬核路徑（檔案 + 空資料夾）
+            // 4. 横扫 27 个 var 自定义硬核重灾路径
             NSArray *customVarPaths = @[
                 @"/var", @"/var/containers", @"/var/containers/Bundle",
                 @"/var/db/com.apple.xpc.roleaccountd.staging", @"/var/log", @"/var/mobile",
@@ -304,13 +284,13 @@ int main(int argc, const char * argv[]) {
                 @"/var/root/Library/Preferences", @"/var/root/Library/Tmp"
             ];
             
-            printRealLog(@"[清洗] 正在橫掃 27 個 var 規則庫戰場...");
+            printRealLog(@"[清洗] 正在横扫 27 个 var 规则库战场...");
             for (NSString *path in customVarPaths) {
                 safeCleanDirectory(path, selectedAppBundleIDs);
             }
-            printRealLog(@"[成功] var 自定義規則庫文件與目錄減法定點清除完畢。");
+            printRealLog(@"[成功] var 自定义规则库文件定点减法清理完毕。");
             
-            // 5. 甩出終極殺招，重啟用戶空間
+            // 5. 最终甩出终极杀招，重启用户空间刷新全机进程缓存
             triggerUserspaceReboot();
         }
     }

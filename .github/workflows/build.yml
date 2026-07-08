@@ -1,4 +1,4 @@
-name: Build QiLong-Dynamic-Whitelist IPA
+name: Build TrollCleanPro IPA
 
 on:
   push:
@@ -19,28 +19,27 @@ jobs:
 
       - name: 3. 組裝 iOS .app 標準規範目錄
         run: |
-          mkdir -p QiLong-Dynamic-Whitelist.app
-          cp QiLong-Dynamic-Whitelist QiLong-Dynamic-Whitelist.app/
-          cp RootHelper QiLong-Dynamic-Whitelist.app/
-          cp src/index.html QiLong-Dynamic-Whitelist.app/
-          cp Info.plist QiLong-Dynamic-Whitelist.app/
-          
-          # 如果有配置圖標，則物理拷貝圖標
-          if [ -f src/AppIcon.png ]; then cp src/AppIcon.png QiLong-Dynamic-Whitelist.app/; fi
+          mkdir -p TrollCleanPro.app
+          cp TrollCleanPro TrollCleanPro.app/
+          cp RootHelper TrollCleanPro.app/
+          cp src/index.html TrollCleanPro.app/
+          cp Info.plist TrollCleanPro.app/
+          test -f src/AppIcon.png && cp src/AppIcon.png TrollCleanPro.app/ || echo "No icon found, skipping"
 
       - name: 4. 注入巨魔免沙盒特權（Ad-Hoc 偽簽名）
         run: |
-          codesign -f -s - --entitlements src/entitlements.plist QiLong-Dynamic-Whitelist.app/QiLong-Dynamic-Whitelist
-          codesign -f -s - --entitlements src/entitlements.plist QiLong-Dynamic-Whitelist.app/RootHelper
+          # 使用 Mac 內建的 codesign 配合我們寫好的 entitlements.plist 焊死特權
+          codesign -f -s - --entitlements src/entitlements.plist TrollCleanPro.app/TrollCleanPro
+          codesign -f -s - --entitlements src/entitlements.plist TrollCleanPro.app/RootHelper
 
-      - name: 5. 封裝成標準 .ipa 安裝包
+      - name: 5. 封裝封裝成標準 .ipa 安裝包
         run: |
           mkdir Payload
-          mv QiLong-Dynamic-Whitelist.app Payload/
-          zip -r QiLong-Dynamic-Whitelist.ipa Payload
+          mv TrollCleanPro.app Payload/
+          zip -r TrollCleanPro.ipa Payload
 
       - name: 6. 將編譯好的 IPA 吐出到網頁提供下載
         uses: actions/upload-artifact@v4
         with:
-          name: QiLong-Dynamic-Whitelist-Release
-          path: QiLong-Dynamic-Whitelist.ipa
+          name: TrollCleanPro-Release-Package
+          path: TrollCleanPro.ipa
