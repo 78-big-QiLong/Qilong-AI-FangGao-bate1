@@ -45,38 +45,106 @@ void resetIDFAIdentifier() {
     }
 }
 
+// Clean shared and plugin containers matching bundle IDs
+void cleanSpecialContainers(NSString *containersRoot, NSArray *targetBundleIDs) {
+    NSFileManager *fm = [NSFileManager defaultManager];
+    NSError *error = nil;
+    NSArray *files = [fm contentsOfDirectoryAtPath:containersRoot error:&error];
+    if (error) return;
+    
+    for (NSString *fileName in files) {
+        NSString *fullPath = [containersRoot stringByAppendingPathComponent:fileName];
+        BOOL isDir = NO;
+        if ([fm fileExistsAtPath:fullPath isDirectory:&isDir] && isDir) {
+            NSString *metadataPath = [fullPath stringByAppendingPathComponent:@".com.apple.mobile_container_manager.metadata.plist"];
+            if ([fm fileExistsAtPath:metadataPath]) {
+                NSDictionary *metadata = [NSDictionary dictionaryWithContentsOfFile:metadataPath];
+                NSString *identifier = metadata[@"MCMMetadataIdentifier"];
+                if (identifier) {
+                    for (NSString *bundleID in targetBundleIDs) {
+                        if ([identifier containsString:bundleID]) {
+                            NSError *deleteError = nil;
+                            if ([fm removeItemAtPath:fullPath error:&deleteError]) {
+                                printRealLog(@"[CLEAN] Removed container: %@", identifier);
+                            } else {
+                                printRealLog(@"[ERROR] Failed to remove container: %@. Reason: %@", identifier, deleteError.localizedDescription);
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Clean Safari cookies/history and WebKit web cache
+void cleanSafariAndWebKit() {
+    NSFileManager *fm = [NSFileManager defaultManager];
+    
+    NSString *safariDir = @"/var/mobile/Library/Safari";
+    NSArray *safariItems = @[
+        [safariDir stringByAppendingPathComponent:@"LocalStorage"],
+        [safariDir stringByAppendingPathComponent:@"History.db"],
+        [safariDir stringByAppendingPathComponent:@"History.db-shm"],
+        [safariDir stringByAppendingPathComponent:@"History.db-wal"],
+        [safariDir stringByAppendingPathComponent:@"Cookies.binarycookies"]
+    ];
+    
+    for (NSString *path in safariItems) {
+        if ([fm fileExistsAtPath:path]) {
+            NSError *err = nil;
+            if ([fm removeItemAtPath:path error:&err]) {
+                printRealLog(@"[CLEAN] Removed Safari item: %@", [path lastPathComponent]);
+            } else {
+                printRealLog(@"[ERROR] Failed to remove Safari item: %@. Reason: %@", [path lastPathComponent], err.localizedDescription);
+            }
+        }
+    }
+    
+    NSString *webKitDir = @"/var/mobile/Library/WebKit";
+    if ([fm fileExistsAtPath:webKitDir]) {
+        NSError *err = nil;
+        if ([fm removeItemAtPath:webKitDir error:&err]) {
+            printRealLog(@"[CLEAN] Removed WebKit cache directory");
+        } else {
+            printRealLog(@"[ERROR] Failed to remove WebKit cache. Reason: %@", err.localizedDescription);
+        }
+    }
+}
+
 // 清空自定义 NVRAM 环境变量
 void clearNVRAMVariables() {
-    printRealLog(@"[NVRAM] 正在执行 NVRAM 自定义变量擦除...");
+    printRealLog(@"[NVRAM] Erasing variables...");
     pid_t pid;
     const char *args[] = {"/usr/sbin/nvram", "-c", NULL}; // -c 清空所有非硬件锁死变量
     int status = posix_spawn(&pid, args[0], NULL, NULL, (char* const*)args, NULL);
     if (status == 0) {
         waitid(P_PID, pid, NULL, WEXITED);
-        printRealLog(@"[NVRAM] 自定义 NVRAM 变量已全部擦除。");
+        printRealLog(@"[NVRAM] Erased successfully.");
     }
 }
 
 // SQLite3 跨沙盒物理爆破名单中所选应用的所有钥匙链（Keychain）
 void deleteSelectedAppKeychain(NSArray *bundleIDs) {
     if (!bundleIDs || bundleIDs.count == 0) {
-        printRealLog(@"[钥匙串] 未勾选任何名单，跳过钥匙链清洗。");
+        printRealLog(@"[KEYCHAIN] No target selected. Skipping.");
         return;
     }
     
     sqlite3 *db;
     if (sqlite3_open("/var/keychains/keychain-2.db", &db) != SQLITE_OK) {
-        printRealLog(@"[严重错误] 钥匙串数据库拒绝连接，请确认巨魔提权环境。");
+        printRealLog(@"[ERROR] Connection failed: Keychain DB.");
         return;
     }
     
     for (NSString *bundleID in bundleIDs) {
         if (bundleID.length < 5 || [bundleID hasPrefix:@"com.apple."]) {
-            printRealLog(@"[安全拦截] 钥匙链拒绝触碰系统核心域: %@", bundleID);
+            printRealLog(@"[SECURITY] Bypassed system domain: %@", bundleID);
             continue;
         }
         
-        printRealLog(@"[钥匙串] 正在定点清洗匹配链: %@", bundleID);
+        printRealLog(@"[KEYCHAIN] Cleaning match: %@", bundleID);
         NSString *likePattern = [NSString stringWithFormat:@"%%%@%%", bundleID];
         NSArray *tables = @[@"genp", @"inet", @"keys", @"cert"];
         
@@ -89,14 +157,14 @@ void deleteSelectedAppKeychain(NSArray *bundleIDs) {
                 if (sqlite3_step(stmt) == SQLITE_DONE) {
                     int changes = sqlite3_changes(db);
                     if (changes > 0) {
-                        printRealLog(@"[移除] 表 %@ 成功蒸发 %d 条残留凭证。", table, changes);
+                        printRealLog(@"[KEYCHAIN] Table %@: Deleted %d records.", table, changes);
                     }
                 } else {
-                    printRealLog(@"[错误] 表 %@ 执行失败: %s", table, sqlite3_errmsg(db));
+                    printRealLog(@"[ERROR] Table %@ failed: %s", table, sqlite3_errmsg(db));
                 }
                 sqlite3_finalize(stmt);
             } else {
-                printRealLog(@"[错误] 表 %@ 预编译失败: %s", table, sqlite3_errmsg(db));
+                printRealLog(@"[ERROR] Table %@ prepare failed: %s", table, sqlite3_errmsg(db));
             }
         }
     }
@@ -135,7 +203,7 @@ void safeCleanDirectory(NSString *dirPath, NSArray *targetBundleIDs) {
         // ✅ 已完美校准为 C 语言标准关键字：unsigned long long
         unsigned long long fileSize = [attrs fileSize];
         if (fileSize > 100 * 1024 * 1024) { 
-            printRealLog(@"[保护熔断] 拦截到超大资产文件, 已跳过: %@ (%llu MB)", fileName, fileSize / 1024 / 1024);
+            printRealLog(@"[LIMIT] Skipped large file (>100MB): %@ (%llu MB)", fileName, fileSize / 1024 / 1024);
             continue;
         }
 
@@ -166,9 +234,9 @@ void safeCleanDirectory(NSString *dirPath, NSArray *targetBundleIDs) {
                 // 铁律红线二：对目标 App 文件夹只做删除（减法），绝不注入 any 伪装补丁或 .pak 文件
                 NSError *deleteError = nil;
                 if ([fm removeItemAtPath:fullPath error:&deleteError]) {
-                    printRealLog(@"[物理清除] 已干掉残留文件: %@", fileName);
+                    printRealLog(@"[CLEAN] Removed file: %@", fileName);
                 } else if (deleteError) {
-                    printRealLog(@"[权限锁死] 无法擦除核心域: %@ 原因: %@", fileName, deleteError.localizedDescription);
+                    printRealLog(@"[ERROR] Permission denied: %@. Reason: %@", fileName, deleteError.localizedDescription);
                 }
             }
         }
@@ -179,23 +247,23 @@ void safeCleanDirectory(NSString *dirPath, NSArray *targetBundleIDs) {
     if (remaining && remaining.count == 0) {
         NSError *rmDirErr = nil;
         if ([fm removeItemAtPath:dirPath error:&rmDirErr]) {
-            printRealLog(@"[物理清除] 成功拔除空文件夹残骸: %@", dirPath);
+            printRealLog(@"[CLEAN] Removed empty dir: %@", dirPath);
         }
     }
 }
 
 // 终极再生：安全重启用户空间
 void triggerUserspaceReboot() {
-    printRealLog(@"[内核] 重置大合拢完成。正在强制安全重启用户空间...");
+    printRealLog(@"[KERNEL] Cleaning complete. Triggering userspace reboot...");
     pid_t pid;
     const char *args[] = {"/bin/launchctl", "reboot", "userspace", NULL};
     int status = posix_spawn(&pid, args[0], NULL, NULL, (char* const*)args, NULL);
     if (status == 0) {
-        printRealLog(@"[内核] 重启进程已拉起，物理 PID: %d", pid);
+        printRealLog(@"[KERNEL] Reboot helper spawned (PID: %d).", pid);
         int waitStatus = 0;
         waitpid(pid, &waitStatus, 0);
         if (WIFEXITED(waitStatus)) {
-            printRealLog(@"[内核] 重启进程已退出，状态码: %d", WEXITSTATUS(waitStatus));
+            printRealLog(@"[KERNEL] Reboot helper exited with status: %d.", WEXITSTATUS(waitStatus));
         }
     }
 }
@@ -205,7 +273,7 @@ int main(int argc, const char * argv[]) {
     @autoreleasepool {
         // 参数越界防错
         if (argc < 2) {
-            printRealLog(@"[错误] 提权总线通信参数缺失。");
+            printRealLog(@"[ERROR] Missing required arguments.");
             return 1;
         }
 
@@ -220,7 +288,7 @@ int main(int argc, const char * argv[]) {
 
         // ==================== 轨道一：【无线轮询自毁快刷轨】 ====================
         if ([runMode isEqualToString:@"bg_idfa_loop"]) {
-            printRealLog(@"[守护] 成功激活后台无限轮询快刷轨（免重启模式）。");
+            printRealLog(@"[DAEMON] Background loop active.");
             
             pid_t parentPid = getppid(); // 咬死当前拉起它的前端主 App PID
             int round = 1;
@@ -228,13 +296,13 @@ int main(int argc, const char * argv[]) {
             while (1) {
                 // 【Watchdog卡点 A】如果父进程变为 1 (被launchd接管) 或主 App 被用户上划清除，1秒内瞬间物理自毁
                 if (getppid() == 1 || kill(parentPid, 0) != 0) {
-                    printRealLog(@"[自毁灭] 检测到主 App 卡片已被划退，后台提权守护优雅退出，0残留。");
+                    printRealLog(@"[DAEMON] Parent process killed. Exiting.");
                     break;
                 }
                 
-                printRealLog(@"[后台定点爆发] 第 %d 轮：正在强制覆写 IDFA 并广播...", round);
+                printRealLog(@"[DAEMON] Round %d: Overwriting IDFA...", round);
                 resetIDFAIdentifier();
-                printRealLog(@"[成功] 第 %d 轮数据固化已完成。进入下一分钟挂机等待。", round);
+                printRealLog(@"[DAEMON] Round %d complete. Waiting 60s.", round);
                 
                 round++;
                 
@@ -243,7 +311,7 @@ int main(int argc, const char * argv[]) {
                 for (int i = 0; i < 60; i++) {
                     sleep(1);
                     if (getppid() == 1 || kill(parentPid, 0) != 0) {
-                        printRealLog(@"[自毁灭] 挂机中途捕获主 App 自毁信号，立即退出。");
+                        printRealLog(@"[DAEMON] Interrupted by parent. Exiting.");
                         exit(0);
                     }
                 }
@@ -253,12 +321,12 @@ int main(int argc, const char * argv[]) {
         
         // ==================== 轨道二：【重度深清空间轨】 ====================
         if ([runMode isEqualToString:@"standard_clean"]) {
-            printRealLog(@"[提权] 成功激活重度深清轨（联动重启用户空间）。");
-            printRealLog(@"[提权] 当前勾选清洗目标数: %lu 个", (unsigned long)selectedAppBundleIDs.count);
+            printRealLog(@"[KERNEL] Active: Deep clean mode.");
+            printRealLog(@"[KERNEL] Target count: %lu", (unsigned long)selectedAppBundleIDs.count);
             
             // 1. 强制覆写三遍随机 UUID 广告底座
             resetIDFAIdentifier();
-            printRealLog(@"[完成] 全新随机广告指纹库固化完毕。");
+            printRealLog(@"[IDFA] Random UUID updated.");
             
             // 2. 清除 NVRAM 标记
             clearNVRAMVariables();
@@ -266,7 +334,19 @@ int main(int argc, const char * argv[]) {
             // 3. SQLite3 物理爆破所选应用在系统库中的 Keychain 痕迹
             deleteSelectedAppKeychain(selectedAppBundleIDs);
             
-            // 4. 横扫 27 个 var 自定义硬核重灾路径
+            // 3.5 清理 Safari 的全局 Cookie、网页状态及 WebKit 跨进程缓存
+            cleanSafariAndWebKit();
+            
+            // 3.6 物理抹除剪贴簿缓存并同步发射广播
+            [[NSFileManager defaultManager] removeItemAtPath:@"/var/mobile/Library/Caches/com.apple.Pasteboard" error:nil];
+            notify_post("com.apple.pasteboard.changed");
+            printRealLog(@"[CLEAN] Clipboard cache erased.");
+            
+            // 3.7 清洗共享特权目录中匹配的目标应用 AppGroup 与 PluginKitPlugin 容器
+            cleanSpecialContainers(@"/var/mobile/Containers/Shared/AppGroup", selectedAppBundleIDs);
+            cleanSpecialContainers(@"/var/mobile/Containers/Data/PluginKitPlugin", selectedAppBundleIDs);
+            
+            // 4. 横扫 27 + 2 个 var 自定义硬核重灾路径
             NSArray *customVarPaths = @[
                 @"/var", @"/var/containers", @"/var/containers/Bundle",
                 @"/var/db/com.apple.xpc.roleaccountd.staging", @"/var/log", @"/var/mobile",
@@ -281,14 +361,16 @@ int main(int argc, const char * argv[]) {
                 @"/var/mobile/Library/WebKit", @"/var/mobile/Media", @"/var/root",
                 @"/var/root/Library", @"/var/root/Library/Application Support",
                 @"/var/root/Library/Caches", @"/var/root/Library/HTTPStorages",
-                @"/var/root/Library/Preferences", @"/var/root/Library/Tmp"
+                @"/var/root/Library/Preferences", @"/var/root/Library/Tmp",
+                @"/var/mobile/Containers/Shared/AppGroup",
+                @"/var/mobile/Containers/Data/PluginKitPlugin"
             ];
             
-            printRealLog(@"[清洗] 正在横扫 27 个 var 规则库战场...");
+            printRealLog(@"[CLEAN] Scanning paths...");
             for (NSString *path in customVarPaths) {
                 safeCleanDirectory(path, selectedAppBundleIDs);
             }
-            printRealLog(@"[成功] var 自定义规则库文件定点减法清理完毕。");
+            printRealLog(@"[CLEAN] Completed successfully.");
             
             // 5. 最终甩出终极杀招，重启用户空间刷新全机进程缓存
             triggerUserspaceReboot();

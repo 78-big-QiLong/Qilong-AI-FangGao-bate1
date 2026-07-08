@@ -700,7 +700,7 @@
                     document.getElementById('text-loading-apps').innerText = dict.textLoading;
                 }
 
-                appendLog(`[语言] 已成功切换至: ${langCode}`, 'system');
+                appendLog(`[LANG] Switched to: ${langCode}`, 'system');
                 toggleModal('modal-lang', false);
             }
 
@@ -731,7 +731,7 @@
 
             // ── 核心升级：唤出物理应用勾选舱 ──
             function clickSelect() {
-                appendLog("[交互] 呼出本地名单，正在进行高精确度目标筛选...", "system");
+                appendLog("[UI] App selector opened.", "system");
                 toggleModal('modal-apps', true);
             }
 
@@ -758,9 +758,9 @@
                     `;
                         container.appendChild(row);
                     });
-                    appendLog(`[探针] 动态成功载入全机 ${apps.length} 个第三方 App 标识矩阵。`);
+                    appendLog(`[BRIDGE] Loaded ${apps.length} applications.`);
                 } catch (e) {
-                    appendLog("[异常] 真实 App 名单数据流解析失败。", "warn");
+                    appendLog("[ERROR] Failed to parse application payload.", "warn");
                 }
             }
 
@@ -769,7 +769,7 @@
                 const checkboxes = document.querySelectorAll('.app-checkbox');
                 let count = 0;
                 checkboxes.forEach(box => { if (box.checked) count++; });
-                appendLog(`[名单] 名单锁定成功，当前准备爆破目标数: ${count} 个`, "warn");
+                appendLog(`[UI] Selected targets count: ${count}`, "warn");
                 toggleModal('modal-apps', false);
             }
 
@@ -787,16 +787,16 @@
             function clickDynamicRefresh() {
                 if (!idfaLoopRunning) {
                     // 当前未运行 → 发送开启信号
-                    appendLog("[后台守护] 信号下达：激活后台无限轮询快刷轨，每60秒清空3遍IDFA痕迹...", "system");
+                    appendLog("[DAEMON] Starting background loop...", "system");
                     if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
                         window.webkit.messageHandlers.TrollHandler.postMessage("start_idfa_loop");
                     } else {
-                        appendLog("[模拟环境] 已挂载模拟后台60s定时器，只要浏览器不关闭将持续生效...", "warn");
+                        appendLog("[SIMULATOR] Timer active.", "warn");
                         window.onIdfaStateChanged(true);
                     }
                 } else {
                     // 当前运行中 → 发送关闭信号
-                    appendLog("[后台守护] 信号下达：下发 SIGKILL 物理截杀后台守护进程...", "system");
+                    appendLog("[DAEMON] Stopping background process...", "system");
                     if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
                         window.webkit.messageHandlers.TrollHandler.postMessage("stop_idfa_loop");
                     } else {
@@ -822,7 +822,7 @@
             // ── 核心升级：高阶多维数据咬合齐发 ──
             function clickExecute() {
                 const selectedApps = getSelectedBundleIDs();
-                appendLog(`[内核] 信号下达：启动重度深清。扫描27个var路径库并爆破 ${selectedApps.length} 个钥匙链目标...`, "system");
+                appendLog(`[KERNEL] Executing clean...`, "system");
                 
                 if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
                     // ✨终极焊死：向原生发射打包字典 {"action": "start_clean", "apps": ["包名1", "包名2", ...]}
@@ -832,25 +832,25 @@
                     };
                     window.webkit.messageHandlers.TrollHandler.postMessage(payload);
                 } else {
-                    appendLog("[模拟环境] 未检测到巨魔环境，已模拟减法测试链路...", "warn");
+                    appendLog("[SIMULATOR] Simulating clean mode...", "warn");
                     if (selectedApps.length > 0) {
-                        appendLog(`[模拟爆破] 正在定点物理蒸发 SQLite 数据库对应条目: ${JSON.stringify(selectedApps)}`, "success");
+                        appendLog(`[SIMULATOR] Overwriting DB records: ${JSON.stringify(selectedApps)}`, "success");
                     }
-                    setTimeout(() => appendLog("[熔断] 检查到大资产文件 (142MB) -> 已成功触发熔断保护，跳过。", "warn"), 600);
+                    setTimeout(() => appendLog("[LIMIT] Large file skipped (>100MB).", "warn"), 600);
                 }
             }
 
             function openExternal(url) {
-                appendLog(`[外链] 正在呼出外部通道打开目标：${url}`);
+                appendLog(`[LINK] Opening URL: ${url}`);
                 window.open(url, '_blank');
             }
 
             function copyQQ(qqNumber) {
                 navigator.clipboard.writeText(qqNumber).then(() => {
-                    appendLog(`[成功] QQ群号/联系信息 ${qqNumber} 已自动复制到你的剪贴板！`, 'success');
+                    appendLog(`[CLIPBOARD] Copied successfully.`, 'success');
                     alert(`QQ群号/联系信息 ${qqNumber} 已成功复制到剪贴板！`);
                 }).catch(() => {
-                    appendLog(`[失败] 无法自动写入剪贴板，请手动复制: ${qqNumber}`, 'warn');
+                    appendLog(`[ERROR] Clipboard write failed.`, 'warn');
                 });
             }
 
@@ -864,7 +864,7 @@
                 document.getElementById('status-troll').innerText = isTroll ? dict.trollOn : dict.trollOff;
                 document.getElementById('status-jb').innerText = isJb ? dict.jbOn : dict.jbOff;
                 if (!isTroll) document.getElementById('status-troll').style.color = '#ffaa00';
-                appendLog("[探针] 真实硬件基础数据链注入成功。");
+                appendLog("[BRIDGE] System telemetry ready.");
             }
         </script>
 </body>

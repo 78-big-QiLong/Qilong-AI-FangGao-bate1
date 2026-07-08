@@ -32,7 +32,7 @@ static pid_t global_bg_idfa_pid = 0;
     
     // 1. 0伪装：开机首要任务，触发底层探针抓取真实的硬件底牌
     DeviceInfo *info = [DeviceInfo sharedInstance];
-    NSLog(@"[总控] 自检就绪 -> iOS: %@, 机型: %@", info.systemVersion, info.deviceModel);
+    NSLog(@"[MAIN] Init complete. iOS: %@, Model: %@", info.systemVersion, info.deviceModel);
     
     // 2. 配置跨界通信管道，注册暗号监听器 "TrollHandler"
     WKUserContentController *userController = [[WKUserContentController alloc] init];
@@ -60,6 +60,7 @@ static pid_t global_bg_idfa_pid = 0;
     DeviceInfo *info = [DeviceInfo sharedInstance];
     
     // 注入 A：将硬件底牌送达前端看板
+    // ✅ 修复：将 js 变量内中文字符改为干净的英文字符
     NSString *jsDevice = [NSString stringWithFormat:@"window.updateDevicePayload('%@', '%@', '%@', '%@', %@, %@);",
                         info.systemVersion, info.deviceModel, info.serialNumber, info.processor,
                         info.isTrollStore ? @"true" : @"false", info.isJailbroken ? @"true" : @"false"];
@@ -71,7 +72,7 @@ static pid_t global_bg_idfa_pid = 0;
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         [self.webView evaluateJavaScript:jsDevice completionHandler:nil];
         [self.webView evaluateJavaScript:jsAppList completionHandler:nil];
-        NSLog(@"[通信桥] 硬件基础数据与真实 App 矩阵链已全面焊死合拢。");
+        NSLog(@"[BRIDGE] Data injected successfully.");
     });
 }
 
@@ -113,21 +114,21 @@ static pid_t global_bg_idfa_pid = 0;
       didReceiveScriptMessage:(WKScriptMessage *)message {
     
     id body = message.body;
-    NSLog(@"[通信桥] 收到前端发来的原始载荷: %@", body);
+    NSLog(@"[BRIDGE] Payload received: %@", body);
     
     if ([body isKindOfClass:[NSString class]]) {
         if ([body isEqualToString:@"start_idfa_loop"]) {
-            // 【自锁开关闸】首次点击：派生后台进程并锁定 PID
+            // 首次点击：派生后台进程并锁定 PID
             pid_t newPid = [self executeRootHelperWithMode:@"bg_idfa_loop" selectedApps:nil];
             if (newPid > 0) {
                 global_bg_idfa_pid = newPid;
                 [self.webView evaluateJavaScript:@"window.onIdfaStateChanged(true);" completionHandler:nil];
             }
         } else if ([body isEqualToString:@"stop_idfa_loop"]) {
-            // 【自锁开关闸】二次点击：下发 SIGKILL 物理截杀后台
+            // 二次点击：下发 SIGKILL 物理截杀后台
             if (global_bg_idfa_pid > 0) {
                 kill(global_bg_idfa_pid, SIGKILL);
-                NSLog(@"[总控] 后台提权守护进程已成功截杀 (PID: %d)", global_bg_idfa_pid);
+                NSLog(@"[MAIN] Daemon process terminated (PID: %d)", global_bg_idfa_pid);
                 global_bg_idfa_pid = 0;
             }
             [self.webView evaluateJavaScript:@"window.onIdfaStateChanged(false);" completionHandler:nil];
@@ -189,7 +190,7 @@ static pid_t global_bg_idfa_pid = 0;
     close(pipefd[1]); // 父进程关闭管道写端
     
     if (status == 0) {
-        NSLog(@"[提权] 成功唤醒 RootHelper 并注入 %d 个动态名单参数 (PID: %d)", (argCount - 2), pid);
+        NSLog(@"[SPAWN] RootHelper launched with %d targets (PID: %d)", (argCount - 2), pid);
         
         // 异步读取管道，将 RootHelper 的 stdout 实时转发至前端 WebView 日志面板
         int readFd = pipefd[0];
@@ -216,7 +217,7 @@ static pid_t global_bg_idfa_pid = 0;
         
         return pid;
     } else {
-        NSLog(@"[降级] 普通沙盒环境提权被拒。");
+        NSLog(@"[ERROR] sandbox restricted.");
         close(pipefd[0]);
         return 0;
     }
