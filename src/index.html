@@ -16,7 +16,8 @@
             -webkit-touch-callout: none;
         }
 
-        html, body {
+        html,
+        body {
             height: 100%;
             width: 100%;
             margin: 0;
@@ -492,9 +493,11 @@
     <div class="marquee-border"></div>
 
     <div id="splash" onclick="dismissSplash()">
-        <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%;">
+        <div
+            style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%;">
             <div class="fly-in-big" id="splash-big">QiLong-Dynamic-Whitelist(beta2)</div>
-            <div class="fly-in-small" id="splash-small">由QiLong-GOLD400借助骑龙AI定制智能体制作 在非hook与伪装下解决高风险残留问题与环境纯净度问题 公益测试第二版积极反馈</div>
+            <div class="fly-in-small" id="splash-small">由QiLong-GOLD400借助骑龙AI定制智能体制作 在非hook与伪装下解决高风险残留问题与环境纯净度问题
+                公益测试第二版积极反馈</div>
         </div>
         <div class="splash-disclaimer">
             项目借助骑龙定制Ai智能体制作 功能ui规则等由AI制作仅供参考<br>
@@ -508,365 +511,410 @@
     <div id="homepage">
         <div>
             <div style="font-size: 1.2rem; font-weight: 800; letter-spacing: 1px;">QiLongAi</div>
-                    <div class="info-board">
-                        <div class="info-item">
-                            <div class="info-label" id="lbl-version">系统版本(读取值)</div>
-                            <div class="info-value" id="sys-version">加载中...</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label" id="lbl-model">机型名称</div>
-                            <div class="info-value" id="dev-model">加载中...</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label" id="lbl-sn">序列号(读取值)</div>
-                            <div class="info-value" id="dev-sn">加载中...</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label" id="lbl-cpu">处理器型号</div>
-                            <div class="info-value" id="dev-cpu">加载中...</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label" id="lbl-troll">巨魔状态(检测值)</div>
-                            <div class="info-value highlight-status" id="status-troll">检测中...</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label" id="lbl-jb">越狱状态(检测值)</div>
-                            <div class="info-value highlight-status" id="status-jb">检测中...</div>
-                        </div>
-                    </div>
-            </div>
-
-            <div class="button-group">
-                <button class="btn btn-select" id="btn-select" onclick="clickSelect()">勾选应用</button>
-                <button class="btn btn-dynamic" id="btn-dynamic" onclick="clickDynamicRefresh()">启动动态白名单</button>
-                <button class="btn btn-execute" id="btn-execute" onclick="clickExecute()">清理风险残留</button>
-            </div>
-
-            <div class="log-panel" id="log-container">
-                <div class="log-line log-system" id="log-init-line">内核初始化完成 作者：QiLong-GOLD400借助骑龙定制Ai多模态智能体制作</div>
-            </div>
-
-            <div class="link-group">
-                <button class="btn-link" id="btn-tutorial" onclick="openExternal('这里填教程地址')">使用教程</button>
-                <button class="btn-link" id="btn-lang" onclick="toggleModal('modal-lang', true)">🌐语言</button>
-                <button class="btn-link" id="btn-channel" onclick="toggleModal('modal-channel', true)">交流频道</button>
-            </div>
-
-            <div class="footer-declaration" id="text-footer">
-                https://github.com/78-big-QiLong拥有所有权与最终解释权 这是永久公益测试版本 如果是花钱买的说明是盗版或木马你被骗了
-            </div>
-        </div>
-
-        <div class="modal-overlay" id="modal-apps" onclick="closeModalOnOverlay(event, 'modal-apps')">
-            <div class="modal-box" style="max-width: 360px; width: 90%;">
-                <div class="modal-title" id="mdl-apps-title">勾选要清理的应用钥匙链</div>
-                <div class="modal-list" id="apps-container">
-                    <div style="color:#666; font-size:0.85rem; padding:20px 0;" id="text-loading-apps">扫描app列表中</div>
+            <div class="info-board">
+                <div class="info-item">
+                    <div class="info-label" id="lbl-version">系统版本(读取值)</div>
+                    <div class="info-value" id="sys-version">加载中...</div>
                 </div>
-                <button class="btn-close" id="mdl-apps-save" onclick="saveAppSelection()">确定</button>
-            </div>
-        </div>
-
-        <div class="modal-overlay" id="modal-lang" onclick="closeModalOnOverlay(event, 'modal-lang')">
-            <div class="modal-box">
-                <div class="modal-title">语言选择</div>
-                <div class="modal-list">
-                    <div class="modal-item" onclick="changeLanguage('zh_CN')">简体中文</div>
-                    <div class="modal-item" onclick="changeLanguage('zh_TW')">繁體中文</div>
-                    <div class="modal-item" onclick="changeLanguage('en')">English</div>
-                    <div class="modal-item" onclick="changeLanguage('ja')">日本語</div>
-                    <div class="modal-item" onclick="changeLanguage('ru')">Русский</div>
-                    <div class="modal-item" onclick="changeLanguage('za')">Vahcuengh (壮语)</div>
+                <div class="info-item">
+                    <div class="info-label" id="lbl-model">机型名称</div>
+                    <div class="info-value" id="dev-model">加载中...</div>
                 </div>
-                <button class="btn-close" onclick="toggleModal('modal-lang', false)">✕ CLOSE</button>
-            </div>
-        </div>
-
-        <div class="modal-overlay" id="modal-channel" onclick="closeModalOnOverlay(event, 'modal-channel')">
-            <div class="modal-box">
-                <div class="modal-title" id="mdl-channel-title">加入我们的社区</div>
-                <div class="modal-list">
-                    <div class="modal-item"
-                        onclick="openExternal('https://estplca.m.kuai-fei.com/fw/user/3xfi2nbx3nwcwei?cc=share_wxms&kpf=ANDROID_PHONE&fid=3616123070&shareMode=app&shareMethod=picture&appType=21&kpn=NEBULA&subBiz=QR_CODE_PROFILE&shareId=19027827816757&shareToken=X-4rCy7BihD3fiUB&shareObjectId=3616123070')">
-                        某人的快手发布页</div>
-                    <div class="modal-item"
-                        onclick="openExternal('https://www.tiktok.com/@qi_long666?_r=1&_t=ZT-97rs2H0fFBG')">作者的tiktok</div>
-                    <div class="modal-item" onclick="openExternal('https://github.com/78-big-QiLong')">骑龙官方GitHub</div>
-                    <div class="modal-item" onclick="openExternal('https://qm.qq.com/q/pVfdAP4Njk')">加入QIlong的QQ交流群
-                    </div>
-                    <div class="modal-item modal-item-qq" onclick="copyQQ('联系到作者QiLong78Big@iCloud.com')">
-                        联系到作者QiLong78Big@iCloud.com<span style="float:right;font-size:0.65rem;color:#888;">点击复制</span>
-                    </div>
-                    <div class="modal-item modal-item-qq" onclick="copyQQ('740953263')">扣扣群1<span
-                            style="float:right;font-size:0.65rem;color:#888;">点击复制</span></div>
-                    <div class="modal-item modal-item-qq" onclick="copyQQ('499574602')">扣扣群2<span
-                            style="float:right;font-size:0.65rem;color:#888;">点击复制</span></div>
+                <div class="info-item">
+                    <div class="info-label" id="lbl-sn">序列号(读取值)</div>
+                    <div class="info-value" id="dev-sn">加载中...</div>
                 </div>
-                <button class="btn-close" id="mdl-channel-close" onclick="toggleModal('modal-channel', false)">我已经全部关注了
-                    点这里关闭</button>
+                <div class="info-item">
+                    <div class="info-label" id="lbl-cpu">处理器型号</div>
+                    <div class="info-value" id="dev-cpu">加载中...</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label" id="lbl-troll">巨魔状态(检测值)</div>
+                    <div class="info-value highlight-status" id="status-troll">检测中...</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label" id="lbl-jb">越狱状态(检测值)</div>
+                    <div class="info-value highlight-status" id="status-jb">检测中...</div>
+                </div>
             </div>
         </div>
 
-        <script>
-            const langDictionary = {
-                zh_CN: {
-                    lblVersion: "系统版本(读取值)", lblModel: "机型名称", lblSn: "序列号(读取值)", lblCpu: "处理器型号", lblTroll: "巨魔状态(检测值)", lblJb: "越狱状态(检测值)",
-                    btnSelect: "勾选应用", btnDynamicOff: "开启动态白名单", btnDynamicOn: "关闭动态白名单", btnExecute: "清理风险残留", btnTutorial: "使用教程", btnChannel: "交流频道", btnClose: "我已经全部关注了 点这里关闭",
-                    mdlTitle: "加入我们的社区", mdlAppsTitle: "勾选要清理的应用钥匙链", btnSave: "确定", textLoading: "扫描app列表中",
-                    logInit: "内核初始化完成 作者：QiLong-GOLD400借助骑龙定制Ai多模态智能体制作", logReady: "系统初始化完毕，设备检测已就绪。",
-                    footer: "https://github.com/78-big-QiLong拥有所有权与最终解释权 这是永久公益测试版本 如果是花钱买的说明是盗版或木马你被骗了",
-                    trollOn: "已解锁 (Root)", trollOff: "未激活 (沙盒限制)", jbOn: "已检测到越狱", jbOff: "未越狱"
-                },
-                zh_TW: {
-                    lblVersion: "系統版本(讀取值)", lblModel: "機型名稱", lblSn: "序列號(讀取值)", lblCpu: "處理器型號", lblTroll: "巨魔狀態(檢測值)", lblJb: "越獄狀態(檢測值)",
-                    btnSelect: "勾選應用", btnDynamicOff: "啟動動態白名單", btnDynamicOn: "關閉動態白名單", btnExecute: "清理風險殘留", btnTutorial: "使用教程", btnChannel: "交流頻道", btnClose: "我已經全部關注了 點這裡關閉",
-                    mdlTitle: "加入我們的社區", mdlAppsTitle: "勾選要清理的應用鑰匙鏈", btnSave: "確定", textLoading: "掃描app列表中",
-                    logInit: "內核編譯完畢 作者：QiLong-GOLD400借助騎龍定制Ai多模態智能體製作", logReady: "系統初始化完畢，設備檢測已就緒。",
-                    footer: "https://github.com/78-big-QiLong擁有所有權與最終解釋權 這是永久公益測試版本 如果是花錢買的說明是盜版或木馬你被騙了",
-                    trollOn: "已解鎖 (Root)", trollOff: "未激活 (沙盒限制)", jbOn: "已檢測到越獄", jbOff: "未越獄"
-                },
-                en: {
-                    lblVersion: "iOS Version (Read)", lblModel: "Device Model", lblSn: "Serial Number", lblCpu: "Processor Model", lblTroll: "TrollStore Status", lblJb: "Jailbreak Status",
-                    btnSelect: "Select Apps", btnDynamicOff: "Enable Dynamic Whitelist", btnDynamicOn: "Disable Dynamic Whitelist", btnExecute: "Clean Risk Residues", btnTutorial: "Usage Guide", btnChannel: "Community Channel", btnClose: "I have followed all, close here",
-                    mdlTitle: "Join Our Community", mdlAppsTitle: "Select Apps Keychain to Clean", btnSave: "Confirm", textLoading: "Scanning application list...",
-                    logInit: "Kernel initialization complete. Powered by QiLong-GOLD400 & QiLong AI agent.", logReady: "System initialization completed. Device detection ready.",
-                    footer: "https://github.com/78-big-QiLong holds all rights and final interpretation. This is a permanent public beta.",
-                    trollOn: "Unlocked (Root)", trollOff: "Not Active (Sandbox Restricted)", jbOn: "Jailbroken", jbOff: "Not Jailbroken"
-                },
-                ja: {
-                    lblVersion: "OSバージョン(取得値)", lblModel: "機種名", lblSn: "シリアル番号", lblCpu: "プロセッサモデル", lblTroll: "TrollStore状態", lblJb: "脱獄状態",
-                    btnSelect: "アプリ選択", btnDynamicOff: "動的ホワイトリスト起動", btnDynamicOn: "動的ホワイトリスト停止", btnExecute: "リスク残留クリア", btnTutorial: "チュートリアル", btnChannel: "交流チャンネル", btnClose: "すべてフォローしました。閉じる",
-                    mdlTitle: "コミュニティに参加", mdlAppsTitle: "クリーンアップするアプリの選択", btnSave: "決定", textLoading: "アプリリストをスキャン中...",
-                    logInit: "カーネルの初期化が完了しました。QiLong-GOLD400 & QiLong AIによって作成されました。", logReady: "システム初期化完了。デバイス検出の準備が整いました。",
-                    footer: "https://github.com/78-big-QiLong がすべての権利と最終解釈権を有します。永久無料テスト版です。",
-                    trollOn: "アンロック済 (Root)", trollOff: "未有効化 (サンドボックス制限)", jbOn: "脱獄検出", jbOff: "未脱獄"
-                },
-                ru: {
-                    lblVersion: "这里填Версия ОС标签", lblModel: "这里填Модель标签", lblSn: "这里填Серийный номер标签", lblCpu: "这里填Процессор标签", lblTroll: "这里填Статус Troll标签", lblJb: "这里填Джейлбрейк标签",
-                    btnSelect: "这里填Выбрать按钮", btnDynamicOff: "这里填Сброс IDFA按钮", btnDynamicOn: "这里填Стоп IDFA按钮", btnExecute: "这里填Очистить按钮", btnTutorial: "这里填Инструкция按钮", btnChannel: "这里填Каналы按钮", btnClose: "这里填Закрыть按钮",
-                    mdlTitle: "这里填Каналы弹窗标题", mdlAppsTitle: "这里填Выбор приложений弹窗标题", btnSave: "这里填Подтвердить按钮", textLoading: "这里填Список пуст文字",
-                    logInit: "这里填Система ожидание日志", logReady: "这里填Система готов日志",
-                    footer: "这里填Предупреждение文字",
-                    trollOn: "这里填Разблокировано文字", trollOff: "这里填Песочница文字", jbOn: "这里填Обнаружен文字", jbOff: "这里填Нет文字"
-                },
-                za: {
-                    lblVersion: "这里填Heitungh Banzbwnz标签", lblModel: "这里填Coengzhingz Mingz标签", lblSn: "这里填Gaengh Swhleizhao标签", lblCpu: "这里填Cuwleiqi标签", lblTroll: "这里填Gvjmoz Canghdaiz标签", lblJb: "这里填Vietngvax Canghdaiz标签",
-                    btnSelect: "这里填Swjndiengz按钮", btnDynamicOff: "这里填Caiqgauh IDFA按钮", btnDynamicOn: "这里填Dinghcij IDFA按钮", btnExecute: "这里填Caegit按钮", btnTutorial: "这里填Saengqcoenz按钮", btnChannel: "这里填Bwndauz按钮", btnClose: "这里填Daengz按钮",
-                    mdlTitle: "这里填Gvnghfangh Bwndauz弹窗标题", mdlAppsTitle: "这里填Swjndiengz Daenghdan弹窗标题", btnSave: "这里填Dingh按钮", textLoading: "这里填Mbuj gienqgauh文字",
-                    logInit: "这里填Heitungh待机日志", logReady: "这里填Heitungh完了日志",
-                    footer: "这里填Swhmingz声明文字",
-                    trollOn: "这里填Gvjmoz已解锁文字", trollOff: "这里填Gvjmoz未激活文字", jbOn: "这里填Vietngvax已检测文字", jbOff: "这里填Vietngvax未检测文字"
+        <div class="button-group">
+            <button class="btn btn-select" id="btn-select" onclick="clickSelect()">勾选应用</button>
+            <button class="btn btn-dynamic" id="btn-dynamic" onclick="clickDynamicRefresh()">启动动态白名单</button>
+            <button class="btn btn-execute" id="btn-execute" onclick="clickExecute()">清理风险残留</button>
+        </div>
+
+        <div class="log-panel" id="log-container">
+            <div class="log-line log-system" id="log-init-line">内核初始化完成 作者：QiLong-GOLD400借助骑龙定制Ai多模态智能体制作</div>
+        </div>
+
+        <div class="link-group">
+            <button class="btn-link" id="btn-tutorial" onclick="openExternal('这里填教程地址')">使用教程</button>
+            <button class="btn-link" id="btn-lang" onclick="toggleModal('modal-lang', true)">🌐语言</button>
+            <button class="btn-link" id="btn-channel" onclick="toggleModal('modal-channel', true)">交流频道</button>
+        </div>
+
+        <div class="footer-declaration" id="text-footer">
+            https://github.com/78-big-QiLong拥有所有权与最终解释权 这是永久公益测试版本 如果是花钱买的说明是盗版或木马你被骗了
+        </div>
+    </div>
+
+    <!-- ── 第一次打开弹窗提示 ── -->
+    <div class="modal-overlay" id="modal-first-open">
+        <div class="modal-box" style="max-width: 380px; width: 92%; padding: 22px;">
+            <div class="modal-title" style="color: #ffaa00; font-size: 1.15rem; font-weight: 900;">首次使用须知 & 用户协议</div>
+            <div class="modal-list" style="max-height: 290px; text-align: left; gap: 12px; padding: 2px;">
+                
+                <div style="background: rgba(255,170,0,0.06); border: 1px solid rgba(255,170,0,0.15); border-radius: 12px; padding: 12px;">
+                    <div style="font-size: 0.92rem; font-weight: 800; color: #ffaa00; margin-bottom: 6px;">1- 前往设置关闭所有应用的 Siri “从此 App 学习”</div>
+                    <p style="font-size: 0.8rem; color: #ccc; margin: 0; line-height: 1.45;">请前往系统的“设置” - “Siri 与搜索”，关闭所有应用的“从此 App 学习”选项，以阻断残留的识别指纹与数据链路。</p>
+                </div>
+
+                <div style="background: rgba(0,255,255,0.06); border: 1px solid rgba(0,255,255,0.15); border-radius: 12px; padding: 12px;">
+                    <div style="font-size: 0.92rem; font-weight: 800; color: #00ffff; margin-bottom: 6px;">2- 前往设置打开本 App “后台 App 刷新”</div>
+                    <p style="font-size: 0.8rem; color: #ccc; margin: 0; line-height: 1.45;">请前往系统的“设置” - “通用” - “后台 App 刷新”，确保本 App 的后台刷新权限已打开，以便 IDFA 后台守护能在挂起时持续刷新。</p>
+                </div>
+
+                <div style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 10px;">
+                    <div style="font-size: 0.92rem; font-weight: 800; color: #ffffff; margin-bottom: 6px;">3- 仔细阅读以下用户协议</div>
+                    <div style="font-size: 0.72rem; color: #888896; line-height: 1.5; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); border-radius: 8px; padding: 10px; max-height: 120px; overflow-y: auto;">
+                        项目借助骑龙定制Ai智能体制作 功能ui规则等由AI制作仅供参考<br>
+                        -任何外部链接都与该工具与作者无关 任何链接与第三方产物的后果均由使用者自行承担<br>
+                        -该工具仅供学习参考 使用请坚决不要违反当地法律法规与社区规则 一切后果由使用者承担<br>
+                        -我们承诺不搜集不共享不存储 any 不必要的数据 不正当的使用该工具有可能造成数据丢失损坏与泄露后果均由使用者承担<br>
+                        -进入首页即代表同意该协议 如拒绝请退出<br>
+                        https://github.com/78-big-QiLong拥有所有权与最终解释权 这是永久公益测试版本 如果是花钱买的说明是盗版或木马你被骗了
+                    </div>
+                </div>
+
+            </div>
+            <button class="btn-close" style="background: #ffaa00; color: #141419; font-weight: 900; font-size: 0.95rem; border: none; box-shadow: 0 4px 15px rgba(255,170,0,0.3); padding: 12px 0;" onclick="agreeFirstOpen()">我已知晓并同意协议</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-apps" onclick="closeModalOnOverlay(event, 'modal-apps')">
+        <div class="modal-box" style="max-width: 360px; width: 90%;">
+            <div class="modal-title" id="mdl-apps-title">勾选要清理的应用钥匙链</div>
+            <div class="modal-list" id="apps-container">
+                <div style="color:#666; font-size:0.85rem; padding:20px 0;" id="text-loading-apps">扫描app列表中</div>
+            </div>
+            <button class="btn-close" id="mdl-apps-save" onclick="saveAppSelection()">确定</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-lang" onclick="closeModalOnOverlay(event, 'modal-lang')">
+        <div class="modal-box">
+            <div class="modal-title">语言选择</div>
+            <div class="modal-list">
+                <div class="modal-item" onclick="changeLanguage('zh_CN')">简体中文</div>
+                <div class="modal-item" onclick="changeLanguage('zh_TW')">繁體中文</div>
+                <div class="modal-item" onclick="changeLanguage('en')">English</div>
+                <div class="modal-item" onclick="changeLanguage('ja')">日本語</div>
+                <div class="modal-item" onclick="changeLanguage('ru')">Русский</div>
+                <div class="modal-item" onclick="changeLanguage('za')">Vahcuengh (壮语)</div>
+            </div>
+            <button class="btn-close" onclick="toggleModal('modal-lang', false)">✕ CLOSE</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-channel" onclick="closeModalOnOverlay(event, 'modal-channel')">
+        <div class="modal-box">
+            <div class="modal-title" id="mdl-channel-title">加入我们的社区</div>
+            <div class="modal-list">
+                <div class="modal-item"
+                    onclick="openExternal('https://estplca.m.kuai-fei.com/fw/user/3xfi2nbx3nwcwei?cc=share_wxms&kpf=ANDROID_PHONE&fid=3616123070&shareMode=app&shareMethod=picture&appType=21&kpn=NEBULA&subBiz=QR_CODE_PROFILE&shareId=19027827816757&shareToken=X-4rCy7BihD3fiUB&shareObjectId=3616123070')">
+                    某人的快手发布页</div>
+                <div class="modal-item"
+                    onclick="openExternal('https://www.tiktok.com/@qi_long666?_r=1&_t=ZT-97rs2H0fFBG')">作者的tiktok</div>
+                <div class="modal-item" onclick="openExternal('https://github.com/78-big-QiLong')">骑龙官方GitHub</div>
+                <div class="modal-item" onclick="openExternal('https://qm.qq.com/q/pVfdAP4Njk')">加入QIlong的QQ交流群
+                </div>
+                <div class="modal-item modal-item-qq" onclick="copyQQ('联系到作者QiLong78Big@iCloud.com')">
+                    联系到作者QiLong78Big@iCloud.com<span style="float:right;font-size:0.65rem;color:#888;">点击复制</span>
+                </div>
+                <div class="modal-item modal-item-qq" onclick="copyQQ('740953263')">扣扣群1<span
+                        style="float:right;font-size:0.65rem;color:#888;">点击复制</span></div>
+                <div class="modal-item modal-item-qq" onclick="copyQQ('499574602')">扣扣群2<span
+                        style="float:right;font-size:0.65rem;color:#888;">点击复制</span></div>
+            </div>
+            <button class="btn-close" id="mdl-channel-close" onclick="toggleModal('modal-channel', false)">我已经全部关注了
+                点这里关闭</button>
+        </div>
+    </div>
+
+    <script>
+        const langDictionary = {
+            zh_CN: {
+                lblVersion: "系统版本(读取值)", lblModel: "机型名称", lblSn: "序列号(读取值)", lblCpu: "处理器型号", lblTroll: "巨魔状态(检测值)", lblJb: "越狱状态(检测值)",
+                btnSelect: "勾选应用", btnDynamicOff: "开启动态白名单", btnDynamicOn: "关闭动态白名单", btnExecute: "清理风险残留", btnTutorial: "使用教程", btnChannel: "交流频道", btnClose: "我已经全部关注了 点这里关闭",
+                mdlTitle: "加入我们的社区", mdlAppsTitle: "勾选要清理的应用钥匙链", btnSave: "确定", textLoading: "扫描app列表中",
+                logInit: "内核初始化完成 作者：QiLong-GOLD400借助骑龙定制Ai多模态智能体制作", logReady: "系统初始化完毕，设备检测已就绪。",
+                footer: "https://github.com/78-big-QiLong拥有所有权与最终解释权 这是永久公益测试版本 如果是花钱买的说明是盗版或木马你被骗了",
+                trollOn: "已解锁 (Root)", trollOff: "未激活 (沙盒限制)", jbOn: "已检测到越狱", jbOff: "未越狱"
+            },
+            zh_TW: {
+                lblVersion: "系統版本(讀取值)", lblModel: "機型名稱", lblSn: "序列號(讀取值)", lblCpu: "處理器型號", lblTroll: "巨魔狀態(檢測值)", lblJb: "越獄狀態(檢測值)",
+                btnSelect: "勾選應用", btnDynamicOff: "啟動動態白名單", btnDynamicOn: "關閉動態白名單", btnExecute: "清理風險殘留", btnTutorial: "使用教程", btnChannel: "交流頻道", btnClose: "我已經全部關注了 點這裡關閉",
+                mdlTitle: "加入我們的社區", mdlAppsTitle: "勾選要清理的應用鑰匙鏈", btnSave: "確定", textLoading: "掃描app列表中",
+                logInit: "內核編譯完畢 作者：QiLong-GOLD400借助騎龍定制Ai多模態智能體製作", logReady: "系統初始化完畢，設備檢測已就緒。",
+                footer: "https://github.com/78-big-QiLong擁有所有權與最終解釋權 這是永久公益測試版本 如果是花錢買的說明是盜版或木馬你被騙了",
+                trollOn: "已解鎖 (Root)", trollOff: "未激活 (沙盒限制)", jbOn: "已檢測到越獄", jbOff: "未越獄"
+            },
+            en: {
+                lblVersion: "iOS Version (Read)", lblModel: "Device Model", lblSn: "Serial Number", lblCpu: "Processor Model", lblTroll: "TrollStore Status", lblJb: "Jailbreak Status",
+                btnSelect: "Select Apps", btnDynamicOff: "Enable Dynamic Whitelist", btnDynamicOn: "Disable Dynamic Whitelist", btnExecute: "Clean Risk Residues", btnTutorial: "Usage Guide", btnChannel: "Community Channel", btnClose: "I have followed all, close here",
+                mdlTitle: "Join Our Community", mdlAppsTitle: "Select Apps Keychain to Clean", btnSave: "Confirm", textLoading: "Scanning application list...",
+                logInit: "Kernel initialization complete. Powered by QiLong-GOLD400 & QiLong AI agent.", logReady: "System initialization completed. Device detection ready.",
+                footer: "https://github.com/78-big-QiLong holds all rights and final interpretation. This is a permanent public beta.",
+                trollOn: "Unlocked (Root)", trollOff: "Not Active (Sandbox Restricted)", jbOn: "Jailbroken", jbOff: "Not Jailbroken"
+            },
+            ja: {
+                lblVersion: "OSバージョン(取得値)", lblModel: "機種名", lblSn: "シリアル番号", lblCpu: "プロセッサモデル", lblTroll: "TrollStore状態", lblJb: "脱獄状態",
+                btnSelect: "アプリ選択", btnDynamicOff: "動的ホワイトリスト起動", btnDynamicOn: "動的ホワイトリスト停止", btnExecute: "リスク残留クリア", btnTutorial: "チュートリアル", btnChannel: "交流チャンネル", btnClose: "すべてフォローしました。閉じる",
+                mdlTitle: "コミュニティに参加", mdlAppsTitle: "クリーンアップするアプリの選択", btnSave: "決定", textLoading: "アプリリストをスキャン中...",
+                logInit: "カーネルの初期化が完了しました。QiLong-GOLD400 & QiLong AIによって作成されました。", logReady: "システム初期化完了。デバイス検出の準備が整いました。",
+                footer: "https://github.com/78-big-QiLong がすべての権利と最終解釈権を有します。永久無料テスト版です。",
+                trollOn: "アンロック済 (Root)", trollOff: "未有効化 (サンドボックス制限)", jbOn: "脱獄検出", jbOff: "未脱獄"
+            },
+            ru: {
+                lblVersion: "这里填Версия ОС标签", lblModel: "这里填Модель标签", lblSn: "这里填Серийный номер标签", lblCpu: "这里填Процессор标签", lblTroll: "这里填Статус Troll标签", lblJb: "这里填Джейлбрейк标签",
+                btnSelect: "这里填Выбрать按钮", btnDynamicOff: "这里填Сброс IDFA按钮", btnDynamicOn: "这里填Стоп IDFA按钮", btnExecute: "这里填Очистить按钮", btnTutorial: "这里填Инструкция按钮", btnChannel: "这里填Каналы按钮", btnClose: "这里填Закрыть按钮",
+                mdlTitle: "这里填Каналы弹窗标题", mdlAppsTitle: "这里填Выбор приложений弹窗标题", btnSave: "这里填Подтвердить按钮", textLoading: "这里填Список пуст文字",
+                logInit: "这里填Система ожидание日志", logReady: "这里填Система готов日志",
+                footer: "这里填Предупреждение文字",
+                trollOn: "这里填Разблокировано文字", trollOff: "这里填Песочница文字", jbOn: "这里填Обнаружен文字", jbOff: "这里填Нет文字"
+            },
+            za: {
+                lblVersion: "这里填Heitungh Banzbwnz标签", lblModel: "这里填Coengzhingz Mingz标签", lblSn: "这里填Gaengh Swhleizhao标签", lblCpu: "这里填Cuwleiqi标签", lblTroll: "这里填Gvjmoz Canghdaiz标签", lblJb: "这里填Vietngvax Canghdaiz标签",
+                btnSelect: "这里填Swjndiengz按钮", btnDynamicOff: "这里填Caiqgauh IDFA按钮", btnDynamicOn: "这里填Dinghcij IDFA按钮", btnExecute: "这里填Caegit按钮", btnTutorial: "这里填Saengqcoenz按钮", btnChannel: "这里填Bwndauz按钮", btnClose: "这里填Daengz按钮",
+                mdlTitle: "这里填Gvnghfangh Bwndauz弹窗标题", mdlAppsTitle: "这里填Swjndiengz Daenghdan弹窗标题", btnSave: "这里填Dingh按钮", textLoading: "这里填Mbuj gienqgauh文字",
+                logInit: "这里填Heitungh待机日志", logReady: "这里填Heitungh完了日志",
+                footer: "这里填Swhmingz声明文字",
+                trollOn: "这里填Gvjmoz已解锁文字", trollOff: "这里填Gvjmoz未激活文字", jbOn: "这里填Vietngvax已检测文字", jbOff: "这里填Vietngvax未检测文字"
+            }
+        };
+
+        let currentLang = 'zh_CN';
+        let globalRawAppList = []; // 存储全机完整 App 名单
+        let idfaLoopRunning = false; // 【自锁开关闸】IDFA 后台轮询状态
+
+        function toggleModal(modalId, show) {
+            const modal = document.getElementById(modalId);
+            if (show) modal.classList.add('open');
+            else modal.classList.remove('open');
+        }
+        function closeModalOnOverlay(e, modalId) {
+            if (e.target.id === modalId) toggleModal(modalId, false);
+        }
+
+        function changeLanguage(langCode) {
+            currentLang = langCode;
+            const dict = langDictionary[langCode];
+
+            document.getElementById('lbl-version').innerText = dict.lblVersion;
+            document.getElementById('lbl-model').innerText = dict.lblModel;
+            document.getElementById('lbl-sn').innerText = dict.lblSn;
+            document.getElementById('lbl-cpu').innerText = dict.lblCpu;
+            document.getElementById('lbl-troll').innerText = dict.lblTroll;
+            document.getElementById('lbl-jb').innerText = dict.lblJb;
+
+            document.getElementById('btn-select').innerText = dict.btnSelect;
+            document.getElementById('btn-dynamic').innerText = idfaLoopRunning ? dict.btnDynamicOn : dict.btnDynamicOff;
+            document.getElementById('btn-execute').innerText = dict.btnExecute;
+            document.getElementById('btn-tutorial').innerText = dict.btnTutorial;
+            document.getElementById('btn-lang').innerText = "🌐 " + (langCode === 'en' ? "Lang" : "语言");
+            document.getElementById('btn-channel').innerText = dict.btnChannel;
+            document.getElementById('text-footer').innerText = dict.footer;
+
+            document.getElementById('mdl-channel-title').innerText = dict.mdlTitle;
+            document.getElementById('mdl-channel-close').innerText = dict.btnClose;
+
+            document.getElementById('mdl-apps-title').innerText = dict.mdlAppsTitle;
+            document.getElementById('mdl-apps-save').innerText = dict.btnSave;
+            if (document.getElementById('text-loading-apps')) {
+                document.getElementById('text-loading-apps').innerText = dict.textLoading;
+            }
+
+            appendLog(`[LANG] Switched to: ${langCode}`, 'system');
+            toggleModal('modal-lang', false);
+        }
+
+        function checkFirstOpen() {
+            if (!localStorage.getItem('first_open_done')) {
+                toggleModal('modal-first-open', true);
+            }
+        }
+
+        function agreeFirstOpen() {
+            localStorage.setItem('first_open_done', 'true');
+            toggleModal('modal-first-open', false);
+        }
+
+        const splashTimer = setTimeout(() => { dismissSplash(); }, 3000);
+        function dismissSplash() {
+            clearTimeout(splashTimer);
+            const splash = document.getElementById('splash');
+            const homepage = document.getElementById('homepage');
+            splash.style.opacity = '0';
+            splash.style.transform = 'scale(1.1)';
+            splash.style.pointerEvents = 'none';
+            setTimeout(() => {
+                splash.style.display = 'none';
+                homepage.classList.add('active');
+                document.getElementById('log-init-line').style.display = 'none';
+                appendLog(langDictionary[currentLang].logReady);
+                checkFirstOpen();
+            }, 600);
+        }
+
+        function appendLog(text, type = 'system') {
+            const container = document.getElementById('log-container');
+            const line = document.createElement('div');
+            line.className = `log-line log-${type}`;
+            line.innerText = text;
+            container.appendChild(line);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // ── 核心升级：唤出物理应用勾选舱 ──
+        function clickSelect() {
+            appendLog("[UI] App selector opened.", "system");
+            toggleModal('modal-apps', true);
+        }
+
+        // ── ✨ 核心对接：接收来自 main.m 私有 API 灌入的真实 App 名单 JSON ──
+        window.updateAppList = function (jsonString) {
+            try {
+                const apps = JSON.parse(jsonString);
+                globalRawAppList = apps;
+                const container = document.getElementById('apps-container');
+                container.innerHTML = ''; // 擦除加载提示
+
+                if (apps.length === 0) {
+                    container.innerHTML = `<div style="color:#666;font-size:0.85rem;padding:20px 0;">未检测到可清理的第三方App</div>`;
+                    return;
                 }
-            };
 
-            let currentLang = 'zh_CN';
-            let globalRawAppList = []; // 存储全机完整 App 名单
-            let idfaLoopRunning = false; // 【自锁开关闸】IDFA 后台轮询状态
-
-            function toggleModal(modalId, show) {
-                const modal = document.getElementById(modalId);
-                if (show) modal.classList.add('open');
-                else modal.classList.remove('open');
-            }
-            function closeModalOnOverlay(e, modalId) {
-                if (e.target.id === modalId) toggleModal(modalId, false);
-            }
-
-            function changeLanguage(langCode) {
-                currentLang = langCode;
-                const dict = langDictionary[langCode];
-
-                document.getElementById('lbl-version').innerText = dict.lblVersion;
-                document.getElementById('lbl-model').innerText = dict.lblModel;
-                document.getElementById('lbl-sn').innerText = dict.lblSn;
-                document.getElementById('lbl-cpu').innerText = dict.lblCpu;
-                document.getElementById('lbl-troll').innerText = dict.lblTroll;
-                document.getElementById('lbl-jb').innerText = dict.lblJb;
-
-                document.getElementById('btn-select').innerText = dict.btnSelect;
-                document.getElementById('btn-dynamic').innerText = idfaLoopRunning ? dict.btnDynamicOn : dict.btnDynamicOff;
-                document.getElementById('btn-execute').innerText = dict.btnExecute;
-                document.getElementById('btn-tutorial').innerText = dict.btnTutorial;
-                document.getElementById('btn-lang').innerText = "🌐 " + (langCode === 'en' ? "Lang" : "语言");
-                document.getElementById('btn-channel').innerText = dict.btnChannel;
-                document.getElementById('text-footer').innerText = dict.footer;
-
-                document.getElementById('mdl-channel-title').innerText = dict.mdlTitle;
-                document.getElementById('mdl-channel-close').innerText = dict.btnClose;
-
-                document.getElementById('mdl-apps-title').innerText = dict.mdlAppsTitle;
-                document.getElementById('mdl-apps-save').innerText = dict.btnSave;
-                if (document.getElementById('text-loading-apps')) {
-                    document.getElementById('text-loading-apps').innerText = dict.textLoading;
-                }
-
-                appendLog(`[LANG] Switched to: ${langCode}`, 'system');
-                toggleModal('modal-lang', false);
-            }
-
-            const splashTimer = setTimeout(() => { dismissSplash(); }, 3000);
-            function dismissSplash() {
-                clearTimeout(splashTimer);
-                const splash = document.getElementById('splash');
-                const homepage = document.getElementById('homepage');
-                splash.style.opacity = '0';
-                splash.style.transform = 'scale(1.1)';
-                splash.style.pointerEvents = 'none';
-                setTimeout(() => {
-                    splash.style.display = 'none';
-                    homepage.classList.add('active');
-                    document.getElementById('log-init-line').style.display = 'none';
-                    appendLog(langDictionary[currentLang].logReady);
-                }, 600);
-            }
-
-            function appendLog(text, type = 'system') {
-                const container = document.getElementById('log-container');
-                const line = document.createElement('div');
-                line.className = `log-line log-${type}`;
-                line.innerText = text;
-                container.appendChild(line);
-                container.scrollTop = container.scrollHeight;
-            }
-
-            // ── 核心升级：唤出物理应用勾选舱 ──
-            function clickSelect() {
-                appendLog("[UI] App selector opened.", "system");
-                toggleModal('modal-apps', true);
-            }
-
-            // ── ✨ 核心对接：接收来自 main.m 私有 API 灌入的真实 App 名单 JSON ──
-            window.updateAppList = function (jsonString) {
-                try {
-                    const apps = JSON.parse(jsonString);
-                    globalRawAppList = apps;
-                    const container = document.getElementById('apps-container');
-                    container.innerHTML = ''; // 擦除加载提示
-
-                    if (apps.length === 0) {
-                        container.innerHTML = `<div style="color:#666;font-size:0.85rem;padding:20px 0;">未检测到可清理的第三方App</div>`;
-                        return;
-                    }
-
-                    // 动态拉出带有 Checkbox 的精美流光名单行
-                    apps.forEach(app => {
-                        const row = document.createElement('div');
-                        row.className = 'app-check-item';
-                        row.innerHTML = `
+                // 动态拉出带有 Checkbox 的精美流光名单行
+                apps.forEach(app => {
+                    const row = document.createElement('div');
+                    row.className = 'app-check-item';
+                    row.innerHTML = `
                         <span class="app-name-label">${app.name}</span>
                         <input type="checkbox" class="app-checkbox" value="${app.bundleID}">
                     `;
-                        container.appendChild(row);
-                    });
-                    appendLog(`[BRIDGE] Loaded ${apps.length} applications.`);
-                } catch (e) {
-                    appendLog("[ERROR] Failed to parse application payload.", "warn");
-                }
-            }
-
-            // 确认选择，清点战场
-            function saveAppSelection() {
-                const checkboxes = document.querySelectorAll('.app-checkbox');
-                let count = 0;
-                checkboxes.forEach(box => { if (box.checked) count++; });
-                appendLog(`[UI] Selected targets count: ${count}`, "warn");
-                toggleModal('modal-apps', false);
-            }
-
-            // 获取当前界面所有被用户打勾的 Bundle ID 数组
-            function getSelectedBundleIDs() {
-                const checkboxes = document.querySelectorAll('.app-checkbox');
-                const selected = [];
-                checkboxes.forEach(box => {
-                    if (box.checked) selected.push(box.value);
+                    container.appendChild(row);
                 });
-                return selected;
+                appendLog(`[BRIDGE] Loaded ${apps.length} applications.`);
+            } catch (e) {
+                appendLog("[ERROR] Failed to parse application payload.", "warn");
             }
+        }
 
-            // ── 【自锁开关闸】IDFA 按钮状态机 ──
-            function clickDynamicRefresh() {
-                if (!idfaLoopRunning) {
-                    // 当前未运行 → 发送开启信号
-                    appendLog("[DAEMON] Starting background loop...", "system");
-                    if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
-                        window.webkit.messageHandlers.TrollHandler.postMessage("start_idfa_loop");
-                    } else {
-                        appendLog("[SIMULATOR] Timer active.", "warn");
-                        window.onIdfaStateChanged(true);
-                    }
-                } else {
-                    // 当前运行中 → 发送关闭信号
-                    appendLog("[DAEMON] Stopping background process...", "system");
-                    if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
-                        window.webkit.messageHandlers.TrollHandler.postMessage("stop_idfa_loop");
-                    } else {
-                        window.onIdfaStateChanged(false);
-                    }
-                }
-            }
+        // 确认选择，清点战场
+        function saveAppSelection() {
+            const checkboxes = document.querySelectorAll('.app-checkbox');
+            let count = 0;
+            checkboxes.forEach(box => { if (box.checked) count++; });
+            appendLog(`[UI] Selected targets count: ${count}`, "warn");
+            toggleModal('modal-apps', false);
+        }
 
-            // 原生回调：同步 IDFA 按钮开关状态（由 main.m 调用）
-            window.onIdfaStateChanged = function (running) {
-                idfaLoopRunning = running;
-                const btn = document.getElementById('btn-dynamic');
-                const dict = langDictionary[currentLang];
-                if (running) {
-                    btn.innerText = dict.btnDynamicOn;
-                    btn.style.boxShadow = '0 0 15px rgba(255,0,0,0.5)';
-                } else {
-                    btn.innerText = dict.btnDynamicOff;
-                    btn.style.boxShadow = '';
-                }
-            }
+        // 获取当前界面所有被用户打勾的 Bundle ID 数组
+        function getSelectedBundleIDs() {
+            const checkboxes = document.querySelectorAll('.app-checkbox');
+            const selected = [];
+            checkboxes.forEach(box => {
+                if (box.checked) selected.push(box.value);
+            });
+            return selected;
+        }
 
-            // ── 核心升级：高阶多维数据咬合齐发 ──
-            function clickExecute() {
-                const selectedApps = getSelectedBundleIDs();
-                appendLog(`[KERNEL] Executing clean...`, "system");
-                
+        // ── 【自锁开关闸】IDFA 按钮状态机 ──
+        function clickDynamicRefresh() {
+            if (!idfaLoopRunning) {
+                // 当前未运行 → 发送开启信号
+                appendLog("[DAEMON] Starting background loop...", "system");
                 if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
-                    // ✨终极焊死：向原生发射打包字典 {"action": "start_clean", "apps": ["包名1", "包名2", ...]}
-                    const payload = {
-                        action: "start_clean",
-                        apps: selectedApps
-                    };
-                    window.webkit.messageHandlers.TrollHandler.postMessage(payload);
+                    window.webkit.messageHandlers.TrollHandler.postMessage("start_idfa_loop");
                 } else {
-                    appendLog("[SIMULATOR] Simulating clean mode...", "warn");
-                    if (selectedApps.length > 0) {
-                        appendLog(`[SIMULATOR] Overwriting DB records: ${JSON.stringify(selectedApps)}`, "success");
-                    }
-                    setTimeout(() => appendLog("[LIMIT] Large file skipped (>100MB).", "warn"), 600);
+                    appendLog("[SIMULATOR] Timer active.", "warn");
+                    window.onIdfaStateChanged(true);
+                }
+            } else {
+                // 当前运行中 → 发送关闭信号
+                appendLog("[DAEMON] Stopping background process...", "system");
+                if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
+                    window.webkit.messageHandlers.TrollHandler.postMessage("stop_idfa_loop");
+                } else {
+                    window.onIdfaStateChanged(false);
                 }
             }
+        }
 
-            function openExternal(url) {
-                appendLog(`[LINK] Opening URL: ${url}`);
-                window.open(url, '_blank');
+        // 原生回调：同步 IDFA 按钮开关状态（由 main.m 调用）
+        window.onIdfaStateChanged = function (running) {
+            idfaLoopRunning = running;
+            const btn = document.getElementById('btn-dynamic');
+            const dict = langDictionary[currentLang];
+            if (running) {
+                btn.innerText = dict.btnDynamicOn;
+                btn.style.boxShadow = '0 0 15px rgba(255,0,0,0.5)';
+            } else {
+                btn.innerText = dict.btnDynamicOff;
+                btn.style.boxShadow = '';
             }
+        }
 
-            function copyQQ(qqNumber) {
-                navigator.clipboard.writeText(qqNumber).then(() => {
-                    appendLog(`[CLIPBOARD] Copied successfully.`, 'success');
-                    alert(`QQ群号/联系信息 ${qqNumber} 已成功复制到剪贴板！`);
-                }).catch(() => {
-                    appendLog(`[ERROR] Clipboard write failed.`, 'warn');
-                });
-            }
+        // ── 核心升级：高阶多维数据咬合齐发 ──
+        function clickExecute() {
+            const selectedApps = getSelectedBundleIDs();
+            appendLog(`[KERNEL] Executing clean...`, "system");
 
-            // 原生硬件探针数据链安全映射入口
-            window.updateDevicePayload = function (version, model, sn, cpu, isTroll, isJb) {
-                document.getElementById('sys-version').innerText = version;
-                document.getElementById('dev-model').innerText = model;
-                document.getElementById('dev-sn').innerText = sn;
-                document.getElementById('dev-cpu').innerText = cpu;
-                const dict = langDictionary[currentLang];
-                document.getElementById('status-troll').innerText = isTroll ? dict.trollOn : dict.trollOff;
-                document.getElementById('status-jb').innerText = isJb ? dict.jbOn : dict.jbOff;
-                if (!isTroll) document.getElementById('status-troll').style.color = '#ffaa00';
-                appendLog("[BRIDGE] System telemetry ready.");
+            if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
+                // ✨终极焊死：向原生发射打包字典 {"action": "start_clean", "apps": ["包名1", "包名2", ...]}
+                const payload = {
+                    action: "start_clean",
+                    apps: selectedApps
+                };
+                window.webkit.messageHandlers.TrollHandler.postMessage(payload);
+            } else {
+                appendLog("[SIMULATOR] Simulating clean mode...", "warn");
+                if (selectedApps.length > 0) {
+                    appendLog(`[SIMULATOR] Overwriting DB records: ${JSON.stringify(selectedApps)}`, "success");
+                }
+                setTimeout(() => appendLog("[LIMIT] Large file skipped (>100MB).", "warn"), 600);
             }
-        </script>
+        }
+
+        function openExternal(url) {
+            appendLog(`[LINK] Opening URL: ${url}`);
+            window.open(url, '_blank');
+        }
+
+        function copyQQ(qqNumber) {
+            navigator.clipboard.writeText(qqNumber).then(() => {
+                appendLog(`[CLIPBOARD] Copied successfully.`, 'success');
+                alert(`QQ群号/联系信息 ${qqNumber} 已成功复制到剪贴板！`);
+            }).catch(() => {
+                appendLog(`[ERROR] Clipboard write failed.`, 'warn');
+            });
+        }
+
+        // 原生硬件探针数据链安全映射入口
+        window.updateDevicePayload = function (version, model, sn, cpu, isTroll, isJb) {
+            document.getElementById('sys-version').innerText = version;
+            document.getElementById('dev-model').innerText = model;
+            document.getElementById('dev-sn').innerText = sn;
+            document.getElementById('dev-cpu').innerText = cpu;
+            const dict = langDictionary[currentLang];
+            document.getElementById('status-troll').innerText = isTroll ? dict.trollOn : dict.trollOff;
+            document.getElementById('status-jb').innerText = isJb ? dict.jbOn : dict.jbOff;
+            if (!isTroll) document.getElementById('status-troll').style.color = '#ffaa00';
+            appendLog("[BRIDGE] System telemetry ready.");
+        }
+    </script>
 </body>
 
 </html>

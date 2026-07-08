@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleDisplayName</key>
-    <string>这里填桌面显示名</string>
+    <string>QiLong-Dynamic-Whitelist(beta2)</string>
     <key>CFBundleName</key>
     <string>QiLong-Dynamic-Whitelist</string>
     <key>CFBundleIdentifier</key>
