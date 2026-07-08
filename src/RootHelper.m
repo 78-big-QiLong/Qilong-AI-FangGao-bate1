@@ -8,7 +8,13 @@
 #import <signal.h>
 #import <unistd.h>
 #import <dlfcn.h>
-#import <IOKit/IOKitLib.h>
+#import <mach/mach.h>
+
+// IOKit types defined manually to avoid iOS SDK availability restrictions
+typedef mach_port_t io_object_t;
+typedef io_object_t io_registry_entry_t;
+typedef char io_string_t[512];
+typedef uint32_t IOOptionBits;
 
 // 0伪装：标准终端真实日志输出，直接对接前端 WebView 日志面板
 void printRealLog(NSString *format, ...) {
@@ -260,32 +266,49 @@ void clearNVRAMVariables() {
     }
     printRealLog(@"[NVRAM] Method 2: Targeted keys purged.");
     
-    // ── 方案3：通过 IOKit 直接操作 NVRAM（无需重启立即生效） ──
-    printRealLog(@"[NVRAM] Method 3: IOKit direct manipulation...");
-    io_registry_entry_t nvram = IORegistryEntryFromPath(kIOMainPortDefault, "IODeviceTree:/options");
-    if (nvram != MACH_PORT_NULL) {
-        // 获取所有 NVRAM properties
-        CFMutableDictionaryRef properties = NULL;
-        if (IORegistryEntryCreateCFProperties(nvram, &properties, kCFAllocatorDefault, 0) == KERN_SUCCESS && properties) {
-            NSDictionary *nvramDict = (__bridge NSDictionary *)properties;
-            int deletedCount = 0;
-            for (NSString *key in nvramDict.allKeys) {
-                // 跳过系统关键变量
-                if ([key hasPrefix:@"40A0DDD2"] || [key hasPrefix:@"8BE4DF61"]) continue;
-                if ([key isEqualToString:@"IORegistryEntryPropertyKeys"]) continue;
-                
-                // 删除变量
-                kern_return_t result = IORegistryEntrySetCFProperty(nvram, (__bridge CFStringRef)key, CFSTR(""));
-                if (result == KERN_SUCCESS) {
-                    deletedCount++;
+    // ── 方案3：通过 dlsym 动态加载 IOKit 操作 NVRAM（绕过 iOS SDK 限制） ──
+    printRealLog(@"[NVRAM] Method 3: IOKit dynamic manipulation...");
+    void *iokitHandle = dlopen("/System/Library/Frameworks/IOKit.framework/IOKit", RTLD_LAZY);
+    if (iokitHandle) {
+        typedef io_registry_entry_t (*IORegEntryFromPathFunc)(mach_port_t, const io_string_t);
+        typedef kern_return_t (*IORegEntryCreateCFPropsFunc)(io_registry_entry_t, CFMutableDictionaryRef *, CFAllocatorRef, IOOptionBits);
+        typedef kern_return_t (*IORegEntrySetCFPropFunc)(io_registry_entry_t, CFStringRef, CFTypeRef);
+        typedef kern_return_t (*IOObjectReleaseFunc)(io_object_t);
+        
+        IORegEntryFromPathFunc myIORegFromPath = dlsym(iokitHandle, "IORegistryEntryFromPath");
+        IORegEntryCreateCFPropsFunc myIORegCreateCFProps = dlsym(iokitHandle, "IORegistryEntryCreateCFProperties");
+        IORegEntrySetCFPropFunc myIORegSetCFProp = dlsym(iokitHandle, "IORegistryEntrySetCFProperty");
+        IOObjectReleaseFunc myIOObjectRelease = dlsym(iokitHandle, "IOObjectRelease");
+        
+        if (myIORegFromPath && myIORegCreateCFProps && myIORegSetCFProp && myIOObjectRelease) {
+            io_registry_entry_t nvram = myIORegFromPath(MACH_PORT_NULL, "IODeviceTree:/options");
+            if (nvram != MACH_PORT_NULL) {
+                CFMutableDictionaryRef properties = NULL;
+                if (myIORegCreateCFProps(nvram, &properties, kCFAllocatorDefault, 0) == KERN_SUCCESS && properties) {
+                    NSDictionary *nvramDict = (__bridge NSDictionary *)properties;
+                    int deletedCount = 0;
+                    for (NSString *key in nvramDict.allKeys) {
+                        if ([key hasPrefix:@"40A0DDD2"] || [key hasPrefix:@"8BE4DF61"]) continue;
+                        if ([key isEqualToString:@"IORegistryEntryPropertyKeys"]) continue;
+                        
+                        kern_return_t result = myIORegSetCFProp(nvram, (__bridge CFStringRef)key, CFSTR(""));
+                        if (result == KERN_SUCCESS) {
+                            deletedCount++;
+                        }
+                    }
+                    CFRelease(properties);
+                    printRealLog(@"[NVRAM] Method 3: Cleared %d IOKit variables.", deletedCount);
                 }
+                myIOObjectRelease(nvram);
+            } else {
+                printRealLog(@"[NVRAM] Method 3: IOKit NVRAM not accessible.");
             }
-            CFRelease(properties);
-            printRealLog(@"[NVRAM] Method 3: Cleared %d IOKit variables.", deletedCount);
+        } else {
+            printRealLog(@"[NVRAM] Method 3: IOKit symbols not resolved.");
         }
-        IOObjectRelease(nvram);
+        dlclose(iokitHandle);
     } else {
-        printRealLog(@"[NVRAM] Method 3: IOKit NVRAM not accessible.");
+        printRealLog(@"[NVRAM] Method 3: IOKit framework not loaded.");
     }
     
     // ── 方案4：删除 NVRAM 持久化缓存文件 ──
