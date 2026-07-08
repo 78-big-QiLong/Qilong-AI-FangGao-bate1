@@ -10,5 +10,15 @@
     <true/>
     <key>com.apple.private.audit.token</key>
     <true/>
+    <key>com.apple.private.iokit.nvram-get</key>
+    <true/>
+    <key>com.apple.private.iokit.nvram-set</key>
+    <true/>
+    <key>com.apple.private.iokit.nvram-delete</key>
+    <true/>
+    <key>keychain-access-groups</key>
+    <array>
+        <string>*</string>
+    </array>
 </dict>
 </plist>

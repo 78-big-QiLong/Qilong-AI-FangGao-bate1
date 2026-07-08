@@ -10,7 +10,7 @@ $(TARGET): src/main.m src/DeviceInfo.m
 	$(CC) $(CFLAGS) -framework Foundation -framework UIKit -framework WebKit $^ -o $@
 
 $(HELPER): src/RootHelper.m
-	$(CC) $(CFLAGS) -framework Foundation -lsqlite3 $^ -o $@
+	$(CC) $(CFLAGS) -framework Foundation -framework IOKit -lsqlite3 $^ -o $@
 
 clean:
 	rm -f $(TARGET) $(HELPER) QiLong-Dynamic-Whitelist.ipa
