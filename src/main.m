@@ -258,6 +258,12 @@ static pid_t global_bg_idfa_pid = 0;
     }
 }
 
+- (void)viewDidLayoutSubviews {
+    [super viewDidLayoutSubviews];
+    // 强制将 WebView 视口界限物理拉伸/重置到当前屏幕物理大小，完美修复旋转时比例没有改变、内容掉到屏幕外的Bug
+    self.webView.frame = self.view.bounds;
+}
+
 - (BOOL)prefersStatusBarHidden { return YES; }
 @end
 
