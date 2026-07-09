@@ -38,9 +38,26 @@ int spawnAndWait(const char *path, const char **argv) {
     return -1;
 }
 
-// ── 核心多方案联合守护进程重载与杀戮引擎（5大联合方案，杜绝权限受限或单一命令失效） ──
+// ── 核心多方案联合守护进程重载与杀戮引擎（5大联合方案，防重入与多进程死锁优化） ──
 void killDaemonByName(const char *name) {
     if (!name || strlen(name) == 0) return;
+    
+    // 用静态线程安全集合记录本次运行中已被处理过的守护进程，防止在同一秒内多次强杀导致 launchd 触发崩溃冷却时间锁死系统
+    static NSMutableSet *killedDaemons = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        killedDaemons = [[NSMutableSet alloc] init];
+    });
+    
+    @synchronized(killedDaemons) {
+        NSString *nsName = [NSString stringWithUTF8String:name];
+        if ([killedDaemons containsObject:nsName]) {
+            // 本次生命周期中已经处理过，跳过避免造成守护进程持续崩溃重启锁死系统
+            return;
+        }
+        [killedDaemons addObject:nsName];
+    }
+
     BOOL killedAny = NO;
 
     // ── 方案一：底层 BSD 内核 sysctl 进程表直接遍历 + C 信号截杀 (SIGTERM / SIGKILL) ──
@@ -65,25 +82,28 @@ void killDaemonByName(const char *name) {
         if (procs) free(procs);
     }
 
-    // ── 方案二：执行 iOS 标准路径下的 killall -9 ──
-    {
-        const char *args[] = {"/usr/bin/killall", "-9", name, NULL};
-        int ret = spawnAndWait(args[0], args);
-        if (ret == 0) killedAny = YES;
-    }
+    // ── 动态阶梯回退：若方案一已成功通过内核杀死进程，则不再执行耗时的命令行进程生成，杜绝数十秒卡死 ──
+    if (!killedAny) {
+        // ── 方案二：执行 iOS 标准路径下的 killall -9 ──
+        {
+            const char *args[] = {"/usr/bin/killall", "-9", name, NULL};
+            int ret = spawnAndWait(args[0], args);
+            if (ret == 0) killedAny = YES;
+        }
 
-    // ── 方案三：兼容 Rootless 越狱路径下的 killall -9 ──
-    {
-        const char *args[] = {"/var/jb/usr/bin/killall", "-9", name, NULL};
-        int ret = spawnAndWait(args[0], args);
-        if (ret == 0) killedAny = YES;
-    }
+        // ── 方案三：兼容 Rootless 越狱路径下的 killall -9 ──
+        if (!killedAny) {
+            const char *args[] = {"/var/jb/usr/bin/killall", "-9", name, NULL};
+            int ret = spawnAndWait(args[0], args);
+            if (ret == 0) killedAny = YES;
+        }
 
-    // ── 方案四：通过 launchctl 停止/重置相关系统服务 ──
-    {
-        NSString *serviceName = [NSString stringWithFormat:@"com.apple.%s", name];
-        const char *args[] = {"/bin/launchctl", "stop", [serviceName UTF8String], NULL};
-        spawnAndWait(args[0], args);
+        // ── 方案四：通过 launchctl 停止/重置相关系统服务 ──
+        if (!killedAny) {
+            NSString *serviceName = [NSString stringWithFormat:@"com.apple.%s", name];
+            const char *args[] = {"/bin/launchctl", "stop", [serviceName UTF8String], NULL};
+            spawnAndWait(args[0], args);
+        }
     }
 
     // ── 方案五：发射 Darwin IPC 广播催促守护进程重载偏好缓存 ──
