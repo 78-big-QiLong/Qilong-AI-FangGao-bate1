@@ -794,6 +794,37 @@
         </div>
     </div>
 
+    <!-- ── 公益测试过期与激活卡密锁屏 ── -->
+    <div class="modal-overlay" id="modal-expiry" style="background: #0a0a0c; opacity: 1; pointer-events: auto; display: none; z-index: 999999;">
+        <div class="modal-box" style="max-width: 420px; width: 92%; border: 1px solid #ffaa00; box-shadow: 0 0 30px rgba(255, 170, 0, 0.2); padding: 22px;">
+            <div class="modal-title" style="color: #ffaa00; font-size: 1.25rem; font-weight: 900; text-shadow: 0 0 10px rgba(255, 170, 0, 0.4); margin-bottom: 15px;">
+                公益测试期已结束
+            </div>
+            <div style="font-size: 0.82rem; line-height: 1.6; color: #d0d0d8; text-align: left; margin-bottom: 18px;">
+                为确保用户的体验与数据安全，本版本已暂停服务。<br>
+                可以从以下渠道获取最新版公益与相关内容，除以下渠道外的任何本工具皆为盗版木马！
+                
+                <div style="margin-top: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 10px;">
+                    <div style="cursor: pointer; color: #00ffff; font-weight: bold; text-decoration: underline; word-break: break-all;" onclick="openExternal('https://github.com/78-big-QiLong')">
+                        🔗 官方GitHub仓库：https://github.com/78-big-QiLong
+                    </div>
+                    <div style="cursor: pointer; color: #00ffff; font-weight: bold; text-decoration: underline; word-break: break-all;" onclick="openExternal('https://qm.qq.com/q/13HQO4RMLo')">
+                        🔗 官方扣扣交流群：https://qm.qq.com/q/13HQO4RMLo
+                    </div>
+                </div>
+            </div>
+            
+            <div style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 15px;">
+                <div style="font-size: 0.8rem; color: #888892; margin-bottom: 8px; text-align: left;">请输入验证卡密以继续使用：</div>
+                <div style="display: flex; gap: 8px;">
+                    <input type="password" id="expiry-key-input" placeholder="输入测试授权卡密..." style="flex: 1; padding: 10px; border-radius: 8px; background: #141419; border: 1px solid rgba(255,255,255,0.15); color: #fff; font-size: 0.85rem; outline: none; box-sizing: border-box;">
+                    <button class="btn-warning-action" style="background: #ffaa00; color: #141419; font-weight: bold; padding: 0 15px; font-size: 0.85rem;" onclick="checkExpiryKey()">验证</button>
+                </div>
+                <div id="expiry-error-tip" style="color: #ff3c3c; font-size: 0.75rem; margin-top: 6px; text-align: left; display: none;">❌ 卡密验证失败，请重新输入！</div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="modal-lang" onclick="closeModalOnOverlay(event, 'modal-lang')">
         <div class="modal-box">
             <div class="modal-title">语言选择</div>
@@ -942,6 +973,34 @@
             toggleModal('modal-first-open', false);
         }
 
+        function checkExpiryDate() {
+            // 过期阈值设为 2026年8月8号 23:59:59
+            const expiryLimit = new Date('2026-08-08T23:59:59').getTime();
+            const now = new Date().getTime();
+            
+            if (now > expiryLimit) {
+                if (localStorage.getItem('unlocked_expiry') !== 'true') {
+                    // 显示全屏过期锁，禁止进入
+                    const expiryModal = document.getElementById('modal-expiry');
+                    expiryModal.style.display = 'flex';
+                }
+            }
+        }
+
+        function checkExpiryKey() {
+            const inputVal = document.getElementById('expiry-key-input').value.trim();
+            const errorTip = document.getElementById('expiry-error-tip');
+            
+            if (inputVal === "31415926") {
+                localStorage.setItem('unlocked_expiry', 'true');
+                document.getElementById('modal-expiry').style.display = 'none';
+                appendLog("[LICENSE] Key verified successfully. Access granted.", "success");
+            } else {
+                errorTip.style.display = 'block';
+                setTimeout(() => { errorTip.style.display = 'none'; }, 3000);
+            }
+        }
+
         const splashTimer = setTimeout(() => { dismissSplash(); }, 3000);
         function dismissSplash() {
             clearTimeout(splashTimer);
@@ -955,6 +1014,10 @@
                 homepage.classList.add('active');
                 document.getElementById('log-init-line').style.display = 'none';
                 appendLog(langDictionary[currentLang].logReady);
+                
+                // ⚠️ 物理卡点：首先核查系统日期是否超过2026年8月8号
+                checkExpiryDate();
+                
                 checkFirstOpen();
             }, 600);
         }
