@@ -486,9 +486,25 @@
             cursor: pointer;
         }
 
+        .btn-warning-action {
+            flex: 1;
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 800;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.1s ease;
+        }
+        .btn-warning-action:active {
+            transform: scale(0.92);
+        }
+
         /* ── 📱 横屏 & 平板 iPad 响应式深度适配 ── */
         @media (orientation: landscape) or (min-width: 768px) {
-            html, body {
+
+            html,
+            body {
                 overflow: hidden;
             }
 
@@ -503,7 +519,7 @@
             }
 
             /* 左半侧：标题 + 自检看板 */
-            #homepage > div:first-child {
+            #homepage>div:first-child {
                 flex: 1.2;
                 min-width: 280px;
                 display: flex;
@@ -649,20 +665,28 @@
         <div class="modal-box" style="max-width: 380px; width: 92%; padding: 22px;">
             <div class="modal-title" style="color: #ffaa00; font-size: 1.15rem; font-weight: 900;">首次使用须知 & 用户协议</div>
             <div class="modal-list" style="max-height: 290px; text-align: left; gap: 12px; padding: 2px;">
-                
-                <div style="background: rgba(255,170,0,0.06); border: 1px solid rgba(255,170,0,0.15); border-radius: 12px; padding: 12px;">
-                    <div style="font-size: 0.92rem; font-weight: 800; color: #ffaa00; margin-bottom: 6px;">1- 前往设置关闭所有应用的 Siri “从此 App 学习”</div>
-                    <p style="font-size: 0.8rem; color: #ccc; margin: 0; line-height: 1.45;">请前往系统的“设置” - “Siri 与搜索”，关闭所有应用的“从此 App 学习”选项，以阻断残留的识别指纹与数据链路。</p>
+
+                <div
+                    style="background: rgba(255,170,0,0.06); border: 1px solid rgba(255,170,0,0.15); border-radius: 12px; padding: 12px;">
+                    <div style="font-size: 0.92rem; font-weight: 800; color: #ffaa00; margin-bottom: 6px;">1-
+                        前往设置关闭所有应用的 Siri “从此 App 学习”</div>
+                    <p style="font-size: 0.8rem; color: #ccc; margin: 0; line-height: 1.45;">请前往系统的“设置” - “Siri
+                        与搜索”，关闭所有应用的“从此 App 学习”选项，以阻断残留的识别指纹与数据链路。</p>
                 </div>
 
-                <div style="background: rgba(0,255,255,0.06); border: 1px solid rgba(0,255,255,0.15); border-radius: 12px; padding: 12px;">
-                    <div style="font-size: 0.92rem; font-weight: 800; color: #00ffff; margin-bottom: 6px;">2- 前往设置打开本 App “后台 App 刷新”</div>
-                    <p style="font-size: 0.8rem; color: #ccc; margin: 0; line-height: 1.45;">请前往系统的“设置” - “通用” - “后台 App 刷新”，确保本 App 的后台刷新权限已打开，以便 IDFA 后台守护能在挂起时持续刷新。</p>
+                <div
+                    style="background: rgba(0,255,255,0.06); border: 1px solid rgba(0,255,255,0.15); border-radius: 12px; padding: 12px;">
+                    <div style="font-size: 0.92rem; font-weight: 800; color: #00ffff; margin-bottom: 6px;">2- 前往设置打开本
+                        App “后台 App 刷新”</div>
+                    <p style="font-size: 0.8rem; color: #ccc; margin: 0; line-height: 1.45;">请前往系统的“设置” - “通用” - “后台 App
+                        刷新”，确保本 App 的后台刷新权限已打开，以便 IDFA 后台守护能在挂起时持续刷新。</p>
                 </div>
 
                 <div style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 10px;">
-                    <div style="font-size: 0.92rem; font-weight: 800; color: #ffffff; margin-bottom: 6px;">3- 仔细阅读以下用户协议</div>
-                    <div style="font-size: 0.72rem; color: #888896; line-height: 1.5; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); border-radius: 8px; padding: 10px; max-height: 120px; overflow-y: auto;">
+                    <div style="font-size: 0.92rem; font-weight: 800; color: #ffffff; margin-bottom: 6px;">3- 仔细阅读以下用户协议
+                    </div>
+                    <div
+                        style="font-size: 0.72rem; color: #888896; line-height: 1.5; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); border-radius: 8px; padding: 10px; max-height: 120px; overflow-y: auto;">
                         项目借助骑龙定制Ai智能体制作 功能ui规则等由AI制作仅供参考<br>
                         -任何外部链接都与该工具与作者无关 任何链接与第三方产物的后果均由使用者自行承担<br>
                         -该工具仅供学习参考 使用请坚决不要违反当地法律法规与社区规则 一切后果由使用者承担<br>
@@ -673,7 +697,9 @@
                 </div>
 
             </div>
-            <button class="btn-close" style="background: #ffaa00; color: #141419; font-weight: 900; font-size: 0.95rem; border: none; box-shadow: 0 4px 15px rgba(255,170,0,0.3); padding: 12px 0;" onclick="agreeFirstOpen()">我已知晓并同意协议</button>
+            <button class="btn-close"
+                style="background: #ffaa00; color: #141419; font-weight: 900; font-size: 0.95rem; border: none; box-shadow: 0 4px 15px rgba(255,170,0,0.3); padding: 12px 0;"
+                onclick="agreeFirstOpen()">我已知晓并同意协议</button>
         </div>
     </div>
 
@@ -681,45 +707,78 @@
     <div class="modal-overlay" id="modal-tutorial" onclick="closeModalOnOverlay(event, 'modal-tutorial')">
         <div class="modal-box" style="max-width: 380px; width: 92%; padding: 22px;">
             <div class="modal-title" style="color: #00ffff; font-size: 1.15rem; font-weight: 900;">使用教程</div>
-            
+
             <div class="modal-list" style="max-height: 310px; text-align: left; gap: 10px; padding: 2px;">
-                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 10px; font-size: 0.82rem; line-height: 1.5; color: #e0e0e6;">
+                <div
+                    style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 10px; font-size: 0.82rem; line-height: 1.5; color: #e0e0e6;">
                     <div style="font-weight: 800; color: #00ffff; margin-bottom: 4px;">第一步</div>
                     关闭所有“Siri从此app学习”
                 </div>
-                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 10px; font-size: 0.82rem; line-height: 1.5; color: #e0e0e6;">
+                <div
+                    style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 10px; font-size: 0.82rem; line-height: 1.5; color: #e0e0e6;">
                     <div style="font-weight: 800; color: #00ffff; margin-bottom: 4px;">第二步</div>
                     打开本应用后台刷新权限 (其他应用尽量关掉)
                 </div>
-                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 10px; font-size: 0.82rem; line-height: 1.5; color: #e0e0e6;">
+                <div
+                    style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 10px; font-size: 0.82rem; line-height: 1.5; color: #e0e0e6;">
                     <div style="font-weight: 800; color: #00ffff; margin-bottom: 4px;">第三步</div>
                     勾选目标应用 (建议尽量全部勾选效果最佳)
                 </div>
-                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 10px; font-size: 0.82rem; line-height: 1.5; color: #e0e0e6;">
+                <div
+                    style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 10px; font-size: 0.82rem; line-height: 1.5; color: #e0e0e6;">
                     <div style="font-weight: 800; color: #00ffff; margin-bottom: 4px;">第四步</div>
                     点击“清理风险残留”
                 </div>
-                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 10px; font-size: 0.82rem; line-height: 1.5; color: #e0e0e6;">
+                <div
+                    style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 10px; font-size: 0.82rem; line-height: 1.5; color: #e0e0e6;">
                     <div style="font-weight: 800; color: #00ffff; margin-bottom: 4px;">第五步</div>
                     开启“动态白名单” (确保巨魔和越狱这时不在后台)
                 </div>
-                <div style="background: rgba(255,80,80,0.06); border: 1px solid rgba(255,80,80,0.15); border-radius: 10px; padding: 10px; font-size: 0.82rem; line-height: 1.5; color: #ff8080; font-weight: bold;">
+                <div
+                    style="background: rgba(255,80,80,0.06); border: 1px solid rgba(255,80,80,0.15); border-radius: 10px; padding: 10px; font-size: 0.82rem; line-height: 1.5; color: #ff8080; font-weight: bold;">
                     注意：该应用后台不要划掉，否则功能会失效
                 </div>
             </div>
 
-            <button class="btn-close" style="background: #00ffff; color: #141419; font-weight: 900; font-size: 0.92rem; border: none; box-shadow: 0 4px 15px rgba(0,255,255,0.3); margin-top: 15px; padding: 11px 0;" onclick="openExternal('https://weixin.qq.com/sph/ANqOp5R71B')">▶ 视频教学</button>
-            <button class="btn-close" style="background: rgba(255,255,255,0.08); color: #fff; border: 1px solid rgba(255,255,255,0.1); margin-top: 8px; padding: 10px 0;" onclick="toggleModal('modal-tutorial', false)">关闭</button>
+            <button class="btn-close"
+                style="background: #00ffff; color: #141419; font-weight: 900; font-size: 0.92rem; border: none; box-shadow: 0 4px 15px rgba(0,255,255,0.3); margin-top: 15px; padding: 11px 0;"
+                onclick="openExternal('https://weixin.qq.com/sph/ANqOp5R71B')">▶ 视频教学</button>
+            <button class="btn-close"
+                style="background: rgba(255,255,255,0.08); color: #fff; border: 1px solid rgba(255,255,255,0.1); margin-top: 8px; padding: 10px 0;"
+                onclick="toggleModal('modal-tutorial', false)">关闭</button>
         </div>
     </div>
 
     <div class="modal-overlay" id="modal-apps" onclick="closeModalOnOverlay(event, 'modal-apps')">
         <div class="modal-box" style="max-width: 360px; width: 90%;">
-            <div class="modal-title" id="mdl-apps-title">勾选要清理的应用钥匙链</div>
+            <div class="modal-title" id="mdl-apps-title">勾选要清理的应用钥匙链，请勿勾选巨魔越狱和系统应用，除非你知道你在干什么，后果自负！</div>
             <div class="modal-list" id="apps-container">
                 <div style="color:#666; font-size:0.85rem; padding:20px 0;" id="text-loading-apps">扫描app列表中</div>
             </div>
             <button class="btn-close" id="mdl-apps-save" onclick="saveAppSelection()">确定</button>
+        </div>
+    </div>
+
+    <!-- ── 自定义极客高光警告确认弹窗 ── -->
+    <div class="modal-overlay" id="modal-warning">
+        <div class="modal-box" style="max-width: 380px; width: 92%; border: 1px solid #ff3c3c; box-shadow: 0 0 25px rgba(255, 60, 60, 0.25);">
+            <div class="modal-title" style="color: #ff3c3c; font-size: 1.15rem; font-weight: 900; text-shadow: 0 0 8px rgba(255, 60, 60, 0.4);">【安全警告 / SAFETY WARNING】</div>
+            <div class="modal-list" style="text-align: left; font-size: 0.8rem; line-height: 1.5; color: #e0e0e6; gap: 10px; max-height: 240px; overflow-y: auto;">
+                <div style="background: rgba(255, 60, 60, 0.05); border: 1px solid rgba(255, 60, 60, 0.15); border-radius: 12px; padding: 10px;">
+                    <div style="font-weight: 800; color: #ff8080; margin-bottom: 4px;">1- 绝对禁区 / CRITICAL RULE</div>
+                    请确保没有勾选 **巨魔(TrollStore)**、**多巴胺(Dopamine)** 或任何 **系统应用**！<br>
+                    Make sure you have NOT checked TrollStore, Dopamine, or System Applications!
+                </div>
+                <div style="background: rgba(255, 170, 0, 0.05); border: 1px solid rgba(255, 170, 0, 0.15); border-radius: 12px; padding: 10px;">
+                    <div style="font-weight: 800; color: #ffaa00; margin-bottom: 4px;">2- 操作规范 / INSTRUCTIONS</div>
+                    清理预计 15 秒期间，**请勿进行任何操作**，直至日志结束，否则后果自负！<br>
+                    Cleaning takes ~15s. Do not touch or operate your device until logs finish, otherwise you bear all consequences.
+                </div>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button class="btn-warning-action" style="background: #ff3c3c; color: #ffffff; box-shadow: 0 4px 12px rgba(255,60,60,0.3);" onclick="confirmCleanExecution()">我确认并清理 / CONFIRM</button>
+                <button class="btn-warning-action" style="background: rgba(255,255,255,0.06); color: #fff; border: 1px solid rgba(255,255,255,0.1);" onclick="cancelCleanExecution()">取消 / CANCEL</button>
+            </div>
         </div>
     </div>
 
@@ -894,22 +953,6 @@
             line.className = `log-line log-${type}`;
             line.innerText = text;
             container.appendChild(line);
-            
-            // ⚠️ 动态白名单一轮刷新完成后追加中英文警告
-            if (text && text.includes("complete. Waiting 60s.")) {
-                const warnLine = document.createElement('div');
-                warnLine.className = 'log-line log-warn';
-                warnLine.style.fontWeight = 'bold';
-                warnLine.style.padding = '8px';
-                warnLine.style.margin = '5px 0';
-                warnLine.style.borderRadius = '8px';
-                warnLine.style.background = 'rgba(255, 60, 60, 0.1)';
-                warnLine.style.border = '1px dashed #ff3c3c';
-                warnLine.style.color = '#ff8080';
-                warnLine.innerText = "【警告】重启或越狱前请关闭该功能，否则可能白苹果或跳激活！\n[WARNING] Please turn off this feature before rebooting or jailbreaking, otherwise it may cause a bootloop (White Apple) or activation loops!";
-                container.appendChild(warnLine);
-            }
-            
             container.scrollTop = container.scrollHeight;
         }
 
@@ -1004,13 +1047,13 @@
         }
 
         // ── 核心升级：高阶多维数据咬合齐发 ──
+        // ── 核心升级：唤起自定义安全警告弹窗 ──
         function clickExecute() {
-            const warningMsg = "【安全警告 / SAFETY WARNING】\n\n请确保没有勾选 巨魔(TrollStore) & 多巴胺(Dopamine) & 系统应用 再进行清理！\nMake sure you have NOT checked TrollStore, Dopamine, or System Applications before proceeding!\n\n清理预计15s期间请勿操作，直至日志结束，否则后果自负！\nCleaning takes ~15 seconds. Do not operate your device until logs finish, otherwise you bear all consequences.";
-            if (!confirm(warningMsg)) {
-                appendLog("[UI] Cleaning cancelled by user.", "warn");
-                return;
-            }
+            toggleModal('modal-warning', true);
+        }
 
+        function confirmCleanExecution() {
+            toggleModal('modal-warning', false);
             const selectedApps = getSelectedBundleIDs();
             appendLog(`[KERNEL] Executing clean...`, "system");
 
@@ -1028,6 +1071,11 @@
                 }
                 setTimeout(() => appendLog("[LIMIT] Large file skipped (>100MB).", "warn"), 600);
             }
+        }
+
+        function cancelCleanExecution() {
+            toggleModal('modal-warning', false);
+            appendLog("[UI] Cleaning cancelled by user.", "warn");
         }
 
         function openExternal(url) {
