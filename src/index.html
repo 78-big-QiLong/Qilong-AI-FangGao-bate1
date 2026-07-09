@@ -965,22 +965,28 @@
             line.className = `log-line log-${type}`;
             line.innerText = text;
             container.appendChild(line);
-            
-            // ⚠️ 动态白名单一轮刷新完成后追加中英文警告
-            if (text && text.includes("complete. Waiting 60s.")) {
-                const warnLine = document.createElement('div');
-                warnLine.className = 'log-line log-warn';
-                warnLine.style.fontWeight = 'bold';
-                warnLine.style.padding = '8px';
-                warnLine.style.margin = '5px 0';
-                warnLine.style.borderRadius = '8px';
-                warnLine.style.background = 'rgba(255, 60, 60, 0.1)';
-                warnLine.style.border = '1px dashed #ff3c3c';
-                warnLine.style.color = '#ff8080';
-                warnLine.innerText = "【警告】重启或越狱前请关闭该功能，否则可能白苹果或跳激活！\n[WARNING] Please turn off this feature before rebooting or jailbreaking, otherwise it may cause a bootloop (White Apple) or activation loops!";
-                container.appendChild(warnLine);
+
+            // ⚠️ 动态白名单一轮刷新完成后追加中英文警告 (不区分大小写，匹配 round/complete/waiting/60s 关键字组合)
+            if (text) {
+                const lowerText = text.toLowerCase();
+                if ((lowerText.includes("complete") && lowerText.includes("waiting")) || 
+                    (lowerText.includes("round") && lowerText.includes("complete")) ||
+                    lowerText.includes("waiting 60s")) {
+                    
+                    const warnLine = document.createElement('div');
+                    warnLine.className = 'log-line log-warn';
+                    warnLine.style.fontWeight = 'bold';
+                    warnLine.style.padding = '8px';
+                    warnLine.style.margin = '5px 0';
+                    warnLine.style.borderRadius = '8px';
+                    warnLine.style.background = 'rgba(255, 60, 60, 0.1)';
+                    warnLine.style.border = '1px dashed #ff3c3c';
+                    warnLine.style.color = '#ff8080';
+                    warnLine.innerText = "【警告】重启或越狱前请关闭该功能，否则可能白苹果或跳激活！\n[WARNING] Please turn off this feature before rebooting or jailbreaking, otherwise it may cause a bootloop (White Apple) or activation loops!";
+                    container.appendChild(warnLine);
+                }
             }
-            
+
             container.scrollTop = container.scrollHeight;
         }
 
@@ -1068,6 +1074,9 @@
             if (running) {
                 btn.innerText = dict.btnDynamicOn;
                 btn.style.boxShadow = '0 0 15px rgba(255,0,0,0.5)';
+                // ⚠️ 开启时立即向日志面板打印中英文醒目警告！
+                appendLog("【重要警告】动态白名单后台守护进程已启动。在重启手机或重新越狱之前，请务必手动关闭此功能，否则可能造成白苹果或激活状态锁死！", "warn");
+                appendLog("[CRITICAL WARNING] Dynamic whitelist background active. You MUST disable this feature before rebooting or jailbreaking, otherwise it may trigger bootloops (White Apple) or setup activation loops!", "warn");
             } else {
                 btn.innerText = dict.btnDynamicOff;
                 btn.style.boxShadow = '';
