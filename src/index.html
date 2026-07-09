@@ -496,6 +496,7 @@
             cursor: pointer;
             transition: transform 0.1s ease;
         }
+
         .btn-warning-action:active {
             transform: scale(0.92);
         }
@@ -761,23 +762,34 @@
 
     <!-- ── 自定义极客高光警告确认弹窗 ── -->
     <div class="modal-overlay" id="modal-warning">
-        <div class="modal-box" style="max-width: 380px; width: 92%; border: 1px solid #ff3c3c; box-shadow: 0 0 25px rgba(255, 60, 60, 0.25);">
-            <div class="modal-title" style="color: #ff3c3c; font-size: 1.15rem; font-weight: 900; text-shadow: 0 0 8px rgba(255, 60, 60, 0.4);">【安全警告 / SAFETY WARNING】</div>
-            <div class="modal-list" style="text-align: left; font-size: 0.8rem; line-height: 1.5; color: #e0e0e6; gap: 10px; max-height: 240px; overflow-y: auto;">
-                <div style="background: rgba(255, 60, 60, 0.05); border: 1px solid rgba(255, 60, 60, 0.15); border-radius: 12px; padding: 10px;">
-                    <div style="font-weight: 800; color: #ff8080; margin-bottom: 4px;">1- 绝对禁区 / CRITICAL RULE</div>
-                    请确保没有勾选 **巨魔(TrollStore)**、**多巴胺(Dopamine)** 或任何 **系统应用**！<br>
+        <div class="modal-box"
+            style="max-width: 380px; width: 92%; border: 1px solid #ff3c3c; box-shadow: 0 0 25px rgba(255, 60, 60, 0.25);">
+            <div class="modal-title"
+                style="color: #ff3c3c; font-size: 1.15rem; font-weight: 900; text-shadow: 0 0 8px rgba(255, 60, 60, 0.4);">
+                【安全警告 / SAFETY WARNING】</div>
+            <div class="modal-list"
+                style="text-align: left; font-size: 0.8rem; line-height: 1.5; color: #e0e0e6; gap: 10px; max-height: 240px; overflow-y: auto;">
+                <div
+                    style="background: rgba(255, 60, 60, 0.05); border: 1px solid rgba(255, 60, 60, 0.15); border-radius: 12px; padding: 10px;">
+                    <div style="font-weight: 800; color: #ff8080; margin-bottom: 4px;">慎重说明 / CRITICAL RULE</div>
+                    请确保没有勾选 巨魔(TrollStore),多巴胺(Dopamine),系统应用！<br>
                     Make sure you have NOT checked TrollStore, Dopamine, or System Applications!
                 </div>
-                <div style="background: rgba(255, 170, 0, 0.05); border: 1px solid rgba(255, 170, 0, 0.15); border-radius: 12px; padding: 10px;">
-                    <div style="font-weight: 800; color: #ffaa00; margin-bottom: 4px;">2- 操作规范 / INSTRUCTIONS</div>
-                    清理预计 15 秒期间，**请勿进行任何操作**，直至日志结束，否则后果自负！<br>
-                    Cleaning takes ~15s. Do not touch or operate your device until logs finish, otherwise you bear all consequences.
+                <div
+                    style="background: rgba(255, 170, 0, 0.05); border: 1px solid rgba(255, 170, 0, 0.15); border-radius: 12px; padding: 10px;">
+                    <div style="font-weight: 800; color: #ffaa00; margin-bottom: 4px;">操作规范 / INSTRUCTIONS</div>
+                    清理预计需要15秒 期间请勿进行任何操作 直至日志提示结束 否则后果自负！<br>
+                    Cleaning takes ~15s. Do not touch or operate your device until logs finish, otherwise you bear all
+                    consequences.
                 </div>
             </div>
             <div style="display: flex; gap: 10px; margin-top: 15px;">
-                <button class="btn-warning-action" style="background: #ff3c3c; color: #ffffff; box-shadow: 0 4px 12px rgba(255,60,60,0.3);" onclick="confirmCleanExecution()">我确认并清理 / CONFIRM</button>
-                <button class="btn-warning-action" style="background: rgba(255,255,255,0.06); color: #fff; border: 1px solid rgba(255,255,255,0.1);" onclick="cancelCleanExecution()">取消 / CANCEL</button>
+                <button class="btn-warning-action"
+                    style="background: #ff3c3c; color: #ffffff; box-shadow: 0 4px 12px rgba(255,60,60,0.3);"
+                    onclick="confirmCleanExecution()">我确认并清理 / CONFIRM</button>
+                <button class="btn-warning-action"
+                    style="background: rgba(255,255,255,0.06); color: #fff; border: 1px solid rgba(255,255,255,0.1);"
+                    onclick="cancelCleanExecution()">取消 / CANCEL</button>
             </div>
         </div>
     </div>
@@ -953,6 +965,22 @@
             line.className = `log-line log-${type}`;
             line.innerText = text;
             container.appendChild(line);
+            
+            // ⚠️ 动态白名单一轮刷新完成后追加中英文警告
+            if (text && text.includes("complete. Waiting 60s.")) {
+                const warnLine = document.createElement('div');
+                warnLine.className = 'log-line log-warn';
+                warnLine.style.fontWeight = 'bold';
+                warnLine.style.padding = '8px';
+                warnLine.style.margin = '5px 0';
+                warnLine.style.borderRadius = '8px';
+                warnLine.style.background = 'rgba(255, 60, 60, 0.1)';
+                warnLine.style.border = '1px dashed #ff3c3c';
+                warnLine.style.color = '#ff8080';
+                warnLine.innerText = "【警告】重启或越狱前请关闭该功能，否则可能白苹果或跳激活！\n[WARNING] Please turn off this feature before rebooting or jailbreaking, otherwise it may cause a bootloop (White Apple) or activation loops!";
+                container.appendChild(warnLine);
+            }
+            
             container.scrollTop = container.scrollHeight;
         }
 
