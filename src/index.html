@@ -485,6 +485,77 @@
             font-size: 0.85rem;
             cursor: pointer;
         }
+
+        /* ── 📱 横屏 & 平板 iPad 响应式深度适配 ── */
+        @media (orientation: landscape) or (min-width: 768px) {
+            #homepage {
+                padding: calc(10px + env(safe-area-inset-top)) 30px calc(10px + env(safe-area-inset-bottom)) 30px !important;
+                display: grid !important;
+                grid-template-columns: 1.2fr 1fr;
+                grid-template-rows: auto 1fr auto;
+                gap: 15px;
+            }
+
+            #homepage > div:first-child {
+                grid-column: 1;
+                grid-row: 1 / span 2;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+            }
+
+            .info-board {
+                grid-template-columns: repeat(3, 1fr) !important;
+                margin-top: 10px !important;
+                gap: 8px !important;
+                padding: 12px !important;
+            }
+
+            .button-group {
+                grid-column: 2;
+                grid-row: 1;
+                margin: 0 !important;
+                flex-direction: column;
+                justify-content: center;
+                gap: 8px !important;
+            }
+
+            .btn {
+                padding: 12px 4px !important;
+                font-size: 0.8rem !important;
+            }
+
+            .log-panel {
+                grid-column: 2;
+                grid-row: 2;
+                height: 100% !important;
+                max-height: 180px !important;
+                margin-top: 5px;
+            }
+
+            .link-group {
+                grid-column: 1 / span 2;
+                grid-row: 3;
+                margin-top: 5px !important;
+            }
+
+            .footer-declaration {
+                grid-column: 1 / span 2;
+                grid-row: 4;
+                margin-top: 4px !important;
+                font-size: 0.65rem !important;
+            }
+
+            .modal-box {
+                max-width: 480px !important;
+                width: 80% !important;
+                padding: 15px !important;
+            }
+
+            .modal-list {
+                max-height: 180px !important;
+            }
+        }
     </style>
 </head>
 

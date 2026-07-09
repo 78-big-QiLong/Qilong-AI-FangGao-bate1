@@ -470,12 +470,10 @@ void clearNVRAMVariables() {
         printRealLog(@"[NVRAM] Method 3: IOKit framework not loaded.");
     }
     
-    // ── 方案4：删除 NVRAM 持久化缓存文件 ──
+    // ── 方案4：删除 NVRAM 持久化缓存文件（安全红线：不破坏系统激活基础） ──
     NSFileManager *fm = [NSFileManager defaultManager];
     NSArray *nvramCacheFiles = @[
-        @"/var/mobile/Library/Preferences/com.apple.purplebuddy.plist",
-        @"/var/mobile/Library/Preferences/.GlobalPreferences.plist",
-        @"/var/root/Library/Preferences/com.apple.purplebuddy.plist"
+        @"/var/mobile/Library/Preferences/com.apple.device-identification.plist"
     ];
     for (NSString *path in nvramCacheFiles) {
         if ([fm fileExistsAtPath:path]) {

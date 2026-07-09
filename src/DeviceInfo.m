@@ -4,8 +4,6 @@
 #import <unistd.h>
 #import <UIKit/UIKit.h>
 
-extern int sandbox_check(pid_t pid, int *operation, int flags);
-
 @implementation DeviceInfo
 
 + (instancetype)sharedInstance {
@@ -33,10 +31,24 @@ extern int sandbox_check(pid_t pid, int *operation, int flags);
     
     [self mapDeviceAndProcessor:platform];
     
-    if (sandbox_check(getpid(), NULL, 0) == 0) {
-        self.isTrollStore = YES;
-    } else {
-        self.isTrollStore = NO;
+    // 安全沙盒检测：解决沙盒外 sandbox_check 未定义导致 iOS 16.3 闪退问题
+    self.isTrollStore = NO;
+    void *sandboxHandle = dlopen(NULL, RTLD_LAZY);
+    if (sandboxHandle) {
+        int (*my_sandbox_check)(pid_t, int *, int) = dlsym(sandboxHandle, "sandbox_check");
+        if (my_sandbox_check) {
+            if (my_sandbox_check(getpid(), NULL, 0) == 0) {
+                self.isTrollStore = YES;
+            }
+        } else {
+            // 降级策略：判断路径写入权限
+            NSString *testPath = @"/var/mobile/test_troll.txt";
+            if ([@"test" writeToFile:testPath atomically:YES encoding:NSUTF8StringEncoding error:nil]) {
+                self.isTrollStore = YES;
+                [[NSFileManager defaultManager] removeItemAtPath:testPath error:nil];
+            }
+        }
+        dlclose(sandboxHandle);
     }
     
     self.isJailbroken = [self checkJailbreakLegacy];

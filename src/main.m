@@ -76,29 +76,58 @@ static pid_t global_bg_idfa_pid = 0;
     });
 }
 
-// 🔍 利用私有 API 捞取全机第三方用户应用名单
+// 🔍 利用私有 API 捞取全机所有应用名单（包括系统内置、第三方与隐藏服务，支持iOS全版本兼容）
 - (NSString *)fetchUserAppListJSON {
     NSMutableArray *appArray = [NSMutableArray array];
     
     // 动态反射获取系统应用工作空间
     Class workspaceClass = NSClassFromString(@"LSApplicationWorkspace");
     if (workspaceClass) {
-        id workspace = [workspaceClass performSelector:@selector(defaultWorkspace)];
-        NSArray *allApps = [workspace performSelector:@selector(allInstalledApplications)];
-        
-        for (id appProxy in allApps) {
-            // 过滤系统原生组件，只抓取用户下载的第三方应用 (User)
-            NSString *appType = [appProxy performSelector:@selector(applicationType)];
-            if ([appType isEqualToString:@"User"]) {
-                NSString *bundleID = [appProxy performSelector:@selector(applicationIdentifier)];
-                NSString *appName = [appProxy performSelector:@selector(localizedName)];
-                
-                if (bundleID && appName) {
-                    [appArray addObject:@{@"bundleID": bundleID, @"name": appName}];
+        @try {
+            id workspace = [workspaceClass performSelector:@selector(defaultWorkspace)];
+            NSArray *allApps = nil;
+            if ([workspace respondsToSelector:@selector(allInstalledApplications)]) {
+                allApps = [workspace performSelector:@selector(allInstalledApplications)];
+            } else if ([workspace respondsToSelector:@selector(allApplications)]) {
+                allApps = [workspace performSelector:@selector(allApplications)];
+            }
+            
+            for (id appProxy in allApps) {
+                @try {
+                    NSString *bundleID = nil;
+                    if ([appProxy respondsToSelector:@selector(applicationIdentifier)]) {
+                        bundleID = [appProxy performSelector:@selector(applicationIdentifier)];
+                    } else if ([appProxy respondsToSelector:@selector(bundleIdentifier)]) {
+                        bundleID = [appProxy performSelector:@selector(bundleIdentifier)];
+                    }
+                    
+                    NSString *appName = nil;
+                    if ([appProxy respondsToSelector:@selector(localizedName)]) {
+                        appName = [appProxy performSelector:@selector(localizedName)];
+                    }
+                    
+                    // 如果无法读取本地化名称，退而求其次使用 bundleID 尾部
+                    if (!appName && bundleID) {
+                        appName = [bundleID lastPathComponent];
+                    }
+                    
+                    if (bundleID && appName) {
+                        // 移除原有的 User/System 过滤，允许全部应用抓取到勾选面板
+                        [appArray addObject:@{@"bundleID": bundleID, @"name": appName}];
+                    }
+                } @catch (NSException *e) {
+                    NSLog(@"[ERROR] Skip parsing proxy record: %@", e);
                 }
             }
+        } @catch (NSException *e) {
+            NSLog(@"[ERROR] Failed to fetch application workspace: %@", e);
         }
     }
+    
+    // 按名称字母表排序，方便用户查找
+    [appArray sortUsingComparator:^NSComparisonResult(NSDictionary *obj1, NSDictionary *obj2) {
+        return [obj1[@"name"] localizedCompare:obj2[@"name"]];
+    }];
     
     // 序列化为标准不带换行的 JSON 纯文本，供前端 JS 直接解析
     NSError *error;
