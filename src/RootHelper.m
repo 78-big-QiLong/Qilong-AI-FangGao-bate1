@@ -711,20 +711,28 @@ void forceRefreshWithoutReboot() {
     printRealLog(@"[REFRESH] All daemons killed + broadcasts sent. Effect immediate.");
 }
 
-// 终极再生：安全重启用户空间
+// 终极再生：安全重启用户空间（异步释放方案，解除 launchd 进程链死锁）
 void triggerUserspaceReboot() {
     printRealLog(@"[KERNEL] Cleaning complete. Triggering userspace reboot...");
-    pid_t pid;
-    const char *args[] = {"/bin/launchctl", "reboot", "userspace", NULL};
-    int status = posix_spawn(&pid, args[0], NULL, NULL, (char* const*)args, NULL);
-    if (status == 0) {
-        printRealLog(@"[KERNEL] Reboot helper spawned (PID: %d).", pid);
-        int waitStatus = 0;
-        waitpid(pid, &waitStatus, 0);
-        if (WIFEXITED(waitStatus)) {
-            printRealLog(@"[KERNEL] Reboot helper exited with status: %d.", WEXITSTATUS(waitStatus));
-        }
+    
+    // 方案一：标准路径 launchctl reboot userspace
+    {
+        pid_t pid;
+        const char *args[] = {"/bin/launchctl", "reboot", "userspace", NULL};
+        posix_spawn(&pid, args[0], NULL, NULL, (char* const*)args, NULL);
     }
+    
+    // 方案二：Rootless 路径 launchctl reboot userspace
+    {
+        pid_t pid;
+        const char *args[] = {"/var/jb/bin/launchctl", "reboot", "userspace", NULL};
+        posix_spawn(&pid, args[0], NULL, NULL, (char* const*)args, NULL);
+    }
+    
+    // ⚠️ 极其关键：必须在此处立即 exit(0) 退出当前 RootHelper 二进制！
+    // 否则 RootHelper 会一直留在内存中等待子进程结束，而 launchd 在执行 userspace 重启时又在等待 RootHelper 退出，
+    // 从而导致长达十几秒的双向死锁卡死。立即退出后，用户空间重启会瞬间无缝执行。
+    exit(0);
 }
 
 // ── 提权辅助器核心多轨总调度入口 ──
