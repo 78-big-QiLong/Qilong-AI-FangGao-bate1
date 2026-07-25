@@ -870,7 +870,6 @@ int main(int argc, const char * argv[]) {
                     // 5. 清理共享 AppGroup 及 PluginKit 插件特权包
                     cleanedFilesInWindow += cleanSpecialContainers(@"/var/mobile/Containers/Shared/AppGroup", selectedAppBundleIDs);
                     cleanedFilesInWindow += cleanSpecialContainers(@"/var/mobile/Containers/Data/PluginKitPlugin", selectedAppBundleIDs);
-
                     // 实时输出每一轮扫描状态，确保日志面板有持续回显
                     printRealLog(@"[REALTIME] Pass #%d: Scanned safe /var paths. Cleaned in pass: %d files.", scanCyclesInWindow, cleanedFilesInWindow);
 

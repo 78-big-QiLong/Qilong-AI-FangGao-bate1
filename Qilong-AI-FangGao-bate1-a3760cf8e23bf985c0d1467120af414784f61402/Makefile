@@ -1,4 +1,4 @@
-TARGET = TrollCleanPro
+TARGET = QiLong-Dynamic-Whitelist
 HELPER = RootHelper
 
 CC = clang
