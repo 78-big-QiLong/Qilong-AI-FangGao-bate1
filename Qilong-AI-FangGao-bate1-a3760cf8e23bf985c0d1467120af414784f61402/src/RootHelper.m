@@ -668,6 +668,7 @@ int safeCleanDirectory(NSString *dirPath, NSArray *targetBundleIDs) {
                 NSError *deleteError = nil;
                 if ([fm removeItemAtPath:fullPath error:&deleteError]) {
                     printRealLog(@"[CLEAN] Removed file: %@", fileName);
+                    cleanedCount++;
                 } else if (deleteError) {
                     printRealLog(@"[ERROR] Permission denied: %@. Reason: %@", fileName, deleteError.localizedDescription);
                 }
@@ -681,8 +682,10 @@ int safeCleanDirectory(NSString *dirPath, NSArray *targetBundleIDs) {
         NSError *rmDirErr = nil;
         if ([fm removeItemAtPath:dirPath error:&rmDirErr]) {
             printRealLog(@"[CLEAN] Removed empty dir: %@", dirPath);
+            cleanedCount++;
         }
     }
+    return cleanedCount;
 }
 
 // ============================================================================
@@ -812,10 +815,7 @@ int main(int argc, const char * argv[]) {
             ];
 
             // 🔍 拓展安全的 `/var` 纯缓存与临时残留清理路径（100% 不影响系统稳定性）
-            NSArray *customVarPaths = @[
-                @"/var/mobile/Library/Caches",
-                @"/var/mobile/Library/Cookies",
-                @"/var/mobile/Library/HTTPStorages",
+        ar/mobile/Library/HTTPStorages",
                 @"/var/mobile/Library/Saved Application State",
                 @"/var/mobile/Library/SplashBoard/Snapshots",
                 @"/var/mobile/Library/WebKit",
@@ -831,7 +831,10 @@ int main(int argc, const char * argv[]) {
                 @"/var/mobile/Containers/Data/PluginKitPlugin"
             ];
 
-            int scanCyclesInWindow = 0;
+            int sca    NSArray *customVarPaths = @[
+                @"/var/mobile/Library/Caches",
+                @"/var/mobile/Library/Cookies",
+                @"/vnCyclesInWindow = 0;
             int cleanedFilesInWindow = 0;
             time_t windowStart = time(NULL);
 
