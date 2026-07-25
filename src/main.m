@@ -1,4 +1,4 @@
-#import <UIKit/UIKit.h>
+﻿#import <UIKit/UIKit.h>
 #import <WebKit/WebKit.h>
 #import <spawn.h>
 #import <sys/wait.h>
@@ -6,7 +6,7 @@
 #import <unistd.h>
 #import "DeviceInfo.h"
 
-// ── 核心：免声明动态绑定 iOS 底层私有应用管理服务 ──
+// 鈹€鈹€ 鏍稿績锛氬厤澹版槑鍔ㄦ€佺粦瀹?iOS 搴曞眰绉佹湁搴旂敤绠＄悊鏈嶅姟 鈹€鈹€
 @interface NSObject (LSApplicationWorkspace_Private)
 + (id)defaultWorkspace;
 - (NSArray *)allInstalledApplications;
@@ -18,7 +18,7 @@
 - (NSString *)applicationType;
 @end
 
-// 【自锁开关闸】锁定后台 IDFA 轮询进程 PID，接通单按钮状态机
+// 銆愯嚜閿佸紑鍏抽椄銆戦攣瀹氬悗鍙?IDFA 杞杩涚▼ PID锛屾帴閫氬崟鎸夐挳鐘舵€佹満
 static pid_t global_bg_idfa_pid = 0;
 
 @interface ViewController : UIViewController <WKScriptMessageHandler, WKNavigationDelegate>
@@ -30,45 +30,45 @@ static pid_t global_bg_idfa_pid = 0;
 - (void)viewDidLoad {
     [super viewDidLoad];
     
-    // 1. 0伪装：开机首要任务，触发底层探针抓取真实的硬件底牌
+    // 1. 0浼锛氬紑鏈洪瑕佷换鍔★紝瑙﹀彂搴曞眰鎺㈤拡鎶撳彇鐪熷疄鐨勭‖浠跺簳鐗?
     DeviceInfo *info = [DeviceInfo sharedInstance];
     NSLog(@"[MAIN] Init complete. iOS: %@, Model: %@", info.systemVersion, info.deviceModel);
     
-    // 2. 配置跨界通信管道，注册暗号监听器 "TrollHandler"
+    // 2. 閰嶇疆璺ㄧ晫閫氫俊绠￠亾锛屾敞鍐屾殫鍙风洃鍚櫒 "TrollHandler"
     WKUserContentController *userController = [[WKUserContentController alloc] init];
     [userController addScriptMessageHandler:self name:@"TrollHandler"];
     
     WKWebViewConfiguration *config = [[WKWebViewConfiguration alloc] init];
     config.userContentController = userController;
     
-    // 3. 初始化全屏 WebView 容器
+    // 3. 鍒濆鍖栧叏灞?WebView 瀹瑰櫒
     self.webView = [[WKWebView alloc] initWithFrame:self.view.bounds configuration:config];
     self.webView.navigationDelegate = self;
     self.webView.backgroundColor = [UIColor colorWithRed:0.04 green:0.04 blue:0.05 alpha:1.0];
     self.webView.scrollView.bounces = NO; 
     [self.view addSubview:self.webView];
     
-    // 4. 从 App Bundle 内部加载 HTML 页面
+    // 4. 浠?App Bundle 鍐呴儴鍔犺浇 HTML 椤甸潰
     NSURL *url = [[NSBundle mainBundle] URLForResource:@"index" withExtension:@"html"];
     if (url) {
         [self.webView loadRequest:[NSURLRequest requestWithURL:url]];
     }
 }
 
-// 📄 当网页加载完毕时，精准执行双重反向注入（硬件数据 + 真实App名单）
+// 馃搫 褰撶綉椤靛姞杞藉畬姣曟椂锛岀簿鍑嗘墽琛屽弻閲嶅弽鍚戞敞鍏ワ紙纭欢鏁版嵁 + 鐪熷疄App鍚嶅崟锛?
 - (void)webView:(WKWebView *)webView didFinishNavigation:(WKNavigation *)navigation {
     DeviceInfo *info = [DeviceInfo sharedInstance];
     
-    // 注入 A：将硬件底牌送达前端看板
-    // ✅ 修复：将 js 变量内中文字符改为干净的英文字符
+    // 娉ㄥ叆 A锛氬皢纭欢搴曠墝閫佽揪鍓嶇鐪嬫澘
+    // 鉁?淇锛氬皢 js 鍙橀噺鍐呬腑鏂囧瓧绗︽敼涓哄共鍑€鐨勮嫳鏂囧瓧绗?
     NSString *jsDevice = [NSString stringWithFormat:@"window.updateDevicePayload('%@', '%@', '%@', '%@', %@, %@);",
                         info.systemVersion, info.deviceModel, info.serialNumber, info.processor,
                         info.isTrollStore ? @"true" : @"false", info.isJailbroken ? @"true" : @"false"];
     
-    // 注入 B：动态抓取真实 App 列表并转为 JSON 字符串
+    // 娉ㄥ叆 B锛氬姩鎬佹姄鍙栫湡瀹?App 鍒楄〃骞惰浆涓?JSON 瀛楃涓?
     NSString *jsAppList = [NSString stringWithFormat:@"window.updateAppList('%@');", [self fetchUserAppListJSON]];
     
-    // 延迟 0.5 秒，配合前端开屏飞入动画滑行完毕后完美灌入
+    // 寤惰繜 0.5 绉掞紝閰嶅悎鍓嶇寮€灞忛鍏ュ姩鐢绘粦琛屽畬姣曞悗瀹岀編鐏屽叆
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         [self.webView evaluateJavaScript:jsDevice completionHandler:nil];
         [self.webView evaluateJavaScript:jsAppList completionHandler:nil];
@@ -76,11 +76,11 @@ static pid_t global_bg_idfa_pid = 0;
     });
 }
 
-// 🔍 利用私有 API 捞取全机所有应用名单（包括系统内置、第三方与隐藏服务，支持iOS全版本兼容）
+// 馃攳 鍒╃敤绉佹湁 API 鎹炲彇鍏ㄦ満鎵€鏈夊簲鐢ㄥ悕鍗曪紙鍖呮嫭绯荤粺鍐呯疆銆佺涓夋柟涓庨殣钘忔湇鍔★紝鏀寔iOS鍏ㄧ増鏈吋瀹癸級
 - (NSString *)fetchUserAppListJSON {
     NSMutableArray *appArray = [NSMutableArray array];
     
-    // 动态反射获取系统应用工作空间
+    // 鍔ㄦ€佸弽灏勮幏鍙栫郴缁熷簲鐢ㄥ伐浣滅┖闂?
     Class workspaceClass = NSClassFromString(@"LSApplicationWorkspace");
     if (workspaceClass) {
         @try {
@@ -106,13 +106,13 @@ static pid_t global_bg_idfa_pid = 0;
                         appName = [appProxy performSelector:@selector(localizedName)];
                     }
                     
-                    // 如果无法读取本地化名称，退而求其次使用 bundleID 尾部
+                    // 濡傛灉鏃犳硶璇诲彇鏈湴鍖栧悕绉帮紝閫€鑰屾眰鍏舵浣跨敤 bundleID 灏鹃儴
                     if (!appName && bundleID) {
                         appName = [bundleID lastPathComponent];
                     }
                     
                     if (bundleID && appName) {
-                        // 移除原有的 User/System 过滤，允许全部应用抓取到勾选面板
+                        // 绉婚櫎鍘熸湁鐨?User/System 杩囨护锛屽厑璁稿叏閮ㄥ簲鐢ㄦ姄鍙栧埌鍕鹃€夐潰鏉?
                         [appArray addObject:@{@"bundleID": bundleID, @"name": appName}];
                     }
                 } @catch (NSException *e) {
@@ -124,12 +124,12 @@ static pid_t global_bg_idfa_pid = 0;
         }
     }
     
-    // 按名称字母表排序，方便用户查找
+    // 鎸夊悕绉板瓧姣嶈〃鎺掑簭锛屾柟渚跨敤鎴锋煡鎵?
     [appArray sortUsingComparator:^NSComparisonResult(NSDictionary *obj1, NSDictionary *obj2) {
         return [obj1[@"name"] localizedCompare:obj2[@"name"]];
     }];
     
-    // 序列化为标准不带换行的 JSON 纯文本，供前端 JS 直接解析
+    // 搴忓垪鍖栦负鏍囧噯涓嶅甫鎹㈣鐨?JSON 绾枃鏈紝渚涘墠绔?JS 鐩存帴瑙ｆ瀽
     NSError *error;
     NSData *jsonData = [NSJSONSerialization dataWithJSONObject:appArray options:0 error:&error];
     if (!error && jsonData) {
@@ -138,7 +138,7 @@ static pid_t global_bg_idfa_pid = 0;
     return @"[]";
 }
 
-// 📥 核心接收器：解析来自前端的多维度指令（支持字符串与复杂对象格式）
+// 馃摜 鏍稿績鎺ユ敹鍣細瑙ｆ瀽鏉ヨ嚜鍓嶇鐨勫缁村害鎸囦护锛堟敮鎸佸瓧绗︿覆涓庡鏉傚璞℃牸寮忥級
 - (void)userContentController:(WKUserContentController *)userContentController 
       didReceiveScriptMessage:(WKScriptMessage *)message {
     
@@ -147,14 +147,14 @@ static pid_t global_bg_idfa_pid = 0;
     
     if ([body isKindOfClass:[NSString class]]) {
         if ([body isEqualToString:@"start_idfa_loop"]) {
-            // 首次点击：派生后台进程并锁定 PID
+            // 棣栨鐐瑰嚮锛氭淳鐢熷悗鍙拌繘绋嬪苟閿佸畾 PID
             pid_t newPid = [self executeRootHelperWithMode:@"bg_idfa_loop" selectedApps:nil];
             if (newPid > 0) {
                 global_bg_idfa_pid = newPid;
                 [self.webView evaluateJavaScript:@"window.onIdfaStateChanged(true);" completionHandler:nil];
             }
         } else if ([body isEqualToString:@"stop_idfa_loop"]) {
-            // 二次点击：下发 SIGKILL 物理截杀后台
+            // 浜屾鐐瑰嚮锛氫笅鍙?SIGKILL 鐗╃悊鎴潃鍚庡彴
             if (global_bg_idfa_pid > 0) {
                 kill(global_bg_idfa_pid, SIGKILL);
                 NSLog(@"[MAIN] Daemon process terminated (PID: %d)", global_bg_idfa_pid);
@@ -166,12 +166,19 @@ static pid_t global_bg_idfa_pid = 0;
         }
     } 
     else if ([body isKindOfClass:[NSDictionary class]]) {
-        // ✨全新咬合：处理带勾选名单的高阶前端对象 {"action": "xxx", "apps": ["包名1", "包名2"]}
+        // 鉁ㄥ叏鏂板挰鍚堬細澶勭悊甯﹀嬀閫夊悕鍗曠殑楂橀樁鍓嶇瀵硅薄 {"action": "xxx", "apps": ["鍖呭悕1", "鍖呭悕2"]}
         NSString *action = body[@"action"];
         
         if ([action isEqualToString:@"start_clean"]) {
             NSArray *apps = body[@"apps"];
             [self executeRootHelperWithMode:@"standard_clean" selectedApps:apps];
+        } else if ([action isEqualToString:@"start_realtime_clean"]) {
+            NSArray *apps = body[@"apps"];
+            pid_t newPid = [self executeRootHelperWithMode:@"realtime_whitelist_clean" selectedApps:apps];
+            if (newPid > 0) {
+                global_bg_idfa_pid = newPid;
+                [self.webView evaluateJavaScript:@"window.onIdfaStateChanged(true);" completionHandler:nil];
+            }
         } else if ([action isEqualToString:@"open_url"]) {
             NSString *urlString = body[@"url"];
             if (urlString) {
@@ -182,30 +189,30 @@ static pid_t global_bg_idfa_pid = 0;
     }
 }
 
-// 🚀 动态派生提权进程（完美传递用户勾选的应用名单参数 + stdout 管道实时回传）
+// 馃殌 鍔ㄦ€佹淳鐢熸彁鏉冭繘绋嬶紙瀹岀編浼犻€掔敤鎴峰嬀閫夌殑搴旂敤鍚嶅崟鍙傛暟 + stdout 绠￠亾瀹炴椂鍥炰紶锛?
 - (pid_t)executeRootHelperWithMode:(NSString *)mode selectedApps:(NSArray *)selectedApps {
     NSString *helperPath = [[NSBundle mainBundle] pathForResource:@"RootHelper" ofType:nil];
     if (!helperPath) return 0;
     
-    // 构建 C 语言标准的 argv 动态参数列数组
+    // 鏋勫缓 C 璇█鏍囧噯鐨?argv 鍔ㄦ€佸弬鏁板垪鏁扮粍
     NSMutableArray *argsArray = [NSMutableArray array];
-    [argsArray addObject:helperPath]; // argv[0] 是程序自身路径
-    [argsArray addObject:mode];       // argv[1] 是运行模式轨
+    [argsArray addObject:helperPath]; // argv[0] 鏄▼搴忚嚜韬矾寰?
+    [argsArray addObject:mode];       // argv[1] 鏄繍琛屾ā寮忚建
     
-    // 将用户勾选的名单追加到 argv[2], argv[3]... 后面，实现数据物理咬合
+    // 灏嗙敤鎴峰嬀閫夌殑鍚嶅崟杩藉姞鍒?argv[2], argv[3]... 鍚庨潰锛屽疄鐜版暟鎹墿鐞嗗挰鍚?
     if (selectedApps && selectedApps.count > 0) {
         [argsArray addObjectsFromArray:selectedApps];
     }
     
-    // 转为 C 指针分配内存
+    // 杞负 C 鎸囬拡鍒嗛厤鍐呭瓨
     int argCount = (int)argsArray.count;
     const char **argv = calloc(argCount + 1, sizeof(char *));
     for (int i = 0; i < argCount; i++) {
         argv[i] = [argsArray[i] UTF8String];
     }
-    argv[argCount] = NULL; // 结构体结尾必须置空
+    argv[argCount] = NULL; // 缁撴瀯浣撶粨灏惧繀椤荤疆绌?
     
-    // 建立管道，接通 RootHelper 的 stdout 实时日志流
+    // 寤虹珛绠￠亾锛屾帴閫?RootHelper 鐨?stdout 瀹炴椂鏃ュ織娴?
     int pipefd[2];
     if (pipe(pipefd) != 0) {
         free(argv);
@@ -222,12 +229,12 @@ static pid_t global_bg_idfa_pid = 0;
     
     posix_spawn_file_actions_destroy(&actions);
     free(argv);
-    close(pipefd[1]); // 父进程关闭管道写端
+    close(pipefd[1]); // 鐖惰繘绋嬪叧闂閬撳啓绔?
     
     if (status == 0) {
         NSLog(@"[SPAWN] RootHelper launched with %d targets (PID: %d)", (argCount - 2), pid);
         
-        // 异步读取管道，将 RootHelper 的 stdout 实时转发至前端 WebView 日志面板
+        // 寮傛璇诲彇绠￠亾锛屽皢 RootHelper 鐨?stdout 瀹炴椂杞彂鑷冲墠绔?WebView 鏃ュ織闈㈡澘
         int readFd = pipefd[0];
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
             FILE *stream = fdopen(readFd, "r");
@@ -236,12 +243,12 @@ static pid_t global_bg_idfa_pid = 0;
             char buffer[1024];
             while (fgets(buffer, sizeof(buffer), stream) != NULL) {
                 NSString *line = [[NSString alloc] initWithUTF8String:buffer];
-                // 去除行尾换行
+                // 鍘婚櫎琛屽熬鎹㈣
                 line = [line stringByTrimmingCharactersInSet:[NSCharacterSet newlineCharacterSet]];
                 if (line.length == 0) continue;
                 
                 dispatch_async(dispatch_get_main_queue(), ^{
-                    // 转义单引号防止 JS 注入崩溃
+                    // 杞箟鍗曞紩鍙烽槻姝?JS 娉ㄥ叆宕╂簝
                     NSString *escaped = [line stringByReplacingOccurrencesOfString:@"'" withString:@"\\'"];
                     NSString *js = [NSString stringWithFormat:@"appendLog('%@', 'system');", escaped];
                     [self.webView evaluateJavaScript:js completionHandler:nil];
@@ -260,14 +267,14 @@ static pid_t global_bg_idfa_pid = 0;
 
 - (void)viewDidLayoutSubviews {
     [super viewDidLayoutSubviews];
-    // 强制将 WebView 视口界限物理拉伸/重置到当前屏幕物理大小，完美修复旋转时比例没有改变、内容掉到屏幕外的Bug
+    // 寮哄埗灏?WebView 瑙嗗彛鐣岄檺鐗╃悊鎷変几/閲嶇疆鍒板綋鍓嶅睆骞曠墿鐞嗗ぇ灏忥紝瀹岀編淇鏃嬭浆鏃舵瘮渚嬫病鏈夋敼鍙樸€佸唴瀹规帀鍒板睆骞曞鐨凚ug
     self.webView.frame = self.view.bounds;
 }
 
 - (BOOL)prefersStatusBarHidden { return YES; }
 @end
 
-// ── 标准 AppDelegate 壳子 ──
+// 鈹€鈹€ 鏍囧噯 AppDelegate 澹冲瓙 鈹€鈹€
 @interface AppDelegate : UIResponder <UIApplicationDelegate>
 @property (strong, nonatomic) UIWindow *window;
 @end

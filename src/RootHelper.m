@@ -1,4 +1,4 @@
-#import <Foundation/Foundation.h>
+﻿#import <Foundation/Foundation.h>
 #import <sys/stat.h>
 #import <sys/sysctl.h>
 #import <spawn.h>
@@ -16,7 +16,7 @@ typedef io_object_t io_registry_entry_t;
 typedef char io_string_t[512];
 typedef uint32_t IOOptionBits;
 
-// 0伪装：标准终端真实日志输出，直接对接前端 WebView 日志面板
+// 0浼锛氭爣鍑嗙粓绔湡瀹炴棩蹇楄緭鍑猴紝鐩存帴瀵规帴鍓嶇 WebView 鏃ュ織闈㈡澘
 void printRealLog(NSString *format, ...) {
     va_list args;
     va_start(args, format);
@@ -26,7 +26,7 @@ void printRealLog(NSString *format, ...) {
     fflush(stdout);
 }
 
-// ── 辅助工具：posix_spawn 封装 ──
+// 鈹€鈹€ 杈呭姪宸ュ叿锛歱osix_spawn 灏佽 鈹€鈹€
 int spawnAndWait(const char *path, const char **argv) {
     pid_t pid;
     int status = posix_spawn(&pid, path, NULL, NULL, (char* const*)argv, NULL);
@@ -38,11 +38,11 @@ int spawnAndWait(const char *path, const char **argv) {
     return -1;
 }
 
-// ── 核心多方案联合守护进程重载与杀戮引擎（5大联合方案，防重入与多进程死锁优化） ──
+// 鈹€鈹€ 鏍稿績澶氭柟妗堣仈鍚堝畧鎶よ繘绋嬮噸杞戒笌鏉€鎴紩鎿庯紙5澶ц仈鍚堟柟妗堬紝闃查噸鍏ヤ笌澶氳繘绋嬫閿佷紭鍖栵級 鈹€鈹€
 void killDaemonByName(const char *name) {
     if (!name || strlen(name) == 0) return;
     
-    // 用静态线程安全集合记录本次运行中已被处理过的守护进程，防止在同一秒内多次强杀导致 launchd 触发崩溃冷却时间锁死系统
+    // 鐢ㄩ潤鎬佺嚎绋嬪畨鍏ㄩ泦鍚堣褰曟湰娆¤繍琛屼腑宸茶澶勭悊杩囩殑瀹堟姢杩涚▼锛岄槻姝㈠湪鍚屼竴绉掑唴澶氭寮烘潃瀵艰嚧 launchd 瑙﹀彂宕╂簝鍐峰嵈鏃堕棿閿佹绯荤粺
     static NSMutableSet *killedDaemons = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
@@ -52,7 +52,7 @@ void killDaemonByName(const char *name) {
     @synchronized(killedDaemons) {
         NSString *nsName = [NSString stringWithUTF8String:name];
         if ([killedDaemons containsObject:nsName]) {
-            // 本次生命周期中已经处理过，跳过避免造成守护进程持续崩溃重启锁死系统
+            // 鏈鐢熷懡鍛ㄦ湡涓凡缁忓鐞嗚繃锛岃烦杩囬伩鍏嶉€犳垚瀹堟姢杩涚▼鎸佺画宕╂簝閲嶅惎閿佹绯荤粺
             return;
         }
         [killedDaemons addObject:nsName];
@@ -60,7 +60,7 @@ void killDaemonByName(const char *name) {
 
     BOOL killedAny = NO;
 
-    // ── 方案一：底层 BSD 内核 sysctl 进程表直接遍历 + C 信号截杀 (SIGTERM / SIGKILL) ──
+    // 鈹€鈹€ 鏂规涓€锛氬簳灞?BSD 鍐呮牳 sysctl 杩涚▼琛ㄧ洿鎺ラ亶鍘?+ C 淇″彿鎴潃 (SIGTERM / SIGKILL) 鈹€鈹€
     int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0};
     size_t size = 0;
     if (sysctl(mib, 4, NULL, &size, NULL, 0) == 0 && size > 0) {
@@ -82,23 +82,23 @@ void killDaemonByName(const char *name) {
         if (procs) free(procs);
     }
 
-    // ── 动态阶梯回退：若方案一已成功通过内核杀死进程，则不再执行耗时的命令行进程生成，杜绝数十秒卡死 ──
+    // 鈹€鈹€ 鍔ㄦ€侀樁姊洖閫€锛氳嫢鏂规涓€宸叉垚鍔熼€氳繃鍐呮牳鏉€姝昏繘绋嬶紝鍒欎笉鍐嶆墽琛岃€楁椂鐨勫懡浠よ杩涚▼鐢熸垚锛屾潨缁濇暟鍗佺鍗℃ 鈹€鈹€
     if (!killedAny) {
-        // ── 方案二：执行 iOS 标准路径下的 killall -9 ──
+        // 鈹€鈹€ 鏂规浜岋細鎵ц iOS 鏍囧噯璺緞涓嬬殑 killall -9 鈹€鈹€
         {
             const char *args[] = {"/usr/bin/killall", "-9", name, NULL};
             int ret = spawnAndWait(args[0], args);
             if (ret == 0) killedAny = YES;
         }
 
-        // ── 方案三：兼容 Rootless 越狱路径下的 killall -9 ──
+        // 鈹€鈹€ 鏂规涓夛細鍏煎 Rootless 瓒婄嫳璺緞涓嬬殑 killall -9 鈹€鈹€
         if (!killedAny) {
             const char *args[] = {"/var/jb/usr/bin/killall", "-9", name, NULL};
             int ret = spawnAndWait(args[0], args);
             if (ret == 0) killedAny = YES;
         }
 
-        // ── 方案四：通过 launchctl 停止/重置相关系统服务 ──
+        // 鈹€鈹€ 鏂规鍥涳細閫氳繃 launchctl 鍋滄/閲嶇疆鐩稿叧绯荤粺鏈嶅姟 鈹€鈹€
         if (!killedAny) {
             NSString *serviceName = [NSString stringWithFormat:@"com.apple.%s", name];
             const char *args[] = {"/bin/launchctl", "stop", [serviceName UTF8String], NULL};
@@ -106,7 +106,7 @@ void killDaemonByName(const char *name) {
         }
     }
 
-    // ── 方案五：发射 Darwin IPC 广播催促守护进程重载偏好缓存 ──
+    // 鈹€鈹€ 鏂规浜旓細鍙戝皠 Darwin IPC 骞挎挱鍌績瀹堟姢杩涚▼閲嶈浇鍋忓ソ缂撳瓨 鈹€鈹€
     {
         char notifyBuf[256];
         snprintf(notifyBuf, sizeof(notifyBuf), "com.apple.%s.changed", name);
@@ -120,7 +120,7 @@ void killDaemonByName(const char *name) {
 }
 
 // ============================================================================
-// IDFA + IDFV 全维度强制刷新（三遍覆写 + 读取回显 + 多层文件深度改写）
+// IDFA + IDFV 鍏ㄧ淮搴﹀己鍒跺埛鏂帮紙涓夐亶瑕嗗啓 + 璇诲彇鍥炴樉 + 澶氬眰鏂囦欢娣卞害鏀瑰啓锛?
 // ============================================================================
 void resetIDFAIdentifier() {
     NSString *adPlist = @"/var/mobile/Library/Preferences/com.apple.AdLib.plist";
@@ -130,7 +130,7 @@ void resetIDFAIdentifier() {
         NSString *newUUID = [[NSUUID UUID] UUIDString];
         NSString *newVendorUUID = [[NSUUID UUID] UUIDString];
         
-        // ── 方案A：直接覆写 AdLib plist ──
+        // 鈹€鈹€ 鏂规A锛氱洿鎺ヨ鍐?AdLib plist 鈹€鈹€
         NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithContentsOfFile:adPlist];
         if (!dict) dict = [NSMutableDictionary dictionary];
         [dict setObject:newUUID forKey:@"ADI_DEVICE_IDENTIFIER_DEPRECATED"];
@@ -140,7 +140,7 @@ void resetIDFAIdentifier() {
         [dict setObject:@(YES) forKey:@"forceLimitAdTracking"];
         [dict writeToFile:adPlist atomically:YES];
         
-        // ── 方案B：通过 MobileGestalt 直接注入（不需要重启） ──
+        // 鈹€鈹€ 鏂规B锛氶€氳繃 MobileGestalt 鐩存帴娉ㄥ叆锛堜笉闇€瑕侀噸鍚級 鈹€鈹€
         void *gestalt = dlopen("/usr/lib/libMobileGestalt.dylib", RTLD_LAZY);
         if (gestalt) {
             int (*MGSetAnswer)(CFStringRef key, CFTypeRef value) = dlsym(gestalt, "MGSetAnswer");
@@ -152,14 +152,14 @@ void resetIDFAIdentifier() {
             dlclose(gestalt);
         }
         
-        // ── 方案C：覆写 identifierForAdvertising 底层缓存 plist ──
+        // 鈹€鈹€ 鏂规C锛氳鍐?identifierForAdvertising 搴曞眰缂撳瓨 plist 鈹€鈹€
         NSString *adIdPlist2 = @"/var/mobile/Library/Preferences/com.apple.AdServices.plist";
         NSMutableDictionary *adDict2 = [NSMutableDictionary dictionaryWithContentsOfFile:adIdPlist2];
         if (!adDict2) adDict2 = [NSMutableDictionary dictionary];
         [adDict2 setObject:newUUID forKey:@"adsIdentifier"];
         [adDict2 writeToFile:adIdPlist2 atomically:YES];
         
-        // ── 方案D：覆写 identifierForVendor 底层缓存 ──
+        // 鈹€鈹€ 鏂规D锛氳鍐?identifierForVendor 搴曞眰缂撳瓨 鈹€鈹€
         NSString *vendorPlist = @"/var/mobile/Library/Preferences/com.apple.identifierForVendor.plist";
         NSMutableDictionary *vendorDict = [NSMutableDictionary dictionaryWithContentsOfFile:vendorPlist];
         if (!vendorDict) vendorDict = [NSMutableDictionary dictionary];
@@ -167,7 +167,7 @@ void resetIDFAIdentifier() {
         [vendorDict setObject:newVendorUUID forKey:@"IdentifierForVendor"];
         [vendorDict writeToFile:vendorPlist atomically:YES];
         
-        // ── 方案E：清除所有 IDFV 相关的 Keychain 条目 ──
+        // 鈹€鈹€ 鏂规E锛氭竻闄ゆ墍鏈?IDFV 鐩稿叧鐨?Keychain 鏉＄洰 鈹€鈹€
         sqlite3 *db;
         if (sqlite3_open("/var/keychains/keychain-2.db", &db) == SQLITE_OK) {
             const char *sql = "DELETE FROM genp WHERE agrp LIKE '%com.apple.identifierForVendor%';";
@@ -182,14 +182,14 @@ void resetIDFAIdentifier() {
             sqlite3_close(db);
         }
 
-        // ── 方案F（新增）：直接覆写 LaunchServices IDFV 映射缓存库 plist ──
+        // 鈹€鈹€ 鏂规F锛堟柊澧烇級锛氱洿鎺ヨ鍐?LaunchServices IDFV 鏄犲皠缂撳瓨搴?plist 鈹€鈹€
         NSString *lsdPlist = @"/var/mobile/Library/Preferences/com.apple.lsd.identifiers.plist";
         NSMutableDictionary *lsdDict = [NSMutableDictionary dictionaryWithContentsOfFile:lsdPlist];
         if (!lsdDict) lsdDict = [NSMutableDictionary dictionary];
         [lsdDict setObject:newVendorUUID forKey:@"VendorIdentifier"];
         [lsdDict writeToFile:lsdPlist atomically:YES];
 
-        // ── 方案G（新增）：覆写 AdPlatforms 与 AdPrivacy 等全部广告关联 plist ──
+        // 鈹€鈹€ 鏂规G锛堟柊澧烇級锛氳鍐?AdPlatforms 涓?AdPrivacy 绛夊叏閮ㄥ箍鍛婂叧鑱?plist 鈹€鈹€
         NSArray *adPlists = @[
             @"/var/mobile/Library/Preferences/com.apple.AdPlatforms.plist",
             @"/var/mobile/Library/Preferences/com.apple.adprivacyd.plist",
@@ -203,7 +203,7 @@ void resetIDFAIdentifier() {
             [pDict writeToFile:pPath atomically:YES];
         }
 
-        // ── 方案H（新增）：覆写 GlobalPreferences 全局参数表中的追踪 UUID 字段 ──
+        // 鈹€鈹€ 鏂规H锛堟柊澧烇級锛氳鍐?GlobalPreferences 鍏ㄥ眬鍙傛暟琛ㄤ腑鐨勮拷韪?UUID 瀛楁 鈹€鈹€
         NSArray *globalPlists = @[
             @"/var/mobile/Library/Preferences/.GlobalPreferences.plist",
             @"/var/root/Library/Preferences/.GlobalPreferences.plist",
@@ -220,7 +220,7 @@ void resetIDFAIdentifier() {
             }
         }
 
-        // ── 方案I（新增）：强制物理抹除 LSD / AdLib 底层磁盘缓存目录 ──
+        // 鈹€鈹€ 鏂规I锛堟柊澧烇級锛氬己鍒剁墿鐞嗘姽闄?LSD / AdLib 搴曞眰纾佺洏缂撳瓨鐩綍 鈹€鈹€
         NSArray *cacheDirs = @[
             @"/var/mobile/Library/Caches/com.apple.lsd",
             @"/var/mobile/Library/Caches/com.apple.AdLib",
@@ -232,13 +232,13 @@ void resetIDFAIdentifier() {
             }
         }
 
-        // ── 广播催促系统守护进程同步 ──
+        // 鈹€鈹€ 骞挎挱鍌績绯荤粺瀹堟姢杩涚▼鍚屾 鈹€鈹€
         notify_post("com.apple.AdLib.LimitAdTrackingChanged");
         notify_post("com.apple.idfa.changed");
         notify_post("com.apple.identityservicesd.idchanged");
         notify_post("com.apple.MobileGestalt.didChange");
         
-        // 反向重读验证
+        // 鍙嶅悜閲嶈楠岃瘉
         NSDictionary *verifyDict = [NSDictionary dictionaryWithContentsOfFile:adPlist];
         NSString *currentIDFA = verifyDict[@"AdvertisingIdentifier"] ?: @"READ_FAILED";
         NSDictionary *verifyVendor = [NSDictionary dictionaryWithContentsOfFile:vendorPlist];
@@ -248,7 +248,7 @@ void resetIDFAIdentifier() {
         printRealLog(@"[IDFV] Round %d: New IDFV = %@", i, currentIDFV);
     }
     
-    // ── 方案J（新增增强）：杀死 cfprefsd / lsd 等偏好缓存守护进程强迫从磁盘重读文件 ──
+    // 鈹€鈹€ 鏂规J锛堟柊澧炲寮猴級锛氭潃姝?cfprefsd / lsd 绛夊亸濂界紦瀛樺畧鎶よ繘绋嬪己杩粠纾佺洏閲嶈鏂囦欢 鈹€鈹€
     killDaemonByName("adprivacyd");
     killDaemonByName("adid");
     killDaemonByName("AdServices");
@@ -258,7 +258,7 @@ void resetIDFAIdentifier() {
 }
 
 // ============================================================================
-// Keychain 多方案联合清理 (8 大联合深度方案)
+// Keychain 澶氭柟妗堣仈鍚堟竻鐞?(8 澶ц仈鍚堟繁搴︽柟妗?
 // ============================================================================
 void deleteSelectedAppKeychain(NSArray *bundleIDs) {
     if (!bundleIDs || bundleIDs.count == 0) {
@@ -266,7 +266,7 @@ void deleteSelectedAppKeychain(NSArray *bundleIDs) {
         return;
     }
     
-    // ── 方案1：SQLite 直接删除 keychain-2.db ──
+    // 鈹€鈹€ 鏂规1锛歋QLite 鐩存帴鍒犻櫎 keychain-2.db 鈹€鈹€
     printRealLog(@"[KEYCHAIN] Method 1: SQLite agrp direct delete...");
     sqlite3 *db;
     if (sqlite3_open("/var/keychains/keychain-2.db", &db) == SQLITE_OK) {
@@ -300,7 +300,7 @@ void deleteSelectedAppKeychain(NSArray *bundleIDs) {
         printRealLog(@"[ERROR] SQLite: Could not open keychain-2.db");
     }
     
-    // ── 方案2：扩展匹配 - 删除包含 bundleID 在 svce/acct/sdmn 列中的条目 ──
+    // 鈹€鈹€ 鏂规2锛氭墿灞曞尮閰?- 鍒犻櫎鍖呭惈 bundleID 鍦?svce/acct/sdmn 鍒椾腑鐨勬潯鐩?鈹€鈹€
     printRealLog(@"[KEYCHAIN] Method 2: Extended column match...");
     if (sqlite3_open("/var/keychains/keychain-2.db", &db) == SQLITE_OK) {
         for (NSString *bundleID in bundleIDs) {
@@ -330,7 +330,7 @@ void deleteSelectedAppKeychain(NSArray *bundleIDs) {
         sqlite3_close(db);
     }
 
-    // ── 方案6（新增）：深度扫描 TEXT/BLOB 列 (data/labl/desc/cmnt) ──
+    // 鈹€鈹€ 鏂规6锛堟柊澧烇級锛氭繁搴︽壂鎻?TEXT/BLOB 鍒?(data/labl/desc/cmnt) 鈹€鈹€
     printRealLog(@"[KEYCHAIN] Method 6: Deep payload & label matching...");
     if (sqlite3_open("/var/keychains/keychain-2.db", &db) == SQLITE_OK) {
         for (NSString *bundleID in bundleIDs) {
@@ -358,7 +358,7 @@ void deleteSelectedAppKeychain(NSArray *bundleIDs) {
         sqlite3_close(db);
     }
     
-    // ── 方案3：WAL checkpoint 强制写入 + VACUUM 压缩 ──
+    // 鈹€鈹€ 鏂规3锛歐AL checkpoint 寮哄埗鍐欏叆 + VACUUM 鍘嬬缉 鈹€鈹€
     printRealLog(@"[KEYCHAIN] Method 3: WAL checkpoint + VACUUM...");
     if (sqlite3_open("/var/keychains/keychain-2.db", &db) == SQLITE_OK) {
         sqlite3_exec(db, "PRAGMA wal_checkpoint(TRUNCATE);", NULL, NULL, NULL);
@@ -367,7 +367,7 @@ void deleteSelectedAppKeychain(NSArray *bundleIDs) {
         printRealLog(@"[KEYCHAIN] DB compacted successfully.");
     }
     
-    // ── 方案4：删除 keychain WAL/SHM 残留文件 ──
+    // 鈹€鈹€ 鏂规4锛氬垹闄?keychain WAL/SHM 娈嬬暀鏂囦欢 鈹€鈹€
     NSFileManager *fm = [NSFileManager defaultManager];
     NSArray *keychainAuxFiles = @[
         @"/var/keychains/keychain-2.db-shm",
@@ -380,7 +380,7 @@ void deleteSelectedAppKeychain(NSArray *bundleIDs) {
         }
     }
 
-    // ── 方案7（新增）：清理 Keychain 目录临时与影子缓存件 ──
+    // 鈹€鈹€ 鏂规7锛堟柊澧烇級锛氭竻鐞?Keychain 鐩綍涓存椂涓庡奖瀛愮紦瀛樹欢 鈹€鈹€
     printRealLog(@"[KEYCHAIN] Method 7: Purging shadow keychain caches...");
     NSArray *keychainDirs = @[@"/var/Keychains", @"/var/mobile/Library/Keychains"];
     for (NSString *kDir in keychainDirs) {
@@ -393,7 +393,7 @@ void deleteSelectedAppKeychain(NSArray *bundleIDs) {
         }
     }
 
-    // ── 方案8（新增）：物理抹除 security/securityd 磁盘运行态缓存 ──
+    // 鈹€鈹€ 鏂规8锛堟柊澧烇級锛氱墿鐞嗘姽闄?security/securityd 纾佺洏杩愯鎬佺紦瀛?鈹€鈹€
     printRealLog(@"[KEYCHAIN] Method 8: Cleaning securityd disk caches...");
     NSArray *secCaches = @[
         @"/var/mobile/Library/Caches/com.apple.security.keychain",
@@ -405,18 +405,18 @@ void deleteSelectedAppKeychain(NSArray *bundleIDs) {
         }
     }
     
-    // ── 方案5：杀死 securityd 强制立即重载（无需重启） ──
+    // 鈹€鈹€ 鏂规5锛氭潃姝?securityd 寮哄埗绔嬪嵆閲嶈浇锛堟棤闇€閲嶅惎锛?鈹€鈹€
     killDaemonByName("securityd");
     printRealLog(@"[KEYCHAIN] securityd killed. Keychain cache invalidated.");
 }
 
 // ============================================================================
-// NVRAM 与硬件追溯多方案联合清理 (6 大联合深度方案)
+// NVRAM 涓庣‖浠惰拷婧鏂规鑱斿悎娓呯悊 (6 澶ц仈鍚堟繁搴︽柟妗?
 // ============================================================================
 void clearNVRAMVariables() {
     printRealLog(@"[NVRAM] Starting multi-method erase...");
     
-    // ── 方案1：nvram -c 清空所有非硬件锁死变量（支持标准和越狱路径多重重试） ──
+    // 鈹€鈹€ 鏂规1锛歯vram -c 娓呯┖鎵€鏈夐潪纭欢閿佹鍙橀噺锛堟敮鎸佹爣鍑嗗拰瓒婄嫳璺緞澶氶噸閲嶈瘯锛?鈹€鈹€
     printRealLog(@"[NVRAM] Method 1: nvram -c...");
     {
         const char *args1[] = {"/usr/sbin/nvram", "-c", NULL};
@@ -428,7 +428,7 @@ void clearNVRAMVariables() {
         printRealLog(@"[NVRAM] Method 1: status = %d.", ret);
     }
     
-    // ── 方案2：逐一删除已知的追踪相关 NVRAM 变量（支持多条路径尝试） ──
+    // 鈹€鈹€ 鏂规2锛氶€愪竴鍒犻櫎宸茬煡鐨勮拷韪浉鍏?NVRAM 鍙橀噺锛堟敮鎸佸鏉¤矾寰勫皾璇曪級 鈹€鈹€
     printRealLog(@"[NVRAM] Method 2: Targeted variable delete...");
     NSArray *nvramKeys = @[
         @"auto-boot", @"boot-args", @"SystemAudioVolumeSaved",
@@ -445,7 +445,7 @@ void clearNVRAMVariables() {
     }
     printRealLog(@"[NVRAM] Method 2: Targeted keys purged.");
     
-    // ── 方案3：通过 dlsym 动态加载 IOKit 操作 NVRAM（绕过 iOS SDK 限制） ──
+    // 鈹€鈹€ 鏂规3锛氶€氳繃 dlsym 鍔ㄦ€佸姞杞?IOKit 鎿嶄綔 NVRAM锛堢粫杩?iOS SDK 闄愬埗锛?鈹€鈹€
     printRealLog(@"[NVRAM] Method 3: IOKit dynamic manipulation...");
     void *iokitHandle = dlopen("/System/Library/Frameworks/IOKit.framework/IOKit", RTLD_LAZY);
     if (iokitHandle) {
@@ -490,7 +490,7 @@ void clearNVRAMVariables() {
         printRealLog(@"[NVRAM] Method 3: IOKit framework not loaded.");
     }
     
-    // ── 方案4：删除 NVRAM 持久化缓存文件（安全红线：不破坏系统激活基础） ──
+    // 鈹€鈹€ 鏂规4锛氬垹闄?NVRAM 鎸佷箙鍖栫紦瀛樻枃浠讹紙瀹夊叏绾㈢嚎锛氫笉鐮村潖绯荤粺婵€娲诲熀纭€锛?鈹€鈹€
     NSFileManager *fm = [NSFileManager defaultManager];
     NSArray *nvramCacheFiles = @[
         @"/var/mobile/Library/Preferences/com.apple.device-identification.plist"
@@ -502,7 +502,7 @@ void clearNVRAMVariables() {
         }
     }
 
-    // ── 方案5（新增）：重置 SystemConfiguration 硬件与网络唯一签名缓存 ──
+    // 鈹€鈹€ 鏂规5锛堟柊澧烇級锛氶噸缃?SystemConfiguration 纭欢涓庣綉缁滃敮涓€绛惧悕缂撳瓨 鈹€鈹€
     printRealLog(@"[NVRAM] Method 5: Resetting SystemConfiguration signature files...");
     NSArray *sysConfigPlists = @[
         @"/var/preferences/SystemConfiguration/preferences.plist",
@@ -519,7 +519,7 @@ void clearNVRAMVariables() {
         }
     }
 
-    // ── 方案6（新增）：清理 uuidtext 与诊断记录足迹 ──
+    // 鈹€鈹€ 鏂规6锛堟柊澧烇級锛氭竻鐞?uuidtext 涓庤瘖鏂褰曡冻杩?鈹€鈹€
     printRealLog(@"[NVRAM] Method 6: Purging uuidtext / diagnostic ID footprints...");
     NSArray *diagDirs = @[@"/var/db/uuidtext", @"/var/db/diagnostics"];
     for (NSString *diagDir in diagDirs) {
@@ -535,12 +535,13 @@ void clearNVRAMVariables() {
 // ============================================================================
 // Clean shared and plugin containers matching bundle IDs
 // ============================================================================
-void cleanSpecialContainers(NSString *containersRoot, NSArray *targetBundleIDs) {
+int cleanSpecialContainers(NSString *containersRoot, NSArray *targetBundleIDs) {
     NSFileManager *fm = [NSFileManager defaultManager];
     NSError *error = nil;
     NSArray *files = [fm contentsOfDirectoryAtPath:containersRoot error:&error];
-    if (error) return;
+    if (error) return 0;
     
+    int cleanedCount = 0;
     for (NSString *fileName in files) {
         NSString *fullPath = [containersRoot stringByAppendingPathComponent:fileName];
         BOOL isDir = NO;
@@ -555,6 +556,7 @@ void cleanSpecialContainers(NSString *containersRoot, NSArray *targetBundleIDs) 
                             NSError *deleteError = nil;
                             if ([fm removeItemAtPath:fullPath error:&deleteError]) {
                                 printRealLog(@"[CLEAN] Removed container: %@", identifier);
+                                cleanedCount++;
                             } else {
                                 printRealLog(@"[ERROR] Failed to remove container: %@. Reason: %@", identifier, deleteError.localizedDescription);
                             }
@@ -565,11 +567,13 @@ void cleanSpecialContainers(NSString *containersRoot, NSArray *targetBundleIDs) 
             }
         }
     }
+    return cleanedCount;
 }
 
 // Clean Safari cookies/history and WebKit web cache
-void cleanSafariAndWebKit() {
+int cleanSafariAndWebKit() {
     NSFileManager *fm = [NSFileManager defaultManager];
+    int cleanedCount = 0;
     
     NSString *safariDir = @"/var/mobile/Library/Safari";
     NSArray *safariItems = @[
@@ -585,6 +589,7 @@ void cleanSafariAndWebKit() {
             NSError *err = nil;
             if ([fm removeItemAtPath:path error:&err]) {
                 printRealLog(@"[CLEAN] Removed Safari item: %@", [path lastPathComponent]);
+                cleanedCount++;
             } else {
                 printRealLog(@"[ERROR] Failed to remove Safari item: %@. Reason: %@", [path lastPathComponent], err.localizedDescription);
             }
@@ -596,28 +601,32 @@ void cleanSafariAndWebKit() {
         NSError *err = nil;
         if ([fm removeItemAtPath:webKitDir error:&err]) {
             printRealLog(@"[CLEAN] Removed WebKit cache directory");
+            cleanedCount++;
         } else {
             printRealLog(@"[ERROR] Failed to remove WebKit cache. Reason: %@", err.localizedDescription);
         }
     }
+    return cleanedCount;
 }
 
-// 安全红线滤网：深度递归清理自定义 var 目录
-void safeCleanDirectory(NSString *dirPath, NSArray *targetBundleIDs) {
+// 瀹夊叏绾㈢嚎婊ょ綉锛氭繁搴﹂€掑綊娓呯悊鑷畾涔?var 鐩綍
+int safeCleanDirectory(NSString *dirPath, NSArray *targetBundleIDs) {
     NSFileManager *fm = [NSFileManager defaultManager];
     BOOL isDir = NO;
-    if (![fm fileExistsAtPath:dirPath isDirectory:&isDir]) return;
+    if (![fm fileExistsAtPath:dirPath isDirectory:&isDir]) return 0;
 
-    // 顶级避让：绝对禁止物理抹除用户层与系统底层基石目录本身
+    // 椤剁骇閬胯锛氱粷瀵圭姝㈢墿鐞嗘姽闄ょ敤鎴峰眰涓庣郴缁熷簳灞傚熀鐭崇洰褰曟湰韬?
     if ([dirPath isEqualToString:@"/var"] || [dirPath isEqualToString:@"/var/mobile"] || [dirPath isEqualToString:@"/var/root"] || [dirPath isEqualToString:@"/var/containers/Bundle"]) {
-        return;
+        return 0;
     }
 
     NSError *error = nil;
     NSArray *files = [fm contentsOfDirectoryAtPath:dirPath error:&error];
-    if (error) return;
+    if (error) return 0;
 
-    // 判断当前目录是否属于"公共纯缓存丢弃区"
+    int cleanedCount = 0;
+
+    // 鍒ゆ柇褰撳墠鐩綍鏄惁灞炰簬"鍏叡绾紦瀛樹涪寮冨尯"
     NSString *lowerPath = [dirPath lowercaseString];
     BOOL isPureCacheZone = [lowerPath containsString:@"/caches"] || 
                            [lowerPath containsString:@"/log"] || 
@@ -630,7 +639,7 @@ void safeCleanDirectory(NSString *dirPath, NSArray *targetBundleIDs) {
         NSDictionary *attrs = [fm attributesOfItemAtPath:fullPath error:nil];
         if (!attrs) continue;
 
-        // 铁律红线一：大文件强行熔断锁 (>100MB 资产直接放行)
+        // 閾佸緥绾㈢嚎涓€锛氬ぇ鏂囦欢寮鸿鐔旀柇閿?(>100MB 璧勪骇鐩存帴鏀捐)
         unsigned long long fileSize = [attrs fileSize];
         if (fileSize > 100 * 1024 * 1024) { 
             printRealLog(@"[LIMIT] Skipped large file (>100MB): %@ (%llu MB)", fileName, fileSize / 1024 / 1024);
@@ -640,7 +649,7 @@ void safeCleanDirectory(NSString *dirPath, NSArray *targetBundleIDs) {
         BOOL isSubDir = [attrs.fileType isEqualToString:NSFileTypeDirectory];
 
         if (isSubDir) {
-            safeCleanDirectory(fullPath, targetBundleIDs);
+            cleanedCount += safeCleanDirectory(fullPath, targetBundleIDs);
         } else {
             BOOL deleteAllowed = NO;
             
@@ -659,6 +668,7 @@ void safeCleanDirectory(NSString *dirPath, NSArray *targetBundleIDs) {
                 NSError *deleteError = nil;
                 if ([fm removeItemAtPath:fullPath error:&deleteError]) {
                     printRealLog(@"[CLEAN] Removed file: %@", fileName);
+                    cleanedCount++;
                 } else if (deleteError) {
                     printRealLog(@"[ERROR] Permission denied: %@. Reason: %@", fileName, deleteError.localizedDescription);
                 }
@@ -666,40 +676,42 @@ void safeCleanDirectory(NSString *dirPath, NSArray *targetBundleIDs) {
         }
     }
     
-    // 连根拔除：递归清理完毕后，若当前目录已成空壳则物理拔除
+    // 杩炴牴鎷旈櫎锛氶€掑綊娓呯悊瀹屾瘯鍚庯紝鑻ュ綋鍓嶇洰褰曞凡鎴愮┖澹冲垯鐗╃悊鎷旈櫎
     NSArray *remaining = [fm contentsOfDirectoryAtPath:dirPath error:nil];
     if (remaining && remaining.count == 0) {
         NSError *rmDirErr = nil;
         if ([fm removeItemAtPath:dirPath error:&rmDirErr]) {
             printRealLog(@"[CLEAN] Removed empty dir: %@", dirPath);
+            cleanedCount++;
         }
     }
+    return cleanedCount;
 }
 
 // ============================================================================
-// 无需重启的守护进程重载方案
+// 鏃犻渶閲嶅惎鐨勫畧鎶よ繘绋嬮噸杞芥柟妗?
 // ============================================================================
 void forceRefreshWithoutReboot() {
     printRealLog(@"[REFRESH] Killing daemons to force immediate effect (no reboot)...");
     
-    // 杀死广告相关守护进程
+    // 鏉€姝诲箍鍛婄浉鍏冲畧鎶よ繘绋?
     killDaemonByName("adprivacyd");
     killDaemonByName("adid");
     
-    // 杀死 keychain 守护进程
+    // 鏉€姝?keychain 瀹堟姢杩涚▼
     killDaemonByName("securityd");
     
-    // 杀死 cfprefsd 刷新 plist 缓存
+    // 鏉€姝?cfprefsd 鍒锋柊 plist 缂撳瓨
     killDaemonByName("cfprefsd");
     
-    // 杀死 nfcd（NFC 指纹相关）
+    // 鏉€姝?nfcd锛圢FC 鎸囩汗鐩稿叧锛?
     killDaemonByName("nfcd");
     
-    // 杀死后台分析守护进程
+    // 鏉€姝诲悗鍙板垎鏋愬畧鎶よ繘绋?
     killDaemonByName("analyticsd");
     killDaemonByName("diagnosticd");
     
-    // 发射全维度系统广播催促刷新
+    // 鍙戝皠鍏ㄧ淮搴︾郴缁熷箍鎾偓淇冨埛鏂?
     notify_post("com.apple.AdLib.LimitAdTrackingChanged");
     notify_post("com.apple.idfa.changed");
     notify_post("com.apple.identityservicesd.idchanged");
@@ -711,49 +723,49 @@ void forceRefreshWithoutReboot() {
     printRealLog(@"[REFRESH] All daemons killed + broadcasts sent. Effect immediate.");
 }
 
-// 终极再生：安全重启用户空间（异步释放方案，解除 launchd 进程链死锁）
+// 缁堟瀬鍐嶇敓锛氬畨鍏ㄩ噸鍚敤鎴风┖闂达紙寮傛閲婃斁鏂规锛岃В闄?launchd 杩涚▼閾炬閿侊級
 void triggerUserspaceReboot() {
     printRealLog(@"[KERNEL] Cleaning complete. Triggering userspace reboot...");
     
-    // 方案一：标准路径 launchctl reboot userspace
+    // 鏂规涓€锛氭爣鍑嗚矾寰?launchctl reboot userspace
     {
         pid_t pid;
         const char *args[] = {"/bin/launchctl", "reboot", "userspace", NULL};
         posix_spawn(&pid, args[0], NULL, NULL, (char* const*)args, NULL);
     }
     
-    // 方案二：Rootless 路径 launchctl reboot userspace
+    // 鏂规浜岋細Rootless 璺緞 launchctl reboot userspace
     {
         pid_t pid;
         const char *args[] = {"/var/jb/bin/launchctl", "reboot", "userspace", NULL};
         posix_spawn(&pid, args[0], NULL, NULL, (char* const*)args, NULL);
     }
     
-    // ⚠️ 极其关键：必须在此处立即 exit(0) 退出当前 RootHelper 二进制！
-    // 否则 RootHelper 会一直留在内存中等待子进程结束，而 launchd 在执行 userspace 重启时又在等待 RootHelper 退出，
-    // 从而导致长达十几秒的双向死锁卡死。立即退出后，用户空间重启会瞬间无缝执行。
+    // 鈿狅笍 鏋佸叾鍏抽敭锛氬繀椤诲湪姝ゅ绔嬪嵆 exit(0) 閫€鍑哄綋鍓?RootHelper 浜岃繘鍒讹紒
+    // 鍚﹀垯 RootHelper 浼氫竴鐩寸暀鍦ㄥ唴瀛樹腑绛夊緟瀛愯繘绋嬬粨鏉燂紝鑰?launchd 鍦ㄦ墽琛?userspace 閲嶅惎鏃跺張鍦ㄧ瓑寰?RootHelper 閫€鍑猴紝
+    // 浠庤€屽鑷撮暱杈惧崄鍑犵鐨勫弻鍚戞閿佸崱姝汇€傜珛鍗抽€€鍑哄悗锛岀敤鎴风┖闂撮噸鍚細鐬棿鏃犵紳鎵ц銆?
     exit(0);
 }
 
-// ── 提权辅助器核心多轨总调度入口 ──
+// 鈹€鈹€ 鎻愭潈杈呭姪鍣ㄦ牳蹇冨杞ㄦ€昏皟搴﹀叆鍙?鈹€鈹€
 int main(int argc, const char * argv[]) {
     @autoreleasepool {
-        // 参数越界防错
+        // 鍙傛暟瓒婄晫闃查敊
         if (argc < 2) {
             printRealLog(@"[ERROR] Missing required arguments.");
             return 1;
         }
 
-        // 解析从 main.m 路由过来的运行轨模式暗号
+        // 瑙ｆ瀽浠?main.m 璺敱杩囨潵鐨勮繍琛岃建妯″紡鏆楀彿
         NSString *runMode = [NSString stringWithUTF8String:argv[1]];
         
-        // 动态咬合：提取并组装用户真正勾选的全部目标应用 Bundle ID 名单
+        // 鍔ㄦ€佸挰鍚堬細鎻愬彇骞剁粍瑁呯敤鎴风湡姝ｅ嬀閫夌殑鍏ㄩ儴鐩爣搴旂敤 Bundle ID 鍚嶅崟
         NSMutableArray *selectedAppBundleIDs = [NSMutableArray array];
         for (int i = 2; i < argc; i++) {
             [selectedAppBundleIDs addObject:[NSString stringWithUTF8String:argv[i]]];
         }
 
-        // ==================== 轨道一：【无线轮询自毁快刷轨】 ====================
+        // ==================== 杞ㄩ亾涓€锛氥€愭棤绾胯疆璇㈣嚜姣佸揩鍒疯建銆?====================
         if ([runMode isEqualToString:@"bg_idfa_loop"]) {
             printRealLog(@"[DAEMON] Background loop active.");
             
@@ -761,7 +773,7 @@ int main(int argc, const char * argv[]) {
             int round = 1;
             
             while (1) {
-                // 【Watchdog卡点 A】父进程变为 1 或被杀
+                // 銆怶atchdog鍗＄偣 A銆戠埗杩涚▼鍙樹负 1 鎴栬鏉€
                 if (getppid() == 1 || kill(parentPid, 0) != 0) {
                     printRealLog(@"[DAEMON] Parent process killed. Exiting.");
                     break;
@@ -770,14 +782,14 @@ int main(int argc, const char * argv[]) {
                 printRealLog(@"[DAEMON] Round %d: Overwriting IDFA+IDFV...", round);
                 resetIDFAIdentifier();
                 
-                // 每轮刷新后立即杀死守护进程使其生效
+                // 姣忚疆鍒锋柊鍚庣珛鍗虫潃姝诲畧鎶よ繘绋嬩娇鍏剁敓鏁?
                 forceRefreshWithoutReboot();
                 
                 printRealLog(@"[DAEMON] Round %d complete. Waiting 60s.", round);
                 
                 round++;
                 
-                // 60秒切碎为60次1秒试探
+                // 60绉掑垏纰庝负60娆?绉掕瘯鎺?
                 for (int i = 0; i < 60; i++) {
                     sleep(1);
                     if (getppid() == 1 || kill(parentPid, 0) != 0) {
@@ -788,35 +800,134 @@ int main(int argc, const char * argv[]) {
             }
             return 0;
         }
+
+        // ==================== 杞ㄩ亾涓€杞┖鐐癸細銆愬叏鐩樺叏灞€澶氭柟妗堟棤寤惰繜瀹炴椂鎵弿娓呯悊杞ㄣ€?====================
+        if ([runMode isEqualToString:@"realtime_whitelist_clean"]) {
+            printRealLog(@"[REALTIME] Dynamic Whitelist Multi-Method Continuous Realtime Clean Active.");
+            printRealLog(@"[REALTIME] Enforcing safe multi-scheme clean (IDFA + Safe Var Caches + AppGroup + WebKit).");
+
+            pid_t parentPid = getppid();
+            
+            // 瀹夊叏缁濇潃锛氶璁剧粷瀵逛笉鍙竻鐞嗙殑纭牳绯荤粺涓庡畨鍏ㄤ繚鎶よ矾寰?ID锛岄槻姝㈣瑙?
+            NSArray *strictSystemWhitelist = @[
+                @"com.apple.", @"org.trollstore", @"com.opa334.", @"/var/mobile/Library/Preferences/com.apple",
+                @"/var/preferences/SystemConfiguration", @"/var/db/diagnostics"
+            ];
+
+            // 馃攳 鎷撳睍瀹夊叏鐨?`/var` 绾紦瀛樹笌涓存椂娈嬬暀娓呯悊璺緞锛?00% 涓嶅奖鍝嶇郴缁熺ǔ瀹氭€э級
+            NSArray *customVarPaths = @[
+                @"/var/mobile/Library/Caches",
+                @"/var/mobile/Library/Cookies",
+                @"/var/mobile/Library/HTTPStorages",
+                @"/var/mobile/Library/Saved Application State",
+                @"/var/mobile/Library/SplashBoard/Snapshots",
+                @"/var/mobile/Library/WebKit",
+                @"/var/mobile/Library/Logs",
+                @"/var/mobile/Library/Logs/CrashReporter",
+                @"/var/mobile/Library/Caches/com.apple.WebKit.WebContent",
+                @"/var/mobile/Library/Caches/com.apple.WebKit.Networking",
+                @"/var/root/Library/Caches",
+                @"/var/root/Library/HTTPStorages",
+                @"/var/root/Library/Tmp",
+                @"/var/tmp",
+                @"/var/mobile/Containers/Shared/AppGroup",
+                @"/var/mobile/Containers/Data/PluginKitPlugin"
+            ];
+
+            int scanCyclesInWindow = 0;
+            int cleanedFilesInWindow = 0;
+            time_t windowStart = time(NULL);
+
+            while (1) {
+                @autoreleasepool {
+                    // 鐪嬮棬鐙楁鏍★細涓荤▼搴忔寕鎺夋椂鑷姩閫€鍦?
+                    if (getppid() == 1 || kill(parentPid, 0) != 0) {
+                        printRealLog(@"[REALTIME] Parent app closed. Terminating realtime daemon.");
+                        break;
+                    }
+
+                    scanCyclesInWindow++;
+
+                    // 1. 瀹炴椂杞婚噺閲嶇疆 IDFA/IDFV Plist 缂撳瓨 (涓嶈Е鍙戝己鏉€锛屼繚鎸佸墠鍙伴『鐣?
+                    resetIDFAIdentifier();
+
+                    // 2. 瀹炴椂鎶归櫎鍓创鏉跨紦瀛樺苟鍙戦€佸箍鎾?
+                    if ([[NSFileManager defaultManager] fileExistsAtPath:@"/var/mobile/Library/Caches/com.apple.Pasteboard"]) {
+                        if ([[NSFileManager defaultManager] removeItemAtPath:@"/var/mobile/Library/Caches/com.apple.Pasteboard" error:nil]) {
+                            cleanedFilesInWindow++;
+                            notify_post("com.apple.pasteboard.changed");
+                        }
+                    }
+
+                    // 3. 瀹炴椂鎵弿娓呯悊 Safari & WebKit 缂撳瓨瓒宠抗
+                    cleanedFilesInWindow += cleanSafariAndWebKit();
+
+                    // 4. 鍏ㄥ眬瀹炴椂鎵弿甯搁┗ Safe Var 缂撳瓨璺緞
+                    for (NSString *targetPath in customVarPaths) {
+                        cleanedFilesInWindow += safeCleanDirectory(targetPath, selectedAppBundleIDs);
+                    }
+
+                    // 5. 娓呯悊鍏变韩 AppGroup 鍙?PluginKit 鎻掍欢鐗规潈鍖?
+                    cleanedFilesInWindow += cleanSpecialContainers(@"/var/mobile/Containers/Shared/AppGroup", selectedAppBundleIDs);
+                    cleanedFilesInWindow += cleanSpecialContainers(@"/var/mobile/Containers/Data/PluginKitPlugin", selectedAppBundleIDs);
+                    // 瀹炴椂杈撳嚭姣忎竴杞壂鎻忕姸鎬侊紝纭繚鏃ュ織闈㈡澘鏈夋寔缁洖鏄?
+                    printRealLog(@"[REALTIME] Pass #%d: Scanned safe /var paths. Cleaned in pass: %d files.", scanCyclesInWindow, cleanedFilesInWindow);
+
+                    // 6. 姣?60 绉掑ぇ鍛ㄦ湡鍒拌揪鏃讹紝缁熶竴鎵ц浣庨 Keychain 鎶归櫎涓庤交閲忓箍鎾噸杞斤紙閬垮厤楂橀寮烘潃 securityd锛?
+                    time_t now = time(NULL);
+                    if (now - windowStart >= 60) {
+                        if (selectedAppBundleIDs.count > 0 && cleanedFilesInWindow > 0) {
+                            deleteSelectedAppKeychain(selectedAppBundleIDs);
+                        }
+                        
+                        // 鍙戝皠 Darwin IPC 骞挎挱鍌績瀹堟姢杩涚▼鍒锋柊鍋忓ソ锛堟棤寮烘潃锛屽墠鍙伴浂鍗￠】锛?
+                        notify_post("com.apple.idfa.changed");
+                        notify_post("com.apple.pasteboard.changed");
+
+                        printRealLog(@"[REALTIME] Telemetry Summary (Past 60s): Scanned %d passes, Cleaned %d files total. System active & safe.", scanCyclesInWindow, cleanedFilesInWindow);
+                        printRealLog(@"[REALTIME] Round complete. Waiting 60s window reset.");
+                        
+                        // 閲嶇疆 60 绉掔粺璁＄獥鍙?
+                        scanCyclesInWindow = 0;
+                        cleanedFilesInWindow = 0;
+                        windowStart = now;
+                    }
+                }
+
+                // 2 绉掍竴娆¤疆璇㈡壂鎻忥紝鏃㈣兘淇濊瘉楂樺搷搴旈€熷害锛屽張鑳界‘淇?stdout 瀹炴椂鍒峰埌 WebView
+                sleep(2);
+            }
+            return 0;
+        }
         
-        // ==================== 轨道二：【重度深清空间轨】 ====================
+        // ==================== 杞ㄩ亾浜岋細銆愰噸搴︽繁娓呯┖闂磋建銆?====================
         if ([runMode isEqualToString:@"standard_clean"]) {
             printRealLog(@"[KERNEL] Active: Deep clean mode.");
             printRealLog(@"[KERNEL] Target count: %lu", (unsigned long)selectedAppBundleIDs.count);
             
-            // 1. 强制覆写三遍随机 UUID（IDFA + IDFV）
+            // 1. 寮哄埗瑕嗗啓涓夐亶闅忔満 UUID锛圛DFA + IDFV锛?
             resetIDFAIdentifier();
             printRealLog(@"[IDFA] Multi-method IDFA+IDFV refresh complete.");
             
-            // 2. 多方案清除 NVRAM
+            // 2. 澶氭柟妗堟竻闄?NVRAM
             clearNVRAMVariables();
             
-            // 3. 多方案联合 Keychain 清理
+            // 3. 澶氭柟妗堣仈鍚?Keychain 娓呯悊
             deleteSelectedAppKeychain(selectedAppBundleIDs);
             
-            // 3.5 清理 Safari 的全局 Cookie、网页状态及 WebKit 跨进程缓存
+            // 3.5 娓呯悊 Safari 鐨勫叏灞€ Cookie銆佺綉椤电姸鎬佸強 WebKit 璺ㄨ繘绋嬬紦瀛?
             cleanSafariAndWebKit();
             
-            // 3.6 物理抹除剪贴簿缓存并同步发射广播
+            // 3.6 鐗╃悊鎶归櫎鍓创绨跨紦瀛樺苟鍚屾鍙戝皠骞挎挱
             [[NSFileManager defaultManager] removeItemAtPath:@"/var/mobile/Library/Caches/com.apple.Pasteboard" error:nil];
             notify_post("com.apple.pasteboard.changed");
             printRealLog(@"[CLEAN] Clipboard cache erased.");
             
-            // 3.7 清洗共享特权目录
+            // 3.7 娓呮礂鍏变韩鐗规潈鐩綍
             cleanSpecialContainers(@"/var/mobile/Containers/Shared/AppGroup", selectedAppBundleIDs);
             cleanSpecialContainers(@"/var/mobile/Containers/Data/PluginKitPlugin", selectedAppBundleIDs);
             
-            // 4. 横扫自定义硬核重灾路径
+            // 4. 妯壂鑷畾涔夌‖鏍搁噸鐏捐矾寰?
             NSArray *customVarPaths = @[
                 @"/var", @"/var/containers", @"/var/containers/Bundle",
                 @"/var/db/com.apple.xpc.roleaccountd.staging", @"/var/log", @"/var/mobile",
@@ -842,10 +953,10 @@ int main(int argc, const char * argv[]) {
             }
             printRealLog(@"[CLEAN] Completed successfully.");
             
-            // 5. 先执行无重启方案强制立即生效
+            // 5. 鍏堟墽琛屾棤閲嶅惎鏂规寮哄埗绔嬪嵆鐢熸晥
             forceRefreshWithoutReboot();
             
-            // 6. 最终重启用户空间刷新全机进程缓存
+            // 6. 鏈€缁堥噸鍚敤鎴风┖闂村埛鏂板叏鏈鸿繘绋嬬紦瀛?
             triggerUserspaceReboot();
         }
     }
