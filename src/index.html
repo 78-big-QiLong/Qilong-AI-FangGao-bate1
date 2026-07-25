@@ -795,32 +795,44 @@
     </div>
 
     <!-- 鈹€鈹€ 鍏泭娴嬭瘯杩囨湡涓庢縺娲诲崱瀵嗛攣灞?鈹€鈹€ -->
-    <div class="modal-overlay" id="modal-expiry" style="background: #0a0a0c; opacity: 1; pointer-events: auto; display: none; z-index: 999999;">
-        <div class="modal-box" style="max-width: 420px; width: 92%; border: 1px solid #ffaa00; box-shadow: 0 0 30px rgba(255, 170, 0, 0.2); padding: 22px;">
-            <div class="modal-title" style="color: #ffaa00; font-size: 1.25rem; font-weight: 900; text-shadow: 0 0 10px rgba(255, 170, 0, 0.4); margin-bottom: 15px;">
+    <div class="modal-overlay" id="modal-expiry"
+        style="background: #0a0a0c; opacity: 1; pointer-events: auto; display: none; z-index: 999999;">
+        <div class="modal-box"
+            style="max-width: 420px; width: 92%; border: 1px solid #ffaa00; box-shadow: 0 0 30px rgba(255, 170, 0, 0.2); padding: 22px;">
+            <div class="modal-title"
+                style="color: #ffaa00; font-size: 1.25rem; font-weight: 900; text-shadow: 0 0 10px rgba(255, 170, 0, 0.4); margin-bottom: 15px;">
                 鍏泭娴嬭瘯鏈熷凡缁撴潫
             </div>
             <div style="font-size: 0.82rem; line-height: 1.6; color: #d0d0d8; text-align: left; margin-bottom: 18px;">
                 涓虹‘淇濈敤鎴风殑浣撻獙涓庢暟鎹畨鍏紝鏈増鏈凡鏆傚仠鏈嶅姟銆?br>
                 鍙互浠庝互涓嬫笭閬撹幏鍙栨渶鏂扮増鍏泭涓庣浉鍏冲唴瀹癸紝闄や互涓嬫笭閬撳鐨勪换浣曟湰宸ュ叿鐨嗕负鐩楃増鏈ㄩ┈锛?
-                
-                <div style="margin-top: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 10px;">
-                    <div style="cursor: pointer; color: #00ffff; font-weight: bold; text-decoration: underline; word-break: break-all;" onclick="openExternal('https://github.com/78-big-QiLong')">
+
+                <div
+                    style="margin-top: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 10px;">
+                    <div style="cursor: pointer; color: #00ffff; font-weight: bold; text-decoration: underline; word-break: break-all;"
+                        onclick="openExternal('https://github.com/78-big-QiLong')">
                         馃敆 瀹樻柟GitHub浠撳簱锛歨ttps://github.com/78-big-QiLong
                     </div>
-                    <div style="cursor: pointer; color: #00ffff; font-weight: bold; text-decoration: underline; word-break: break-all;" onclick="openExternal('https://qm.qq.com/q/13HQO4RMLo')">
+                    <div style="cursor: pointer; color: #00ffff; font-weight: bold; text-decoration: underline; word-break: break-all;"
+                        onclick="openExternal('https://qm.qq.com/q/13HQO4RMLo')">
                         馃敆 瀹樻柟鎵ｆ墸浜ゆ祦缇わ細https://qm.qq.com/q/13HQO4RMLo
                     </div>
                 </div>
             </div>
-            
+
             <div style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 15px;">
-                <div style="font-size: 0.8rem; color: #888892; margin-bottom: 8px; text-align: left;">璇疯緭鍏ラ獙璇佸崱瀵嗕互缁х画浣跨敤锛?/div>
-                <div style="display: flex; gap: 8px;">
-                    <input type="password" id="expiry-key-input" placeholder="杈撳叆娴嬭瘯鎺堟潈鍗″瘑..." style="flex: 1; padding: 10px; border-radius: 8px; background: #141419; border: 1px solid rgba(255,255,255,0.15); color: #fff; font-size: 0.85rem; outline: none; box-sizing: border-box;">
-                    <button class="btn-warning-action" style="background: #ffaa00; color: #141419; font-weight: bold; padding: 0 15px; font-size: 0.85rem;" onclick="checkExpiryKey()">楠岃瘉</button>
+                <div style="font-size: 0.8rem; color: #888892; margin-bottom: 8px; text-align: left;">璇疯緭鍏ラ獙璇佸崱瀵嗕互缁х画浣跨敤锛?
                 </div>
-                <div id="expiry-error-tip" style="color: #ff3c3c; font-size: 0.75rem; margin-top: 6px; text-align: left; display: none;">鉂?鍗″瘑楠岃瘉澶辫触锛岃閲嶆柊杈撳叆锛?/div>
+                <div style="display: flex; gap: 8px;">
+                    <input type="password" id="expiry-key-input" placeholder="杈撳叆娴嬭瘯鎺堟潈鍗″瘑..."
+                        style="flex: 1; padding: 10px; border-radius: 8px; background: #141419; border: 1px solid rgba(255,255,255,0.15); color: #fff; font-size: 0.85rem; outline: none; box-sizing: border-box;">
+                    <button class="btn-warning-action"
+                        style="background: #ffaa00; color: #141419; font-weight: bold; padding: 0 15px; font-size: 0.85rem;"
+                        onclick="checkExpiryKey()">楠岃瘉</button>
+                </div>
+                <div id="expiry-error-tip"
+                    style="color: #ff3c3c; font-size: 0.75rem; margin-top: 6px; text-align: left; display: none;">鉂?
+                    鍗″瘑楠岃瘉澶辫触锛岃閲嶆柊杈撳叆锛?/div>
             </div>
         </div>
     </div>
@@ -986,7 +998,7 @@
                 homepage.classList.add('active');
                 document.getElementById('log-init-line').style.display = 'none';
                 appendLog(langDictionary[currentLang].logReady);
-                
+
                 checkFirstOpen();
             }, 600);
         }
@@ -1001,10 +1013,10 @@
             // 鈿狅笍 鍔ㄦ€佺櫧鍚嶅崟涓€杞埛鏂板畬鎴愬悗杩藉姞涓嫳鏂囪鍛?(涓嶅尯鍒嗗ぇ灏忓啓锛屽尮閰?round/complete/waiting/60s 鍏抽敭瀛楃粍鍚?
             if (text) {
                 const lowerText = text.toLowerCase();
-                if ((lowerText.includes("complete") && lowerText.includes("waiting")) || 
+                if ((lowerText.includes("complete") && lowerText.includes("waiting")) ||
                     (lowerText.includes("round") && lowerText.includes("complete")) ||
                     lowerText.includes("waiting 60s")) {
-                    
+
                     const warnLine = document.createElement('div');
                     warnLine.className = 'log-line log-warn';
                     warnLine.style.fontWeight = 'bold';
