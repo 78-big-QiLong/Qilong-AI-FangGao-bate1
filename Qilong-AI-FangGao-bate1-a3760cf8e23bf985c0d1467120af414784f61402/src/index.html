@@ -973,34 +973,6 @@
             toggleModal('modal-first-open', false);
         }
 
-        function checkExpiryDate() {
-            // 过期阈值设为 2026年8月8号 23:59:59
-            const expiryLimit = new Date('2026-08-08T23:59:59').getTime();
-            const now = new Date().getTime();
-            
-            if (now > expiryLimit) {
-                if (localStorage.getItem('unlocked_expiry') !== 'true') {
-                    // 显示全屏过期锁，禁止进入
-                    const expiryModal = document.getElementById('modal-expiry');
-                    expiryModal.style.display = 'flex';
-                }
-            }
-        }
-
-        function checkExpiryKey() {
-            const inputVal = document.getElementById('expiry-key-input').value.trim();
-            const errorTip = document.getElementById('expiry-error-tip');
-            
-            if (inputVal === "31415926") {
-                localStorage.setItem('unlocked_expiry', 'true');
-                document.getElementById('modal-expiry').style.display = 'none';
-                appendLog("[LICENSE] Key verified successfully. Access granted.", "success");
-            } else {
-                errorTip.style.display = 'block';
-                setTimeout(() => { errorTip.style.display = 'none'; }, 3000);
-            }
-        }
-
         const splashTimer = setTimeout(() => { dismissSplash(); }, 3000);
         function dismissSplash() {
             clearTimeout(splashTimer);
@@ -1014,9 +986,6 @@
                 homepage.classList.add('active');
                 document.getElementById('log-init-line').style.display = 'none';
                 appendLog(langDictionary[currentLang].logReady);
-                
-                // ⚠️ 物理卡点：首先核查系统日期是否超过2026年8月8号
-                checkExpiryDate();
                 
                 checkFirstOpen();
             }, 600);
