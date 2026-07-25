@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 
 <head>
@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>TrollClean Pro UI</title>
     <style>
-        /* 鈹€鈹€ 鍏ㄥ眬娣辫壊鏋佸娴佸厜搴曡壊 鈹€鈹€ */
+        /* ── 全局深色极客流光底色 ── */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -34,7 +34,7 @@
             align-items: center;
         }
 
-        /* 鈹€鈹€ 鐗规晥涓€锛氬叏灞忚竟缂?绉掔媯椋欒窇椹伅 鈹€鈹€ */
+        /* ── 特效一：全屏边缘2秒狂飙跑马灯 ── */
         .marquee-border {
             position: fixed;
             top: 0;
@@ -73,7 +73,7 @@
             }
         }
 
-        /* 鈹€鈹€ 鐗规晥浜岋細3绉掑叏灞忓嚮纰庡紑灞忛〉 鈹€鈹€ */
+        /* ── 特效二：3秒全屏击碎开屏页 ── */
         #splash {
             position: fixed;
             top: 0;
@@ -146,7 +146,7 @@
             }
         }
 
-        /* 鈹€鈹€ 鏍稿績椤甸潰锛氱‖鏍搁椤垫帶鍒朵腑蹇?鈹€鈹€ */
+        /* ── 核心页面：硬核首页控制中心 ── */
         #homepage {
             position: absolute;
             top: 0;
@@ -168,7 +168,7 @@
             transform: scale(1);
         }
 
-        /* 纭欢鐘舵€佽嚜妫€鐪嬫澘 */
+        /* 硬件状态自检看板 */
         .info-board {
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid rgba(255, 255, 255, 0.08);
@@ -204,7 +204,7 @@
             text-shadow: 0 0 10px rgba(0, 255, 102, 0.3);
         }
 
-        /* 鈹€鈹€ 涓夋牳蹇冧富鎸夐挳锛氱嫭绔嬫祦鍏夎窇椹伅澶栬竟妗?鈹€鈹€ */
+        /* ── 三核心主按钮：独立流光跑马灯外边框 ── */
         .button-group {
             display: flex;
             gap: 10px;
@@ -272,7 +272,7 @@
             background: linear-gradient(135deg, #092c15 0%, #031409 100%);
         }
 
-        /* 閲嶅害鏈烘鎸夊帇鐗╃悊鍙嶉鍙嶉 */
+        /* 重度机械按压物理反馈反馈 */
         .btn:active {
             transform: scale(0.88) !important;
             filter: brightness(0.7) contrast(1.3);
@@ -284,7 +284,7 @@
             }
         }
 
-        /* 0浼锛氱函鐪熷疄缁堢鏃ュ織璇存槑鍖?*/
+        /* 0伪装：纯真实终端日志说明区 */
         .log-panel {
             flex: 1;
             background: #000000;
@@ -317,7 +317,7 @@
             color: #00ffff;
         }
 
-        /* 涓夎繛骞跺彂娆＄骇鍔熻兘鎸夐挳缁?*/
+        /* 三连并发次级功能按钮组 */
         .link-group {
             display: flex;
             gap: 8px;
@@ -348,7 +348,7 @@
             filter: brightness(0.8);
         }
 
-        /* 搴曢儴甯搁┗澹版槑灏忓瓧 */
+        /* 底部常驻声明小字 */
         .footer-declaration {
             font-size: 0.7rem;
             color: #55555e;
@@ -358,7 +358,7 @@
             line-height: 1.4;
         }
 
-        /* 鈹€鈹€ 寮圭獥鐭╅樀涓庣簿缁嗗垪琛?鈹€鈹€ */
+        /* ── 弹窗矩阵与精细列表 ── */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -445,7 +445,7 @@
             font-size: 0.85rem;
         }
 
-        /* 鉁?鏂板锛氬悕鍗曞垪琛ㄥ崟椤瑰嬀閫夋鏍峰紡 */
+        /* ✨ 新增：名单列表单项勾选框样式 */
         .app-check-item {
             display: flex;
             align-items: center;
@@ -501,7 +501,7 @@
             transform: scale(0.92);
         }
 
-        /* 鈹€鈹€ 馃摫 妯睆 & 骞虫澘 iPad 鍝嶅簲寮忔繁搴﹂€傞厤 鈹€鈹€ */
+        /* ── 📱 横屏 & 平板 iPad 响应式深度适配 ── */
         @media (orientation: landscape) or (min-width: 768px) {
 
             html,
@@ -519,7 +519,7 @@
                 gap: 10px !important;
             }
 
-            /* 宸﹀崐渚э細鏍囬 + 鑷鐪嬫澘 */
+            /* 左半侧：标题 + 自检看板 */
             #homepage>div:first-child {
                 flex: 1.2;
                 min-width: 280px;
@@ -535,7 +535,7 @@
                 padding: 10px !important;
             }
 
-            /* 鍙冲崐渚э細鎺у埗鎸夐挳缁?+ 鏃ュ織绐楀彛 */
+            /* 右半侧：控制按钮组 + 日志窗口 */
             .button-group {
                 flex: 1;
                 min-width: 240px;
@@ -597,15 +597,15 @@
         <div
             style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%;">
             <div class="fly-in-big" id="splash-big">QiLong-Dynamic-Whitelist(beta2)</div>
-            <div class="fly-in-small" id="splash-small">鐢盦iLong-GOLD400鍊熷姪楠戦緳AI瀹氬埗鏅鸿兘浣撳埗浣?鍦ㄩ潪hook涓庝吉瑁呬笅瑙ｅ喅楂橀闄╂畫鐣欓棶棰樹笌鐜绾噣搴﹂棶棰?
-                鍏泭娴嬭瘯绗簩鐗堢Н鏋佸弽棣?/div>
+            <div class="fly-in-small" id="splash-small">由QiLong-GOLD400借助骑龙AI定制智能体制作 在非hook与伪装下解决高风险残留问题与环境纯净度问题
+                公益测试第二版积极反馈</div>
         </div>
         <div class="splash-disclaimer">
-            椤圭洰鍊熷姪楠戦緳瀹氬埗Ai鏅鸿兘浣撳埗浣?鍔熻兘ui瑙勫垯绛夌敱AI鍒朵綔浠呬緵鍙傝€?br>
-            -浠讳綍澶栭儴閾炬帴閮戒笌璇ュ伐鍏蜂笌浣滆€呮棤鍏?浠讳綍閾炬帴涓庣涓夋柟浜х墿鐨勫悗鏋滃潎鐢变娇鐢ㄨ€呰嚜琛屾壙鎷?br>
-            -璇ュ伐鍏蜂粎渚涘涔犲弬鑰?浣跨敤璇峰潥鍐充笉瑕佽繚鍙嶅綋鍦版硶寰嬫硶瑙勪笌绀惧尯瑙勫垯 涓€鍒囧悗鏋滅敱浣跨敤鑰呮壙鎷?br>
-            -鎴戜滑鎵胯涓嶆悳闆嗕笉鍏变韩涓嶅瓨鍌ㄤ换浣曚笉蹇呰鐨勬暟鎹?涓嶆褰撶殑浣跨敤璇ュ伐鍏锋湁鍙兘閫犳垚鏁版嵁涓㈠け鎹熷潖涓庢硠闇插悗鏋滃潎鐢变娇鐢ㄨ€呮壙鎷?br>
-            -杩涘叆棣栭〉鍗充唬琛ㄥ悓鎰忚鍗忚 濡傛嫆缁濊閫€鍑?
+            项目借助骑龙定制Ai智能体制作 功能ui规则等由AI制作仅供参考<br>
+            -任何外部链接都与该工具与作者无关 任何链接与第三方产物的后果均由使用者自行承担<br>
+            -该工具仅供学习参考 使用请坚决不要违反当地法律法规与社区规则 一切后果由使用者承担<br>
+            -我们承诺不搜集不共享不存储任何不必要的数据 不正当的使用该工具有可能造成数据丢失损坏与泄露后果均由使用者承担<br>
+            -进入首页即代表同意该协议 如拒绝请退出
         </div>
     </div>
 
@@ -614,171 +614,171 @@
             <div style="font-size: 1.2rem; font-weight: 800; letter-spacing: 1px;">QiLongAi</div>
             <div class="info-board">
                 <div class="info-item">
-                    <div class="info-label" id="lbl-version">绯荤粺鐗堟湰(璇诲彇鍊?</div>
-                    <div class="info-value" id="sys-version">鍔犺浇涓?..</div>
+                    <div class="info-label" id="lbl-version">系统版本(读取值)</div>
+                    <div class="info-value" id="sys-version">加载中...</div>
                 </div>
                 <div class="info-item">
-                    <div class="info-label" id="lbl-model">鏈哄瀷鍚嶇О</div>
-                    <div class="info-value" id="dev-model">鍔犺浇涓?..</div>
+                    <div class="info-label" id="lbl-model">机型名称</div>
+                    <div class="info-value" id="dev-model">加载中...</div>
                 </div>
                 <div class="info-item">
-                    <div class="info-label" id="lbl-sn">搴忓垪鍙?璇诲彇鍊?</div>
-                    <div class="info-value" id="dev-sn">鍔犺浇涓?..</div>
+                    <div class="info-label" id="lbl-sn">序列号(读取值)</div>
+                    <div class="info-value" id="dev-sn">加载中...</div>
                 </div>
                 <div class="info-item">
-                    <div class="info-label" id="lbl-cpu">澶勭悊鍣ㄥ瀷鍙?/div>
-                    <div class="info-value" id="dev-cpu">鍔犺浇涓?..</div>
+                    <div class="info-label" id="lbl-cpu">处理器型号</div>
+                    <div class="info-value" id="dev-cpu">加载中...</div>
                 </div>
                 <div class="info-item">
-                    <div class="info-label" id="lbl-troll">宸ㄩ瓟鐘舵€?妫€娴嬪€?</div>
-                    <div class="info-value highlight-status" id="status-troll">妫€娴嬩腑...</div>
+                    <div class="info-label" id="lbl-troll">巨魔状态(检测值)</div>
+                    <div class="info-value highlight-status" id="status-troll">检测中...</div>
                 </div>
                 <div class="info-item">
-                    <div class="info-label" id="lbl-jb">瓒婄嫳鐘舵€?妫€娴嬪€?</div>
-                    <div class="info-value highlight-status" id="status-jb">妫€娴嬩腑...</div>
+                    <div class="info-label" id="lbl-jb">越狱状态(检测值)</div>
+                    <div class="info-value highlight-status" id="status-jb">检测中...</div>
                 </div>
             </div>
         </div>
 
         <div class="button-group">
-            <button class="btn btn-select" id="btn-select" onclick="clickSelect()">鍕鹃€夊簲鐢?/button>
-            <button class="btn btn-dynamic" id="btn-dynamic" onclick="clickDynamicRefresh()">鍚姩鍔ㄦ€佺櫧鍚嶅崟</button>
-            <button class="btn btn-execute" id="btn-execute" onclick="clickExecute()">娓呯悊椋庨櫓娈嬬暀</button>
+            <button class="btn btn-select" id="btn-select" onclick="clickSelect()">勾选应用</button>
+            <button class="btn btn-dynamic" id="btn-dynamic" onclick="clickDynamicRefresh()">启动动态白名单</button>
+            <button class="btn btn-execute" id="btn-execute" onclick="clickExecute()">清理风险残留</button>
         </div>
 
         <div class="log-panel" id="log-container">
-            <div class="log-line log-system" id="log-init-line">鍐呮牳鍒濆鍖栧畬鎴?浣滆€咃細QiLong-GOLD400鍊熷姪楠戦緳瀹氬埗Ai澶氭ā鎬佹櫤鑳戒綋鍒朵綔</div>
+            <div class="log-line log-system" id="log-init-line">内核初始化完成 作者：QiLong-GOLD400借助骑龙定制Ai多模态智能体制作</div>
         </div>
 
         <div class="link-group">
-            <button class="btn-link" id="btn-tutorial" onclick="toggleModal('modal-tutorial', true)">浣跨敤鏁欑▼</button>
-            <button class="btn-link" id="btn-lang" onclick="toggleModal('modal-lang', true)">馃寪璇█</button>
-            <button class="btn-link" id="btn-channel" onclick="toggleModal('modal-channel', true)">浜ゆ祦棰戦亾</button>
+            <button class="btn-link" id="btn-tutorial" onclick="toggleModal('modal-tutorial', true)">使用教程</button>
+            <button class="btn-link" id="btn-lang" onclick="toggleModal('modal-lang', true)">🌐语言</button>
+            <button class="btn-link" id="btn-channel" onclick="toggleModal('modal-channel', true)">交流频道</button>
         </div>
 
         <div class="footer-declaration" id="text-footer">
-            https://github.com/78-big-QiLong鎷ユ湁鎵€鏈夋潈涓庢渶缁堣В閲婃潈 杩欐槸姘镐箙鍏泭娴嬭瘯鐗堟湰 濡傛灉鏄姳閽变拱鐨勮鏄庢槸鐩楃増鎴栨湪椹綘琚獥浜?
+            https://github.com/78-big-QiLong拥有所有权与最终解释权 这是永久公益测试版本 如果是花钱买的说明是盗版或木马你被骗了
         </div>
     </div>
 
-    <!-- 鈹€鈹€ 绗竴娆℃墦寮€寮圭獥鎻愮ず 鈹€鈹€ -->
+    <!-- ── 第一次打开弹窗提示 ── -->
     <div class="modal-overlay" id="modal-first-open">
         <div class="modal-box" style="max-width: 380px; width: 92%; padding: 22px;">
-            <div class="modal-title" style="color: #ffaa00; font-size: 1.15rem; font-weight: 900;">棣栨浣跨敤椤荤煡 & 鐢ㄦ埛鍗忚</div>
+            <div class="modal-title" style="color: #ffaa00; font-size: 1.15rem; font-weight: 900;">首次使用须知 & 用户协议</div>
             <div class="modal-list" style="max-height: 290px; text-align: left; gap: 12px; padding: 2px;">
 
                 <div
                     style="background: rgba(255,170,0,0.06); border: 1px solid rgba(255,170,0,0.15); border-radius: 12px; padding: 12px;">
                     <div style="font-size: 0.92rem; font-weight: 800; color: #ffaa00; margin-bottom: 6px;">1-
-                        鍓嶅線璁剧疆鍏抽棴鎵€鏈夊簲鐢ㄧ殑 Siri 鈥滀粠姝?App 瀛︿範鈥?/div>
-                    <p style="font-size: 0.8rem; color: #ccc; margin: 0; line-height: 1.45;">璇峰墠寰€绯荤粺鐨勨€滆缃€?- 鈥淪iri
-                        涓庢悳绱⑩€濓紝鍏抽棴鎵€鏈夊簲鐢ㄧ殑鈥滀粠姝?App 瀛︿範鈥濋€夐」锛屼互闃绘柇娈嬬暀鐨勮瘑鍒寚绾逛笌鏁版嵁閾捐矾銆?/p>
+                        前往设置关闭所有应用的 Siri “从此 App 学习”</div>
+                    <p style="font-size: 0.8rem; color: #ccc; margin: 0; line-height: 1.45;">请前往系统的“设置” - “Siri
+                        与搜索”，关闭所有应用的“从此 App 学习”选项，以阻断残留的识别指纹与数据链路。</p>
                 </div>
 
                 <div
                     style="background: rgba(0,255,255,0.06); border: 1px solid rgba(0,255,255,0.15); border-radius: 12px; padding: 12px;">
-                    <div style="font-size: 0.92rem; font-weight: 800; color: #00ffff; margin-bottom: 6px;">2- 鍓嶅線璁剧疆鎵撳紑鏈?
-                        App 鈥滃悗鍙?App 鍒锋柊鈥?/div>
-                    <p style="font-size: 0.8rem; color: #ccc; margin: 0; line-height: 1.45;">璇峰墠寰€绯荤粺鐨勨€滆缃€?- 鈥滈€氱敤鈥?- 鈥滃悗鍙?App
-                        鍒锋柊鈥濓紝纭繚鏈?App 鐨勫悗鍙板埛鏂版潈闄愬凡鎵撳紑锛屼互渚?IDFA 鍚庡彴瀹堟姢鑳藉湪鎸傝捣鏃舵寔缁埛鏂般€?/p>
+                    <div style="font-size: 0.92rem; font-weight: 800; color: #00ffff; margin-bottom: 6px;">2- 前往设置打开本
+                        App “后台 App 刷新”</div>
+                    <p style="font-size: 0.8rem; color: #ccc; margin: 0; line-height: 1.45;">请前往系统的“设置” - “通用” - “后台 App
+                        刷新”，确保本 App 的后台刷新权限已打开，以便 IDFA 后台守护能在挂起时持续刷新。</p>
                 </div>
 
                 <div style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 10px;">
-                    <div style="font-size: 0.92rem; font-weight: 800; color: #ffffff; margin-bottom: 6px;">3- 浠旂粏闃呰浠ヤ笅鐢ㄦ埛鍗忚
+                    <div style="font-size: 0.92rem; font-weight: 800; color: #ffffff; margin-bottom: 6px;">3- 仔细阅读以下用户协议
                     </div>
                     <div
                         style="font-size: 0.72rem; color: #888896; line-height: 1.5; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); border-radius: 8px; padding: 10px; max-height: 120px; overflow-y: auto;">
-                        椤圭洰鍊熷姪楠戦緳瀹氬埗Ai鏅鸿兘浣撳埗浣?鍔熻兘ui瑙勫垯绛夌敱AI鍒朵綔浠呬緵鍙傝€?br>
-                        -浠讳綍澶栭儴閾炬帴閮戒笌璇ュ伐鍏蜂笌浣滆€呮棤鍏?浠讳綍閾炬帴涓庣涓夋柟浜х墿鐨勫悗鏋滃潎鐢变娇鐢ㄨ€呰嚜琛屾壙鎷?br>
-                        -璇ュ伐鍏蜂粎渚涘涔犲弬鑰?浣跨敤璇峰潥鍐充笉瑕佽繚鍙嶅綋鍦版硶寰嬫硶瑙勪笌绀惧尯瑙勫垯 涓€鍒囧悗鏋滅敱浣跨敤鑰呮壙鎷?br>
-                        -鎴戜滑鎵胯涓嶆悳闆嗕笉鍏变韩涓嶅瓨鍌?any 涓嶅繀瑕佺殑鏁版嵁 涓嶆褰撶殑浣跨敤璇ュ伐鍏锋湁鍙兘閫犳垚鏁版嵁涓㈠け鎹熷潖涓庢硠闇插悗鏋滃潎鐢变娇鐢ㄨ€呮壙鎷?br>
-                        -杩涘叆棣栭〉鍗充唬琛ㄥ悓鎰忚鍗忚 濡傛嫆缁濊閫€鍑?br>
-                        https://github.com/78-big-QiLong鎷ユ湁鎵€鏈夋潈涓庢渶缁堣В閲婃潈 杩欐槸姘镐箙鍏泭娴嬭瘯鐗堟湰 濡傛灉鏄姳閽变拱鐨勮鏄庢槸鐩楃増鎴栨湪椹綘琚獥浜?
+                        项目借助骑龙定制Ai智能体制作 功能ui规则等由AI制作仅供参考<br>
+                        -任何外部链接都与该工具与作者无关 任何链接与第三方产物的后果均由使用者自行承担<br>
+                        -该工具仅供学习参考 使用请坚决不要违反当地法律法规与社区规则 一切后果由使用者承担<br>
+                        -我们承诺不搜集不共享不存储 any 不必要的数据 不正当的使用该工具有可能造成数据丢失损坏与泄露后果均由使用者承担<br>
+                        -进入首页即代表同意该协议 如拒绝请退出<br>
+                        https://github.com/78-big-QiLong拥有所有权与最终解释权 这是永久公益测试版本 如果是花钱买的说明是盗版或木马你被骗了
                     </div>
                 </div>
 
             </div>
             <button class="btn-close"
                 style="background: #ffaa00; color: #141419; font-weight: 900; font-size: 0.95rem; border: none; box-shadow: 0 4px 15px rgba(255,170,0,0.3); padding: 12px 0;"
-                onclick="agreeFirstOpen()">鎴戝凡鐭ユ檽骞跺悓鎰忓崗璁?/button>
+                onclick="agreeFirstOpen()">我已知晓并同意协议</button>
         </div>
     </div>
 
-    <!-- 鈹€鈹€ 浣跨敤鏁欑▼寮圭獥 鈹€鈹€ -->
+    <!-- ── 使用教程弹窗 ── -->
     <div class="modal-overlay" id="modal-tutorial" onclick="closeModalOnOverlay(event, 'modal-tutorial')">
         <div class="modal-box" style="max-width: 380px; width: 92%; padding: 22px;">
-            <div class="modal-title" style="color: #00ffff; font-size: 1.15rem; font-weight: 900;">浣跨敤鏁欑▼</div>
+            <div class="modal-title" style="color: #00ffff; font-size: 1.15rem; font-weight: 900;">使用教程</div>
 
             <div class="modal-list" style="max-height: 310px; text-align: left; gap: 10px; padding: 2px;">
                 <div
                     style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 10px; font-size: 0.82rem; line-height: 1.5; color: #e0e0e6;">
-                    <div style="font-weight: 800; color: #00ffff; margin-bottom: 4px;">绗竴姝?/div>
-                    鍏抽棴鎵€鏈夆€淪iri浠庢app瀛︿範鈥?
+                    <div style="font-weight: 800; color: #00ffff; margin-bottom: 4px;">第一步</div>
+                    关闭所有“Siri从此app学习”
                 </div>
                 <div
                     style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 10px; font-size: 0.82rem; line-height: 1.5; color: #e0e0e6;">
-                    <div style="font-weight: 800; color: #00ffff; margin-bottom: 4px;">绗簩姝?/div>
-                    鎵撳紑鏈簲鐢ㄥ悗鍙板埛鏂版潈闄?(鍏朵粬搴旂敤灏介噺鍏虫帀)
+                    <div style="font-weight: 800; color: #00ffff; margin-bottom: 4px;">第二步</div>
+                    打开本应用后台刷新权限 (其他应用尽量关掉)
                 </div>
                 <div
                     style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 10px; font-size: 0.82rem; line-height: 1.5; color: #e0e0e6;">
-                    <div style="font-weight: 800; color: #00ffff; margin-bottom: 4px;">绗笁姝?/div>
-                    鍕鹃€夌洰鏍囧簲鐢?(寤鸿灏介噺鍏ㄩ儴鍕鹃€夋晥鏋滄渶浣?
+                    <div style="font-weight: 800; color: #00ffff; margin-bottom: 4px;">第三步</div>
+                    勾选目标应用 (建议尽量全部勾选效果最佳)
                 </div>
                 <div
                     style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 10px; font-size: 0.82rem; line-height: 1.5; color: #e0e0e6;">
-                    <div style="font-weight: 800; color: #00ffff; margin-bottom: 4px;">绗洓姝?/div>
-                    鐐瑰嚮鈥滄竻鐞嗛闄╂畫鐣欌€?
+                    <div style="font-weight: 800; color: #00ffff; margin-bottom: 4px;">第四步</div>
+                    点击“清理风险残留”
                 </div>
                 <div
                     style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 10px; font-size: 0.82rem; line-height: 1.5; color: #e0e0e6;">
-                    <div style="font-weight: 800; color: #00ffff; margin-bottom: 4px;">绗簲姝?/div>
-                    寮€鍚€滃姩鎬佺櫧鍚嶅崟鈥?(纭繚宸ㄩ瓟鍜岃秺鐙辫繖鏃朵笉鍦ㄥ悗鍙?
+                    <div style="font-weight: 800; color: #00ffff; margin-bottom: 4px;">第五步</div>
+                    开启“动态白名单” (确保巨魔和越狱这时不在后台)
                 </div>
                 <div
                     style="background: rgba(255,80,80,0.06); border: 1px solid rgba(255,80,80,0.15); border-radius: 10px; padding: 10px; font-size: 0.82rem; line-height: 1.5; color: #ff8080; font-weight: bold;">
-                    娉ㄦ剰锛氳搴旂敤鍚庡彴涓嶈鍒掓帀锛屽惁鍒欏姛鑳戒細澶辨晥
+                    注意：该应用后台不要划掉，否则功能会失效
                 </div>
             </div>
 
             <button class="btn-close"
                 style="background: #00ffff; color: #141419; font-weight: 900; font-size: 0.92rem; border: none; box-shadow: 0 4px 15px rgba(0,255,255,0.3); margin-top: 15px; padding: 11px 0;"
-                onclick="openExternal('https://weixin.qq.com/sph/ANqOp5R71B')">鈻?瑙嗛鏁欏</button>
+                onclick="openExternal('https://weixin.qq.com/sph/ANqOp5R71B')">▶ 视频教学</button>
             <button class="btn-close"
                 style="background: rgba(255,255,255,0.08); color: #fff; border: 1px solid rgba(255,255,255,0.1); margin-top: 8px; padding: 10px 0;"
-                onclick="toggleModal('modal-tutorial', false)">鍏抽棴</button>
+                onclick="toggleModal('modal-tutorial', false)">关闭</button>
         </div>
     </div>
 
     <div class="modal-overlay" id="modal-apps" onclick="closeModalOnOverlay(event, 'modal-apps')">
         <div class="modal-box" style="max-width: 360px; width: 90%;">
-            <div class="modal-title" id="mdl-apps-title">鍕鹃€夎娓呯悊鐨勫簲鐢ㄩ挜鍖欓摼锛岃鍕垮嬀閫夊法榄旇秺鐙卞拰绯荤粺搴旂敤锛岄櫎闈炰綘鐭ラ亾浣犲湪骞蹭粈涔堬紝鍚庢灉鑷礋锛?/div>
+            <div class="modal-title" id="mdl-apps-title">勾选要清理的应用钥匙链，请勿勾选巨魔越狱和系统应用，除非你知道你在干什么，后果自负！</div>
             <div class="modal-list" id="apps-container">
-                <div style="color:#666; font-size:0.85rem; padding:20px 0;" id="text-loading-apps">鎵弿app鍒楄〃涓?/div>
+                <div style="color:#666; font-size:0.85rem; padding:20px 0;" id="text-loading-apps">扫描app列表中</div>
             </div>
-            <button class="btn-close" id="mdl-apps-save" onclick="saveAppSelection()">纭畾</button>
+            <button class="btn-close" id="mdl-apps-save" onclick="saveAppSelection()">确定</button>
         </div>
     </div>
 
-    <!-- 鈹€鈹€ 鑷畾涔夋瀬瀹㈤珮鍏夎鍛婄‘璁ゅ脊绐?鈹€鈹€ -->
+    <!-- ── 自定义极客高光警告确认弹窗 ── -->
     <div class="modal-overlay" id="modal-warning">
         <div class="modal-box"
             style="max-width: 380px; width: 92%; border: 1px solid #ff3c3c; box-shadow: 0 0 25px rgba(255, 60, 60, 0.25);">
             <div class="modal-title"
                 style="color: #ff3c3c; font-size: 1.15rem; font-weight: 900; text-shadow: 0 0 8px rgba(255, 60, 60, 0.4);">
-                銆愬畨鍏ㄨ鍛?/ SAFETY WARNING銆?/div>
+                【安全警告 / SAFETY WARNING】</div>
             <div class="modal-list"
                 style="text-align: left; font-size: 0.8rem; line-height: 1.5; color: #e0e0e6; gap: 10px; max-height: 240px; overflow-y: auto;">
                 <div
                     style="background: rgba(255, 60, 60, 0.05); border: 1px solid rgba(255, 60, 60, 0.15); border-radius: 12px; padding: 10px;">
-                    <div style="font-weight: 800; color: #ff8080; margin-bottom: 4px;">鎱庨噸璇存槑 / CRITICAL RULE</div>
-                    璇风‘淇濇病鏈夊嬀閫?宸ㄩ瓟(TrollStore),澶氬反鑳?Dopamine),绯荤粺搴旂敤锛?br>
+                    <div style="font-weight: 800; color: #ff8080; margin-bottom: 4px;">慎重说明 / CRITICAL RULE</div>
+                    请确保没有勾选 巨魔(TrollStore),多巴胺(Dopamine),系统应用！<br>
                     Make sure you have NOT checked TrollStore, Dopamine, or System Applications!
                 </div>
                 <div
                     style="background: rgba(255, 170, 0, 0.05); border: 1px solid rgba(255, 170, 0, 0.15); border-radius: 12px; padding: 10px;">
-                    <div style="font-weight: 800; color: #ffaa00; margin-bottom: 4px;">鎿嶄綔瑙勮寖 / INSTRUCTIONS</div>
-                    娓呯悊棰勮闇€瑕?5绉?鏈熼棿璇峰嬁杩涜浠讳綍鎿嶄綔 鐩磋嚦鏃ュ織鎻愮ず缁撴潫 鍚﹀垯鍚庢灉鑷礋锛?br>
+                    <div style="font-weight: 800; color: #ffaa00; margin-bottom: 4px;">操作规范 / INSTRUCTIONS</div>
+                    清理预计需要15秒 期间请勿进行任何操作 直至日志提示结束 否则后果自负！<br>
                     Cleaning takes ~15s. Do not touch or operate your device until logs finish, otherwise you bear all
                     consequences.
                 </div>
@@ -786,114 +786,114 @@
             <div style="display: flex; gap: 10px; margin-top: 15px;">
                 <button class="btn-warning-action"
                     style="background: #ff3c3c; color: #ffffff; box-shadow: 0 4px 12px rgba(255,60,60,0.3);"
-                    onclick="confirmCleanExecution()">鎴戠‘璁ゅ苟娓呯悊 / CONFIRM</button>
+                    onclick="confirmCleanExecution()">我确认并清理 / CONFIRM</button>
                 <button class="btn-warning-action"
                     style="background: rgba(255,255,255,0.06); color: #fff; border: 1px solid rgba(255,255,255,0.1);"
-                    onclick="cancelCleanExecution()">鍙栨秷 / CANCEL</button>
+                    onclick="cancelCleanExecution()">取消 / CANCEL</button>
             </div>
         </div>
     </div>
 
-    <!-- 鈹€鈹€ 鍏泭娴嬭瘯杩囨湡涓庢縺娲诲崱瀵嗛攣灞?鈹€鈹€ -->
+    <!-- ── 公益测试过期与激活卡密锁屏 ── -->
     <div class="modal-overlay" id="modal-expiry"
         style="background: #0a0a0c; opacity: 1; pointer-events: auto; display: none; z-index: 999999;">
         <div class="modal-box"
             style="max-width: 420px; width: 92%; border: 1px solid #ffaa00; box-shadow: 0 0 30px rgba(255, 170, 0, 0.2); padding: 22px;">
             <div class="modal-title"
                 style="color: #ffaa00; font-size: 1.25rem; font-weight: 900; text-shadow: 0 0 10px rgba(255, 170, 0, 0.4); margin-bottom: 15px;">
-                鍏泭娴嬭瘯鏈熷凡缁撴潫
+                公益测试期已结束
             </div>
             <div style="font-size: 0.82rem; line-height: 1.6; color: #d0d0d8; text-align: left; margin-bottom: 18px;">
-                涓虹‘淇濈敤鎴风殑浣撻獙涓庢暟鎹畨鍏紝鏈増鏈凡鏆傚仠鏈嶅姟銆?br>
-                鍙互浠庝互涓嬫笭閬撹幏鍙栨渶鏂扮増鍏泭涓庣浉鍏冲唴瀹癸紝闄や互涓嬫笭閬撳鐨勪换浣曟湰宸ュ叿鐨嗕负鐩楃増鏈ㄩ┈锛?
+                为确保用户的体验与数据安全，本版本已暂停服务。<br>
+                可以从以下渠道获取最新版公益与相关内容，除以下渠道外的任何本工具皆为盗版木马！
 
                 <div
                     style="margin-top: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 10px;">
                     <div style="cursor: pointer; color: #00ffff; font-weight: bold; text-decoration: underline; word-break: break-all;"
                         onclick="openExternal('https://github.com/78-big-QiLong')">
-                        馃敆 瀹樻柟GitHub浠撳簱锛歨ttps://github.com/78-big-QiLong
+                        🔗 官方GitHub仓库：https://github.com/78-big-QiLong
                     </div>
                     <div style="cursor: pointer; color: #00ffff; font-weight: bold; text-decoration: underline; word-break: break-all;"
                         onclick="openExternal('https://qm.qq.com/q/13HQO4RMLo')">
-                        馃敆 瀹樻柟鎵ｆ墸浜ゆ祦缇わ細https://qm.qq.com/q/13HQO4RMLo
+                        🔗 官方扣扣交流群：https://qm.qq.com/q/13HQO4RMLo
                     </div>
                 </div>
             </div>
 
             <div style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 15px;">
-                <div style="font-size: 0.8rem; color: #888892; margin-bottom: 8px; text-align: left;">璇疯緭鍏ラ獙璇佸崱瀵嗕互缁х画浣跨敤锛?
+                <div style="font-size: 0.8rem; color: #888892; margin-bottom: 8px; text-align: left;">请输入验证卡密以继续使用：
                 </div>
                 <div style="display: flex; gap: 8px;">
-                    <input type="password" id="expiry-key-input" placeholder="杈撳叆娴嬭瘯鎺堟潈鍗″瘑..."
+                    <input type="password" id="expiry-key-input" placeholder="输入测试授权卡密..."
                         style="flex: 1; padding: 10px; border-radius: 8px; background: #141419; border: 1px solid rgba(255,255,255,0.15); color: #fff; font-size: 0.85rem; outline: none; box-sizing: border-box;">
                     <button class="btn-warning-action"
                         style="background: #ffaa00; color: #141419; font-weight: bold; padding: 0 15px; font-size: 0.85rem;"
-                        onclick="checkExpiryKey()">楠岃瘉</button>
+                        onclick="checkExpiryKey()">验证</button>
                 </div>
                 <div id="expiry-error-tip"
-                    style="color: #ff3c3c; font-size: 0.75rem; margin-top: 6px; text-align: left; display: none;">鉂?
-                    鍗″瘑楠岃瘉澶辫触锛岃閲嶆柊杈撳叆锛?/div>
+                    style="color: #ff3c3c; font-size: 0.75rem; margin-top: 6px; text-align: left; display: none;">❌
+                    卡密验证失败，请重新输入！</div>
             </div>
         </div>
     </div>
 
     <div class="modal-overlay" id="modal-lang" onclick="closeModalOnOverlay(event, 'modal-lang')">
         <div class="modal-box">
-            <div class="modal-title">璇█閫夋嫨</div>
+            <div class="modal-title">语言选择</div>
             <div class="modal-list">
-                <div class="modal-item" onclick="changeLanguage('zh_CN')">绠€浣撲腑鏂?/div>
-                <div class="modal-item" onclick="changeLanguage('zh_TW')">绻侀珨涓枃</div>
+                <div class="modal-item" onclick="changeLanguage('zh_CN')">简体中文</div>
+                <div class="modal-item" onclick="changeLanguage('zh_TW')">繁體中文</div>
                 <div class="modal-item" onclick="changeLanguage('en')">English</div>
-                <div class="modal-item" onclick="changeLanguage('ja')">鏃ユ湰瑾?/div>
-                <div class="modal-item" onclick="changeLanguage('ru')">袪褍褋褋泻懈泄</div>
-                <div class="modal-item" onclick="changeLanguage('za')">Vahcuengh (澹)</div>
+                <div class="modal-item" onclick="changeLanguage('ja')">日本語</div>
+                <div class="modal-item" onclick="changeLanguage('ru')">Русский</div>
+                <div class="modal-item" onclick="changeLanguage('za')">Vahcuengh (壮语)</div>
             </div>
-            <button class="btn-close" onclick="toggleModal('modal-lang', false)">鉁?CLOSE</button>
+            <button class="btn-close" onclick="toggleModal('modal-lang', false)">✕ CLOSE</button>
         </div>
     </div>
 
     <div class="modal-overlay" id="modal-channel" onclick="closeModalOnOverlay(event, 'modal-channel')">
         <div class="modal-box">
-            <div class="modal-title" id="mdl-channel-title">鍔犲叆鎴戜滑鐨勭ぞ鍖?/div>
+            <div class="modal-title" id="mdl-channel-title">加入我们的社区</div>
             <div class="modal-list">
                 <div class="modal-item"
                     onclick="openExternal('https://estplca.m.kuai-fei.com/fw/user/3xfi2nbx3nwcwei?cc=share_wxms&kpf=ANDROID_PHONE&fid=3616123070&shareMode=app&shareMethod=picture&appType=21&kpn=NEBULA&subBiz=QR_CODE_PROFILE&shareId=19027827816757&shareToken=X-4rCy7BihD3fiUB&shareObjectId=3616123070')">
-                    鏌愪汉鐨勫揩鎵嬪彂甯冮〉</div>
+                    某人的快手发布页</div>
                 <div class="modal-item"
-                    onclick="openExternal('https://www.tiktok.com/@qi_long666?_r=1&_t=ZT-97rs2H0fFBG')">浣滆€呯殑tiktok</div>
-                <div class="modal-item" onclick="openExternal('https://github.com/78-big-QiLong')">楠戦緳瀹樻柟GitHub</div>
-                <div class="modal-item" onclick="openExternal('https://qm.qq.com/q/pVfdAP4Njk')">鍔犲叆QIlong鐨凲Q浜ゆ祦缇?
+                    onclick="openExternal('https://www.tiktok.com/@qi_long666?_r=1&_t=ZT-97rs2H0fFBG')">作者的tiktok</div>
+                <div class="modal-item" onclick="openExternal('https://github.com/78-big-QiLong')">骑龙官方GitHub</div>
+                <div class="modal-item" onclick="openExternal('https://qm.qq.com/q/pVfdAP4Njk')">加入QIlong的QQ交流群
                 </div>
-                <div class="modal-item modal-item-qq" onclick="copyQQ('鑱旂郴鍒颁綔鑰匭iLong78Big@iCloud.com')">
-                    鑱旂郴鍒颁綔鑰匭iLong78Big@iCloud.com<span style="float:right;font-size:0.65rem;color:#888;">鐐瑰嚮澶嶅埗</span>
+                <div class="modal-item modal-item-qq" onclick="copyQQ('联系到作者QiLong78Big@iCloud.com')">
+                    联系到作者QiLong78Big@iCloud.com<span style="float:right;font-size:0.65rem;color:#888;">点击复制</span>
                 </div>
-                <div class="modal-item modal-item-qq" onclick="copyQQ('740953263')">鎵ｆ墸缇?<span
-                        style="float:right;font-size:0.65rem;color:#888;">鐐瑰嚮澶嶅埗</span></div>
-                <div class="modal-item modal-item-qq" onclick="copyQQ('499574602')">鎵ｆ墸缇?<span
-                        style="float:right;font-size:0.65rem;color:#888;">鐐瑰嚮澶嶅埗</span></div>
+                <div class="modal-item modal-item-qq" onclick="copyQQ('740953263')">扣扣群1<span
+                        style="float:right;font-size:0.65rem;color:#888;">点击复制</span></div>
+                <div class="modal-item modal-item-qq" onclick="copyQQ('499574602')">扣扣群2<span
+                        style="float:right;font-size:0.65rem;color:#888;">点击复制</span></div>
             </div>
-            <button class="btn-close" id="mdl-channel-close" onclick="toggleModal('modal-channel', false)">鎴戝凡缁忓叏閮ㄥ叧娉ㄤ簡
-                鐐硅繖閲屽叧闂?/button>
+            <button class="btn-close" id="mdl-channel-close" onclick="toggleModal('modal-channel', false)">我已经全部关注了
+                点这里关闭</button>
         </div>
     </div>
 
     <script>
         const langDictionary = {
             zh_CN: {
-                lblVersion: "绯荤粺鐗堟湰(璇诲彇鍊?", lblModel: "鏈哄瀷鍚嶇О", lblSn: "搴忓垪鍙?璇诲彇鍊?", lblCpu: "澶勭悊鍣ㄥ瀷鍙?, lblTroll: "宸ㄩ瓟鐘舵€?妫€娴嬪€?", lblJb: "瓒婄嫳鐘舵€?妫€娴嬪€?",
-                btnSelect: "鍕鹃€夊簲鐢?, btnDynamicOff: "寮€鍚姩鎬佺櫧鍚嶅崟", btnDynamicOn: "鍏抽棴鍔ㄦ€佺櫧鍚嶅崟", btnExecute: "娓呯悊椋庨櫓娈嬬暀", btnTutorial: "浣跨敤鏁欑▼", btnChannel: "浜ゆ祦棰戦亾", btnClose: "鎴戝凡缁忓叏閮ㄥ叧娉ㄤ簡 鐐硅繖閲屽叧闂?,
-                mdlTitle: "鍔犲叆鎴戜滑鐨勭ぞ鍖?, mdlAppsTitle: "鍕鹃€夎娓呯悊鐨勫簲鐢ㄩ挜鍖欓摼", btnSave: "纭畾", textLoading: "鎵弿app鍒楄〃涓?,
-                logInit: "鍐呮牳鍒濆鍖栧畬鎴?浣滆€咃細QiLong-GOLD400鍊熷姪楠戦緳瀹氬埗Ai澶氭ā鎬佹櫤鑳戒綋鍒朵綔", logReady: "绯荤粺鍒濆鍖栧畬姣曪紝璁惧妫€娴嬪凡灏辩华銆?,
-                footer: "https://github.com/78-big-QiLong鎷ユ湁鎵€鏈夋潈涓庢渶缁堣В閲婃潈 杩欐槸姘镐箙鍏泭娴嬭瘯鐗堟湰 濡傛灉鏄姳閽变拱鐨勮鏄庢槸鐩楃増鎴栨湪椹綘琚獥浜?,
-                trollOn: "宸茶В閿?(Root)", trollOff: "鏈縺娲?(娌欑洅闄愬埗)", jbOn: "宸叉娴嬪埌瓒婄嫳", jbOff: "鏈秺鐙?
+                lblVersion: "系统版本(读取值)", lblModel: "机型名称", lblSn: "序列号(读取值)", lblCpu: "处理器型号", lblTroll: "巨魔状态(检测值)", lblJb: "越狱状态(检测值)",
+                btnSelect: "勾选应用", btnDynamicOff: "开启动态白名单", btnDynamicOn: "关闭动态白名单", btnExecute: "清理风险残留", btnTutorial: "使用教程", btnChannel: "交流频道", btnClose: "我已经全部关注了 点这里关闭",
+                mdlTitle: "加入我们的社区", mdlAppsTitle: "勾选要清理的应用钥匙链", btnSave: "确定", textLoading: "扫描app列表中",
+                logInit: "内核初始化完成 作者：QiLong-GOLD400借助骑龙定制Ai多模态智能体制作", logReady: "系统初始化完毕，设备检测已就绪。",
+                footer: "https://github.com/78-big-QiLong拥有所有权与最终解释权 这是永久公益测试版本 如果是花钱买的说明是盗版或木马你被骗了",
+                trollOn: "已解锁 (Root)", trollOff: "未激活 (沙盒限制)", jbOn: "已检测到越狱", jbOff: "未越狱"
             },
             zh_TW: {
-                lblVersion: "绯荤当鐗堟湰(璁€鍙栧€?", lblModel: "姗熷瀷鍚嶇ū", lblSn: "搴忓垪铏?璁€鍙栧€?", lblCpu: "铏曠悊鍣ㄥ瀷铏?, lblTroll: "宸ㄩ瓟鐙€鎱?妾㈡脯鍊?", lblJb: "瓒婄崉鐙€鎱?妾㈡脯鍊?",
-                btnSelect: "鍕鹃伕鎳夌敤", btnDynamicOff: "鍟熷嫊鍕曟厠鐧藉悕鍠?, btnDynamicOn: "闂滈枆鍕曟厠鐧藉悕鍠?, btnExecute: "娓呯悊棰ㄩ毆娈樼暀", btnTutorial: "浣跨敤鏁欑▼", btnChannel: "浜ゆ祦闋婚亾", btnClose: "鎴戝凡缍撳叏閮ㄩ棞娉ㄤ簡 榛為€欒！闂滈枆",
-                mdlTitle: "鍔犲叆鎴戝€戠殑绀惧崁", mdlAppsTitle: "鍕鹃伕瑕佹竻鐞嗙殑鎳夌敤閼板寵閺?, btnSave: "纰哄畾", textLoading: "鎺冩弿app鍒楄〃涓?,
-                logInit: "鍏ф牳绶ㄨ瀹岀暍 浣滆€咃細QiLong-GOLD400鍊熷姪楱庨緧瀹氬埗Ai澶氭ā鎱嬫櫤鑳介珨瑁戒綔", logReady: "绯荤当鍒濆鍖栧畬鐣紝瑷倷妾㈡脯宸插氨绶掋€?,
-                footer: "https://github.com/78-big-QiLong鎿佹湁鎵€鏈夋瑠鑸囨渶绲傝В閲嬫瑠 閫欐槸姘镐箙鍏泭娓│鐗堟湰 濡傛灉鏄姳閷㈣卜鐨勮鏄庢槸鐩滅増鎴栨湪棣綘琚浜?,
-                trollOn: "宸茶В閹?(Root)", trollOff: "鏈縺娲?(娌欑洅闄愬埗)", jbOn: "宸叉娓埌瓒婄崉", jbOff: "鏈秺鐛?
+                lblVersion: "系統版本(讀取值)", lblModel: "機型名稱", lblSn: "序列號(讀取值)", lblCpu: "處理器型號", lblTroll: "巨魔狀態(檢測值)", lblJb: "越獄狀態(檢測值)",
+                btnSelect: "勾選應用", btnDynamicOff: "啟動動態白名單", btnDynamicOn: "關閉動態白名單", btnExecute: "清理風險殘留", btnTutorial: "使用教程", btnChannel: "交流頻道", btnClose: "我已經全部關注了 點這裡關閉",
+                mdlTitle: "加入我們的社區", mdlAppsTitle: "勾選要清理的應用鑰匙鏈", btnSave: "確定", textLoading: "掃描app列表中",
+                logInit: "內核編譯完畢 作者：QiLong-GOLD400借助騎龍定制Ai多模態智能體製作", logReady: "系統初始化完畢，設備檢測已就緒。",
+                footer: "https://github.com/78-big-QiLong擁有所有權與最終解釋權 這是永久公益測試版本 如果是花錢買的說明是盜版或木馬你被騙了",
+                trollOn: "已解鎖 (Root)", trollOff: "未激活 (沙盒限制)", jbOn: "已檢測到越獄", jbOff: "未越獄"
             },
             en: {
                 lblVersion: "iOS Version (Read)", lblModel: "Device Model", lblSn: "Serial Number", lblCpu: "Processor Model", lblTroll: "TrollStore Status", lblJb: "Jailbreak Status",
@@ -904,34 +904,34 @@
                 trollOn: "Unlocked (Root)", trollOff: "Not Active (Sandbox Restricted)", jbOn: "Jailbroken", jbOff: "Not Jailbroken"
             },
             ja: {
-                lblVersion: "OS銉愩兗銈搞儳銉?鍙栧緱鍊?", lblModel: "姗熺ó鍚?, lblSn: "銈枫儶銈儷鐣彿", lblCpu: "銉椼儹銈汇儍銈点儮銉囥儷", lblTroll: "TrollStore鐘舵厠", lblJb: "鑴辩崉鐘舵厠",
-                btnSelect: "銈儣銉伕鎶?, btnDynamicOff: "鍕曠殑銉涖儻銈ゃ儓銉偣銉堣捣鍕?, btnDynamicOn: "鍕曠殑銉涖儻銈ゃ儓銉偣銉堝仠姝?, btnExecute: "銉偣銈畫鐣欍偗銉偄", btnTutorial: "銉併儱銉笺儓銉偄銉?, btnChannel: "浜ゆ祦銉併儯銉炽儘銉?, btnClose: "銇欍伖銇︺儠銈┿儹銉笺仐銇俱仐銇熴€傞枆銇樸倠",
-                mdlTitle: "銈炽儫銉ャ儖銉嗐偅銇弬鍔?, mdlAppsTitle: "銈儶銉笺兂銈儍銉椼仚銈嬨偄銉椼儶銇伕鎶?, btnSave: "姹哄畾", textLoading: "銈儣銉儶銈广儓銈掋偣銈儯銉充腑...",
-                logInit: "銈兗銉嶃儷銇垵鏈熷寲銇屽畬浜嗐仐銇俱仐銇熴€俀iLong-GOLD400 & QiLong AI銇倛銇ｃ仸浣滄垚銇曘倢銇俱仐銇熴€?, logReady: "銈枫偣銉嗐儬鍒濇湡鍖栧畬浜嗐€傘儑銉愩偆銈规鍑恒伄婧栧倷銇屾暣銇勩伨銇椼仧銆?,
-                footer: "https://github.com/78-big-QiLong 銇屻仚銇广仸銇ī鍒┿仺鏈€绲傝В閲堟ī銈掓湁銇椼伨銇欍€傛案涔呯劇鏂欍儐銈广儓鐗堛仹銇欍€?,
-                trollOn: "銈兂銉儍銈笀 (Root)", trollOff: "鏈湁鍔瑰寲 (銈点兂銉夈儨銉冦偗銈瑰埗闄?", jbOn: "鑴辩崉妞滃嚭", jbOff: "鏈劚鐛?
+                lblVersion: "OSバージョン(取得値)", lblModel: "機種名", lblSn: "シリアル番号", lblCpu: "プロセッサモデル", lblTroll: "TrollStore状態", lblJb: "脱獄状態",
+                btnSelect: "アプリ選択", btnDynamicOff: "動的ホワイトリスト起動", btnDynamicOn: "動的ホワイトリスト停止", btnExecute: "リスク残留クリア", btnTutorial: "チュートリアル", btnChannel: "交流チャンネル", btnClose: "すべてフォローしました。閉じる",
+                mdlTitle: "コミュニティに参加", mdlAppsTitle: "クリーンアップするアプリの選択", btnSave: "決定", textLoading: "アプリリストをスキャン中...",
+                logInit: "カーネルの初期化が完了しました。QiLong-GOLD400 & QiLong AIによって作成されました。", logReady: "システム初期化完了。デバイス検出の準備が整いました。",
+                footer: "https://github.com/78-big-QiLong がすべての権利と最終解釈権を有します。永久無料テスト版です。",
+                trollOn: "アンロック済 (Root)", trollOff: "未有効化 (サンドボックス制限)", jbOn: "脱獄検出", jbOff: "未脱獄"
             },
             ru: {
-                lblVersion: "杩欓噷濉捫笛€褋懈褟 袨小鏍囩", lblModel: "杩欓噷濉溞拘葱敌谎屾爣绛?, lblSn: "杩欓噷濉⌒笛€懈泄薪褘泄 薪芯屑械褉鏍囩", lblCpu: "杩欓噷濉熝€芯褑械褋褋芯褉鏍囩", lblTroll: "杩欓噷濉⊙傂把傃冄?Troll鏍囩", lblJb: "杩欓噷濉斝缎敌剐恍毖€械泄泻鏍囩",
-                btnSelect: "杩欓噷濉捬嬓毖€邪褌褜鎸夐挳", btnDynamicOff: "杩欓噷濉⌒毖€芯褋 IDFA鎸夐挳", btnDynamicOn: "杩欓噷濉⊙傂拘?IDFA鎸夐挳", btnExecute: "杩欓噷濉炑囆秆佈傂秆傃屾寜閽?, btnTutorial: "杩欓噷濉樞窖佈傃€褍泻褑懈褟鎸夐挳", btnChannel: "杩欓噷濉毿靶叫靶谎嬫寜閽?, btnClose: "杩欓噷濉椥靶貉€褘褌褜鎸夐挳",
-                mdlTitle: "杩欓噷濉毿靶叫靶谎嬪脊绐楁爣棰?, mdlAppsTitle: "杩欓噷濉捬嬓毙狙€ 锌褉懈谢芯卸械薪懈泄寮圭獥鏍囬", btnSave: "杩欓噷濉熜拘囱傂残笛€写懈褌褜鎸夐挳", textLoading: "杩欓噷濉⌒啃秆佇拘?锌褍褋褌鏂囧瓧",
-                logInit: "杩欓噷濉⌒秆佈傂敌夹?芯卸懈写邪薪懈械鏃ュ織", logReady: "杩欓噷濉⌒秆佈傂敌夹?谐芯褌芯胁鏃ュ織",
-                footer: "杩欓噷濉熝€械写褍锌褉械卸写械薪懈械鏂囧瓧",
-                trollOn: "杩欓噷濉犘靶沸毙恍拘盒秆€芯胁邪薪芯鏂囧瓧", trollOff: "杩欓噷濉熜笛佇狙囆叫秆喰版枃瀛?, jbOn: "杩欓噷濉炐毙叫把€褍卸械薪鏂囧瓧", jbOff: "杩欓噷濉澬笛傛枃瀛?
+                lblVersion: "这里填Версия ОС标签", lblModel: "这里填Модель标签", lblSn: "这里填Серийный номер标签", lblCpu: "这里填Процессор标签", lblTroll: "这里填Статус Troll标签", lblJb: "这里填Джейлбрейк标签",
+                btnSelect: "这里填Выбрать按钮", btnDynamicOff: "这里填Сброс IDFA按钮", btnDynamicOn: "这里填Стоп IDFA按钮", btnExecute: "这里填Очистить按钮", btnTutorial: "这里填Инструкция按钮", btnChannel: "这里填Каналы按钮", btnClose: "这里填Закрыть按钮",
+                mdlTitle: "这里填Каналы弹窗标题", mdlAppsTitle: "这里填Выбор приложений弹窗标题", btnSave: "这里填Подтвердить按钮", textLoading: "这里填Список пуст文字",
+                logInit: "这里填Система ожидание日志", logReady: "这里填Система готов日志",
+                footer: "这里填Предупреждение文字",
+                trollOn: "这里填Разблокировано文字", trollOff: "这里填Песочница文字", jbOn: "这里填Обнаружен文字", jbOff: "这里填Нет文字"
             },
             za: {
-                lblVersion: "杩欓噷濉獺eitungh Banzbwnz鏍囩", lblModel: "杩欓噷濉獵oengzhingz Mingz鏍囩", lblSn: "杩欓噷濉獹aengh Swhleizhao鏍囩", lblCpu: "杩欓噷濉獵uwleiqi鏍囩", lblTroll: "杩欓噷濉獹vjmoz Canghdaiz鏍囩", lblJb: "杩欓噷濉玍ietngvax Canghdaiz鏍囩",
-                btnSelect: "杩欓噷濉玈wjndiengz鎸夐挳", btnDynamicOff: "杩欓噷濉獵aiqgauh IDFA鎸夐挳", btnDynamicOn: "杩欓噷濉獶inghcij IDFA鎸夐挳", btnExecute: "杩欓噷濉獵aegit鎸夐挳", btnTutorial: "杩欓噷濉玈aengqcoenz鎸夐挳", btnChannel: "杩欓噷濉獴wndauz鎸夐挳", btnClose: "杩欓噷濉獶aengz鎸夐挳",
-                mdlTitle: "杩欓噷濉獹vnghfangh Bwndauz寮圭獥鏍囬", mdlAppsTitle: "杩欓噷濉玈wjndiengz Daenghdan寮圭獥鏍囬", btnSave: "杩欓噷濉獶ingh鎸夐挳", textLoading: "杩欓噷濉玀buj gienqgauh鏂囧瓧",
-                logInit: "杩欓噷濉獺eitungh寰呮満鏃ュ織", logReady: "杩欓噷濉獺eitungh瀹屼簡鏃ュ織",
-                footer: "杩欓噷濉玈whmingz澹版槑鏂囧瓧",
-                trollOn: "杩欓噷濉獹vjmoz宸茶В閿佹枃瀛?, trollOff: "杩欓噷濉獹vjmoz鏈縺娲绘枃瀛?, jbOn: "杩欓噷濉玍ietngvax宸叉娴嬫枃瀛?, jbOff: "杩欓噷濉玍ietngvax鏈娴嬫枃瀛?
+                lblVersion: "这里填Heitungh Banzbwnz标签", lblModel: "这里填Coengzhingz Mingz标签", lblSn: "这里填Gaengh Swhleizhao标签", lblCpu: "这里填Cuwleiqi标签", lblTroll: "这里填Gvjmoz Canghdaiz标签", lblJb: "这里填Vietngvax Canghdaiz标签",
+                btnSelect: "这里填Swjndiengz按钮", btnDynamicOff: "这里填Caiqgauh IDFA按钮", btnDynamicOn: "这里填Dinghcij IDFA按钮", btnExecute: "这里填Caegit按钮", btnTutorial: "这里填Saengqcoenz按钮", btnChannel: "这里填Bwndauz按钮", btnClose: "这里填Daengz按钮",
+                mdlTitle: "这里填Gvnghfangh Bwndauz弹窗标题", mdlAppsTitle: "这里填Swjndiengz Daenghdan弹窗标题", btnSave: "这里填Dingh按钮", textLoading: "这里填Mbuj gienqgauh文字",
+                logInit: "这里填Heitungh待机日志", logReady: "这里填Heitungh完了日志",
+                footer: "这里填Swhmingz声明文字",
+                trollOn: "这里填Gvjmoz已解锁文字", trollOff: "这里填Gvjmoz未激活文字", jbOn: "这里填Vietngvax已检测文字", jbOff: "这里填Vietngvax未检测文字"
             }
         };
 
         let currentLang = 'zh_CN';
-        let globalRawAppList = []; // 瀛樺偍鍏ㄦ満瀹屾暣 App 鍚嶅崟
-        let idfaLoopRunning = false; // 銆愯嚜閿佸紑鍏抽椄銆慖DFA 鍚庡彴杞鐘舵€?
+        let globalRawAppList = []; // 存储全机完整 App 名单
+        let idfaLoopRunning = false; // 【自锁开关闸】IDFA 后台轮询状态
 
         function toggleModal(modalId, show) {
             const modal = document.getElementById(modalId);
@@ -957,7 +957,7 @@
             document.getElementById('btn-dynamic').innerText = idfaLoopRunning ? dict.btnDynamicOn : dict.btnDynamicOff;
             document.getElementById('btn-execute').innerText = dict.btnExecute;
             document.getElementById('btn-tutorial').innerText = dict.btnTutorial;
-            document.getElementById('btn-lang').innerText = "馃寪 " + (langCode === 'en' ? "Lang" : "璇█");
+            document.getElementById('btn-lang').innerText = "🌐 " + (langCode === 'en' ? "Lang" : "语言");
             document.getElementById('btn-channel').innerText = dict.btnChannel;
             document.getElementById('text-footer').innerText = dict.footer;
 
@@ -1010,7 +1010,7 @@
             line.innerText = text;
             container.appendChild(line);
 
-            // 鈿狅笍 鍔ㄦ€佺櫧鍚嶅崟涓€杞埛鏂板畬鎴愬悗杩藉姞涓嫳鏂囪鍛?(涓嶅尯鍒嗗ぇ灏忓啓锛屽尮閰?round/complete/waiting/60s 鍏抽敭瀛楃粍鍚?
+            // ⚠️ 动态白名单一轮刷新完成后追加中英文警告 (不区分大小写，匹配 round/complete/waiting/60s 关键字组合)
             if (text) {
                 const lowerText = text.toLowerCase();
                 if ((lowerText.includes("complete") && lowerText.includes("waiting")) ||
@@ -1026,7 +1026,7 @@
                     warnLine.style.background = 'rgba(255, 60, 60, 0.1)';
                     warnLine.style.border = '1px dashed #ff3c3c';
                     warnLine.style.color = '#ff8080';
-                    warnLine.innerText = "銆愯鍛娿€戦噸鍚垨瓒婄嫳鍓嶈鍏抽棴璇ュ姛鑳斤紝鍚﹀垯鍙兘鐧借嫻鏋滄垨璺虫縺娲伙紒\n[WARNING] Please turn off this feature before rebooting or jailbreaking, otherwise it may cause a bootloop (White Apple) or activation loops!";
+                    warnLine.innerText = "【警告】重启或越狱前请关闭该功能，否则可能白苹果或跳激活！\n[WARNING] Please turn off this feature before rebooting or jailbreaking, otherwise it may cause a bootloop (White Apple) or activation loops!";
                     container.appendChild(warnLine);
                 }
             }
@@ -1034,26 +1034,26 @@
             container.scrollTop = container.scrollHeight;
         }
 
-        // 鈹€鈹€ 鏍稿績鍗囩骇锛氬敜鍑虹墿鐞嗗簲鐢ㄥ嬀閫夎埍 鈹€鈹€
+        // ── 核心升级：唤出物理应用勾选舱 ──
         function clickSelect() {
             appendLog("[UI] App selector opened.", "system");
             toggleModal('modal-apps', true);
         }
 
-        // 鈹€鈹€ 鉁?鏍稿績瀵规帴锛氭帴鏀舵潵鑷?main.m 绉佹湁 API 鐏屽叆鐨勭湡瀹?App 鍚嶅崟 JSON 鈹€鈹€
+        // ── ✨ 核心对接：接收来自 main.m 私有 API 灌入的真实 App 名单 JSON ──
         window.updateAppList = function (jsonString) {
             try {
                 const apps = JSON.parse(jsonString);
                 globalRawAppList = apps;
                 const container = document.getElementById('apps-container');
-                container.innerHTML = ''; // 鎿﹂櫎鍔犺浇鎻愮ず
+                container.innerHTML = ''; // 擦除加载提示
 
                 if (apps.length === 0) {
-                    container.innerHTML = `<div style="color:#666;font-size:0.85rem;padding:20px 0;">鏈娴嬪埌鍙竻鐞嗙殑绗笁鏂笰pp</div>`;
+                    container.innerHTML = `<div style="color:#666;font-size:0.85rem;padding:20px 0;">未检测到可清理的第三方App</div>`;
                     return;
                 }
 
-                // 鍔ㄦ€佹媺鍑哄甫鏈?Checkbox 鐨勭簿缇庢祦鍏夊悕鍗曡
+                // 动态拉出带有 Checkbox 的精美流光名单行
                 apps.forEach(app => {
                     const row = document.createElement('div');
                     row.className = 'app-check-item';
@@ -1069,7 +1069,7 @@
             }
         }
 
-        // 纭閫夋嫨锛屾竻鐐规垬鍦?
+        // 确认选择，清点战场
         function saveAppSelection() {
             const checkboxes = document.querySelectorAll('.app-checkbox');
             let count = 0;
@@ -1078,7 +1078,7 @@
             toggleModal('modal-apps', false);
         }
 
-        // 鑾峰彇褰撳墠鐣岄潰鎵€鏈夎鐢ㄦ埛鎵撳嬀鐨?Bundle ID 鏁扮粍
+        // 获取当前界面所有被用户打勾的 Bundle ID 数组
         function getSelectedBundleIDs() {
             const checkboxes = document.querySelectorAll('.app-checkbox');
             const selected = [];
@@ -1088,10 +1088,10 @@
             return selected;
         }
 
-        // 鈹€鈹€ 銆愯嚜閿佸紑鍏抽椄銆慖DFA / 鍔ㄦ€佺櫧鍚嶅崟瀹炴椂鎵弿鎸夐敭 鈹€鈹€
+        // ── 【自锁开关闸】IDFA / 动态白名单实时扫描按键 ──
         function clickDynamicRefresh() {
             if (!idfaLoopRunning) {
-                // 褰撳墠鏈繍琛?鈫?鍙戦€佸紑鍚俊鍙?(鎹庡甫褰撳墠閫変腑鐨勭洰鏍?Bundle ID 鍚嶅崟)
+                // 当前未运行 → 发送开启信号 (捎带当前选中的目标 Bundle ID 名单)
                 const selectedApps = getSelectedBundleIDs();
                 appendLog(`[REALTIME] Starting dynamic whitelist realtime scan daemon (Targets: ${selectedApps.length})...`, "system");
                 if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
@@ -1104,7 +1104,7 @@
                     window.onIdfaStateChanged(true);
                 }
             } else {
-                // 褰撳墠杩愯涓?鈫?鍙戦€佸叧闂俊鍙?
+                // 当前运行中 → 发送关闭信号
                 appendLog("[DAEMON] Stopping background process...", "system");
                 if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
                     window.webkit.messageHandlers.TrollHandler.postMessage("stop_idfa_loop");
@@ -1114,7 +1114,7 @@
             }
         }
 
-        // 鍘熺敓鍥炶皟锛氬悓姝?IDFA 鎸夐挳寮€鍏崇姸鎬侊紙鐢?main.m 璋冪敤锛?
+        // 原生回调：同步 IDFA 按钮开关状态（由 main.m 调用）
         window.onIdfaStateChanged = function (running) {
             idfaLoopRunning = running;
             const btn = document.getElementById('btn-dynamic');
@@ -1122,8 +1122,8 @@
             if (running) {
                 btn.innerText = dict.btnDynamicOn;
                 btn.style.boxShadow = '0 0 15px rgba(255,0,0,0.5)';
-                // 鈿狅笍 寮€鍚椂绔嬪嵆鍚戞棩蹇楅潰鏉挎墦鍗颁腑鑻辨枃閱掔洰璀﹀憡锛?
-                appendLog("銆愰噸瑕佽鍛娿€戝姩鎬佺櫧鍚嶅崟鍚庡彴瀹堟姢杩涚▼宸插惎鍔ㄣ€傚湪閲嶅惎鎵嬫満鎴栭噸鏂拌秺鐙变箣鍓嶏紝璇峰姟蹇呮墜鍔ㄥ叧闂鍔熻兘锛屽惁鍒欏彲鑳介€犳垚鐧借嫻鏋滄垨婵€娲荤姸鎬侀攣姝伙紒", "warn");
+                // ⚠️ 开启时立即向日志面板打印中英文醒目警告！
+                appendLog("【重要警告】动态白名单后台守护进程已启动。在重启手机或重新越狱之前，请务必手动关闭此功能，否则可能造成白苹果或激活状态锁死！", "warn");
                 appendLog("[CRITICAL WARNING] Dynamic whitelist background active. You MUST disable this feature before rebooting or jailbreaking, otherwise it may trigger bootloops (White Apple) or setup activation loops!", "warn");
             } else {
                 btn.innerText = dict.btnDynamicOff;
@@ -1131,8 +1131,8 @@
             }
         }
 
-        // 鈹€鈹€ 鏍稿績鍗囩骇锛氶珮闃跺缁存暟鎹挰鍚堥綈鍙?鈹€鈹€
-        // 鈹€鈹€ 鏍稿績鍗囩骇锛氬敜璧疯嚜瀹氫箟瀹夊叏璀﹀憡寮圭獥 鈹€鈹€
+        // ── 核心升级：高阶多维数据咬合齐发 ──
+        // ── 核心升级：唤起自定义安全警告弹窗 ──
         function clickExecute() {
             toggleModal('modal-warning', true);
         }
@@ -1143,7 +1143,7 @@
             appendLog(`[KERNEL] Executing clean...`, "system");
 
             if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
-                // 鉁ㄧ粓鏋佺剨姝伙細鍚戝師鐢熷彂灏勬墦鍖呭瓧鍏?{"action": "start_clean", "apps": ["鍖呭悕1", "鍖呭悕2", ...]}
+                // ✨终极焊死：向原生发射打包字典 {"action": "start_clean", "apps": ["包名1", "包名2", ...]}
                 const payload = {
                     action: "start_clean",
                     apps: selectedApps
@@ -1178,13 +1178,13 @@
         function copyQQ(qqNumber) {
             navigator.clipboard.writeText(qqNumber).then(() => {
                 appendLog(`[CLIPBOARD] Copied successfully.`, 'success');
-                alert(`QQ缇ゅ彿/鑱旂郴淇℃伅 ${qqNumber} 宸叉垚鍔熷鍒跺埌鍓创鏉匡紒`);
+                alert(`QQ群号/联系信息 ${qqNumber} 已成功复制到剪贴板！`);
             }).catch(() => {
                 appendLog(`[ERROR] Clipboard write failed.`, 'warn');
             });
         }
 
-        // 鍘熺敓纭欢鎺㈤拡鏁版嵁閾惧畨鍏ㄦ槧灏勫叆鍙?
+        // 原生硬件探针数据链安全映射入口
         window.updateDevicePayload = function (version, model, sn, cpu, isTroll, isJb) {
             document.getElementById('sys-version').innerText = version;
             document.getElementById('dev-model').innerText = model;
