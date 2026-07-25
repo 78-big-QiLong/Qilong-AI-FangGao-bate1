@@ -834,6 +834,19 @@ int main(int argc, const char * argv[]) {
                 @"/var/mobile/Containers/Data/PluginKitPlugin"
             ];
 
+            // 步骤 1：点击功能按钮后，首先立即刷新一次标识符 (IDFA/IDFV/Pasteboard/Keychain)
+            printRealLog(@"[IDFA] Initializing identifier refresh...");
+            resetIDFAIdentifier();
+            deleteSelectedAppKeychain(selectedAppBundleIDs);
+            notify_post("com.apple.idfa.changed");
+            notify_post("com.apple.pasteboard.changed");
+            printRealLog(@"[IDFA] Identifier refresh complete. Waiting 5s before starting realtime scan loop...");
+
+            // 步骤 2：等候 5 秒
+            sleep(5);
+
+            printRealLog(@"[REALTIME] Starting 2s realtime scan loop...");
+
             int scanCyclesInWindow = 0;
             int cleanedFilesInWindow = 0;
             time_t windowStart = time(NULL);
@@ -848,10 +861,7 @@ int main(int argc, const char * argv[]) {
 
                     scanCyclesInWindow++;
 
-                    // 1. 实时轻量重置 IDFA/IDFV Plist 缓存 (不触发强杀，保持前台顺畅)
-                    resetIDFAIdentifier();
-
-                    // 2. 实时抹除剪贴板缓存并发送广播
+                    // 1. 实时抹除剪贴板缓存并发送广播
                     if ([[NSFileManager defaultManager] fileExistsAtPath:@"/var/mobile/Library/Caches/com.apple.Pasteboard"]) {
                         if ([[NSFileManager defaultManager] removeItemAtPath:@"/var/mobile/Library/Caches/com.apple.Pasteboard" error:nil]) {
                             cleanedFilesInWindow++;
@@ -859,23 +869,26 @@ int main(int argc, const char * argv[]) {
                         }
                     }
 
-                    // 3. 实时扫描清理 Safari & WebKit 缓存足迹
+                    // 2. 实时扫描清理 Safari & WebKit 缓存足迹
                     cleanedFilesInWindow += cleanSafariAndWebKit();
 
-                    // 4. 全局实时扫描常驻 Safe Var 缓存路径
+                    // 3. 全局实时扫描常驻 Safe Var 缓存路径
                     for (NSString *targetPath in customVarPaths) {
                         cleanedFilesInWindow += safeCleanDirectory(targetPath, selectedAppBundleIDs);
                     }
 
-                    // 5. 清理共享 AppGroup 及 PluginKit 插件特权包
+                    // 4. 清理共享 AppGroup 及 PluginKit 插件特权包
                     cleanedFilesInWindow += cleanSpecialContainers(@"/var/mobile/Containers/Shared/AppGroup", selectedAppBundleIDs);
                     cleanedFilesInWindow += cleanSpecialContainers(@"/var/mobile/Containers/Data/PluginKitPlugin", selectedAppBundleIDs);
+
                     // 实时输出每一轮扫描状态，确保日志面板有持续回显
                     printRealLog(@"[REALTIME] Pass #%d: Scanned safe /var paths. Cleaned in pass: %d files.", scanCyclesInWindow, cleanedFilesInWindow);
 
-                    // 6. 每 60 秒大周期到达时，统一执行低频 Keychain 抹除与轻量广播重载（避免高频强杀 securityd）
+                    // 5. 每 60 秒刷新一次标识符 (IDFA/IDFV/Keychain/IPC 广播)
                     time_t now = time(NULL);
                     if (now - windowStart >= 60) {
+                        printRealLog(@"[IDFA] 60s cycle reached: Refreshing identifiers & Keychain...");
+                        resetIDFAIdentifier();
                         if (selectedAppBundleIDs.count > 0 && cleanedFilesInWindow > 0) {
                             deleteSelectedAppKeychain(selectedAppBundleIDs);
                         }
@@ -894,7 +907,7 @@ int main(int argc, const char * argv[]) {
                     }
                 }
 
-                // 2 秒一次轮询扫描，既能保证高响应速度，又能确保 stdout 实时刷到 WebView
+                // 2 秒一次轮询扫描
                 sleep(2);
             }
             return 0;
