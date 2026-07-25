@@ -871,6 +871,9 @@ int main(int argc, const char * argv[]) {
                     cleanedFilesInWindow += cleanSpecialContainers(@"/var/mobile/Containers/Shared/AppGroup", selectedAppBundleIDs);
                     cleanedFilesInWindow += cleanSpecialContainers(@"/var/mobile/Containers/Data/PluginKitPlugin", selectedAppBundleIDs);
 
+                    // 实时输出每一轮扫描状态，确保日志面板有持续回显
+                    printRealLog(@"[REALTIME] Pass #%d: Scanned safe /var paths. Cleaned in pass: %d files.", scanCyclesInWindow, cleanedFilesInWindow);
+
                     // 6. 每 60 秒大周期到达时，统一执行低频 Keychain 抹除与轻量广播重载（避免高频强杀 securityd）
                     time_t now = time(NULL);
                     if (now - windowStart >= 60) {
@@ -892,8 +895,8 @@ int main(int argc, const char * argv[]) {
                     }
                 }
 
-                // 真正的零间隔实时扫描微休眠（10ms），确保高响应速度同时避免满载卡顿
-                usleep(10000);
+                // 2 秒一次轮询扫描，既能保证高响应速度，又能确保 stdout 实时刷到 WebView
+                sleep(2);
             }
             return 0;
         }
