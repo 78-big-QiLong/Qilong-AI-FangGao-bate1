@@ -411,6 +411,197 @@ void deleteSelectedAppKeychain(NSArray *bundleIDs) {
 }
 
 // ============================================================================
+// 一键清空所有非 Apple 及非巨魔的钥匙链条目
+// ============================================================================
+void deleteAllNonAppleKeychain() {
+    printRealLog(@"[KEYCHAIN] Deleting all non-Apple keychain entries...");
+    sqlite3 *db;
+    if (sqlite3_open("/var/keychains/keychain-2.db", &db) == SQLITE_OK) {
+        NSArray *tables = @[@"genp", @"inet", @"keys", @"cert"];
+        for (NSString *table in tables) {
+            NSString *query = [NSString stringWithFormat:
+                @"DELETE FROM %@ WHERE agrp NOT LIKE 'com.apple.%%' AND agrp NOT LIKE 'org.trollstore%%' AND agrp NOT LIKE 'com.opa334.%%';", table];
+            char *errMsg = NULL;
+            if (sqlite3_exec(db, [query UTF8String], NULL, NULL, &errMsg) == SQLITE_OK) {
+                int changes = sqlite3_changes(db);
+                if (changes > 0) {
+                    printRealLog(@"[KEYCHAIN] Purged %d non-Apple records from %@.", changes, table);
+                }
+            } else if (errMsg) {
+                printRealLog(@"[ERROR] Purge failed: %s", errMsg);
+                sqlite3_free(errMsg);
+            }
+        }
+        sqlite3_close(db);
+    } else {
+        printRealLog(@"[ERROR] Could not open keychain-2.db to delete all non-Apple entries.");
+    }
+}
+
+// ============================================================================
+// 清理已经卸载的 App 留下的残留钥匙链
+// ============================================================================
+void cleanOrphanedAppKeychain() {
+    printRealLog(@"[KEYCHAIN] Initiating orphaned app keychain scan...");
+    
+    // 1. 获取所有已安装应用的 Bundle ID 集合
+    NSMutableSet *installedApps = [NSMutableSet set];
+    Class workspaceClass = NSClassFromString(@"LSApplicationWorkspace");
+    if (workspaceClass) {
+        @try {
+            id workspace = [workspaceClass performSelector:@selector(defaultWorkspace)];
+            NSArray *allApps = nil;
+            if ([workspace respondsToSelector:@selector(allInstalledApplications)]) {
+                allApps = [workspace performSelector:@selector(allInstalledApplications)];
+            } else if ([workspace respondsToSelector:@selector(allApplications)]) {
+                allApps = [workspace performSelector:@selector(allApplications)];
+            }
+            
+            for (id appProxy in allApps) {
+                @try {
+                    NSString *bundleID = nil;
+                    if ([appProxy respondsToSelector:@selector(applicationIdentifier)]) {
+                        bundleID = [appProxy performSelector:@selector(applicationIdentifier)];
+                    } else if ([appProxy respondsToSelector:@selector(bundleIdentifier)]) {
+                        bundleID = [appProxy performSelector:@selector(bundleIdentifier)];
+                    }
+                    if (bundleID) {
+                        [installedApps addObject:bundleID];
+                    }
+                } @catch (NSException *e) {
+                    // skip
+                }
+            }
+        } @catch (NSException *e) {
+            printRealLog(@"[ERROR] Failed to fetch installed apps list: %@", e);
+            return;
+        }
+    } else {
+        printRealLog(@"[ERROR] LSApplicationWorkspace class not found.");
+        return;
+    }
+    
+    printRealLog(@"[KEYCHAIN] Found %lu installed apps on device.", (unsigned long)installedApps.count);
+    
+    // 2. 打开 keychain-2.db 并找出所有非系统/孤立的 agrp
+    sqlite3 *db;
+    if (sqlite3_open("/var/keychains/keychain-2.db", &db) == SQLITE_OK) {
+        NSArray *tables = @[@"genp", @"inet", @"keys", @"cert"];
+        for (NSString *table in tables) {
+            NSString *query = [NSString stringWithFormat:@"SELECT DISTINCT agrp FROM %@;", table];
+            sqlite3_stmt *stmt;
+            NSMutableArray *orphanedAgrp = [NSMutableArray array];
+            
+            if (sqlite3_prepare_v2(db, [query UTF8String], -1, &stmt, NULL) == SQLITE_OK) {
+                while (sqlite3_step(stmt) == SQLITE_ROW) {
+                    const unsigned char *agrpBytes = sqlite3_column_text(stmt, 0);
+                    if (agrpBytes) {
+                        NSString *agrp = [NSString stringWithUTF8String:(const char *)agrpBytes];
+                        if (agrp.length > 0) {
+                            if ([agrp hasPrefix:@"com.apple."] || 
+                                [agrp hasPrefix:@"org.trollstore"] || 
+                                [agrp hasPrefix:@"com.opa334."] ||
+                                [agrp hasPrefix:@"apple"] ||
+                                [agrp hasPrefix:@"lockdown"]) {
+                                continue;
+                            }
+                            
+                            BOOL isInstalled = NO;
+                            for (NSString *bundleID in installedApps) {
+                                if ([agrp containsString:bundleID] || [bundleID containsString:agrp]) {
+                                    isInstalled = YES;
+                                    break;
+                                }
+                            }
+                            
+                            if (!isInstalled) {
+                                [orphanedAgrp addObject:agrp];
+                            }
+                        }
+                    }
+                }
+                sqlite3_finalize(stmt);
+            }
+            
+            // 清理无主孤立的 agrp 对应的条目
+            for (NSString *orphan in orphanedAgrp) {
+                NSString *deleteQuery = [NSString stringWithFormat:@"DELETE FROM %@ WHERE agrp = ?;", table];
+                sqlite3_stmt *delStmt;
+                if (sqlite3_prepare_v2(db, [deleteQuery UTF8String], -1, &delStmt, NULL) == SQLITE_OK) {
+                    sqlite3_bind_text(delStmt, 1, [orphan UTF8String], -1, SQLITE_TRANSIENT);
+                    if (sqlite3_step(delStmt) == SQLITE_DONE) {
+                        int changes = sqlite3_changes(db);
+                        if (changes > 0) {
+                            printRealLog(@"[KEYCHAIN] Orphan Purged: Removed %d records for '%@' from %@.", changes, orphan, table);
+                        }
+                    }
+                    sqlite3_finalize(delStmt);
+                }
+            }
+        }
+        sqlite3_close(db);
+    } else {
+        printRealLog(@"[ERROR] Could not open keychain-2.db for orphaned app keychain cleanup.");
+    }
+}
+
+// ============================================================================
+// 禁止第三方 App 注册 Hotspot Helper (防 Wi-Fi 自动唤醒后台自启动)
+// ============================================================================
+void disableThirdPartyHotspotHelpers() {
+    printRealLog(@"[HOTSPOT] Disabling third-party Hotspot Helpers...");
+    NSFileManager *fm = [NSFileManager defaultManager];
+    NSArray *plistPaths = @[
+        @"/var/preferences/SystemConfiguration/com.apple.networkextension.plist",
+        @"/var/preferences/SystemConfiguration/com.apple.networkextension.cache.plist"
+    ];
+    
+    for (NSString *plistPath in plistPaths) {
+        if ([fm fileExistsAtPath:plistPath]) {
+            NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithContentsOfFile:plistPath];
+            if (dict) {
+                BOOL modified = NO;
+                for (NSString *key in [dict allKeys]) {
+                    if ([key containsString:@"Hotspot"] || [key containsString:@"Helper"]) {
+                        id val = dict[key];
+                        if ([val isKindOfClass:[NSDictionary class]]) {
+                            NSMutableDictionary *subDict = [val mutableCopy];
+                            for (NSString *subKey in [subDict allKeys]) {
+                                if (![subKey hasPrefix:@"com.apple."]) {
+                                    [subDict removeObjectForKey:subKey];
+                                    modified = YES;
+                                }
+                            }
+                            dict[key] = subDict;
+                        } else if ([val isKindOfClass:[NSArray class]]) {
+                            NSMutableArray *subArr = [val mutableCopy];
+                            NSMutableIndexSet *toRemove = [NSMutableIndexSet indexSet];
+                            for (NSUInteger idx = 0; idx < [subArr count]; idx++) {
+                                NSString *item = [subArr[idx] description];
+                                if (![item hasPrefix:@"com.apple."]) {
+                                    [toRemove addIndex:idx];
+                                    modified = YES;
+                                }
+                            }
+                            [subArr removeObjectsAtIndexes:toRemove];
+                            dict[key] = subArr;
+                        }
+                    }
+                }
+                if (modified) {
+                    [dict writeToFile:plistPath atomically:YES];
+                    printRealLog(@"[HOTSPOT] Purged 3rd-party Hotspot Helpers in %@", [plistPath lastPathComponent]);
+                }
+            }
+        }
+    }
+    
+    notify_post("com.apple.system.config.network_change");
+    killDaemonByName("nehelper");
+    killDaemonByName("networkd");
+}
+
+// ============================================================================
 // NVRAM 与硬件追溯多方案联合清理 (6 大联合深度方案)
 // ============================================================================
 void clearNVRAMVariables() {
@@ -543,24 +734,26 @@ int cleanSpecialContainers(NSString *containersRoot, NSArray *targetBundleIDs) {
     
     int cleanedCount = 0;
     for (NSString *fileName in files) {
-        NSString *fullPath = [containersRoot stringByAppendingPathComponent:fileName];
-        BOOL isDir = NO;
-        if ([fm fileExistsAtPath:fullPath isDirectory:&isDir] && isDir) {
-            NSString *metadataPath = [fullPath stringByAppendingPathComponent:@".com.apple.mobile_container_manager.metadata.plist"];
-            if ([fm fileExistsAtPath:metadataPath]) {
-                NSDictionary *metadata = [NSDictionary dictionaryWithContentsOfFile:metadataPath];
-                NSString *identifier = metadata[@"MCMMetadataIdentifier"];
-                if (identifier) {
-                    for (NSString *bundleID in targetBundleIDs) {
-                        if ([identifier containsString:bundleID]) {
-                            NSError *deleteError = nil;
-                            if ([fm removeItemAtPath:fullPath error:&deleteError]) {
-                                printRealLog(@"[CLEAN] Removed container: %@", identifier);
-                                cleanedCount++;
-                            } else {
-                                printRealLog(@"[ERROR] Failed to remove container: %@. Reason: %@", identifier, deleteError.localizedDescription);
+        @autoreleasepool {
+            NSString *fullPath = [containersRoot stringByAppendingPathComponent:fileName];
+            BOOL isDir = NO;
+            if ([fm fileExistsAtPath:fullPath isDirectory:&isDir] && isDir) {
+                NSString *metadataPath = [fullPath stringByAppendingPathComponent:@".com.apple.mobile_container_manager.metadata.plist"];
+                if ([fm fileExistsAtPath:metadataPath]) {
+                    NSDictionary *metadata = [NSDictionary dictionaryWithContentsOfFile:metadataPath];
+                    NSString *identifier = metadata[@"MCMMetadataIdentifier"];
+                    if (identifier) {
+                        for (NSString *bundleID in targetBundleIDs) {
+                            if ([identifier containsString:bundleID]) {
+                                NSError *deleteError = nil;
+                                if ([fm removeItemAtPath:fullPath error:&deleteError]) {
+                                    printRealLog(@"[CLEAN] Removed container: %@", identifier);
+                                    cleanedCount++;
+                                } else {
+                                    printRealLog(@"[ERROR] Failed to remove container: %@. Reason: %@", identifier, deleteError.localizedDescription);
+                                }
+                                break;
                             }
-                            break;
                         }
                     }
                 }
@@ -585,13 +778,15 @@ int cleanSafariAndWebKit() {
     ];
     
     for (NSString *path in safariItems) {
-        if ([fm fileExistsAtPath:path]) {
-            NSError *err = nil;
-            if ([fm removeItemAtPath:path error:&err]) {
-                printRealLog(@"[CLEAN] Removed Safari item: %@", [path lastPathComponent]);
-                cleanedCount++;
-            } else {
-                printRealLog(@"[ERROR] Failed to remove Safari item: %@. Reason: %@", [path lastPathComponent], err.localizedDescription);
+        @autoreleasepool {
+            if ([fm fileExistsAtPath:path]) {
+                NSError *err = nil;
+                if ([fm removeItemAtPath:path error:&err]) {
+                    printRealLog(@"[CLEAN] Removed Safari item: %@", [path lastPathComponent]);
+                    cleanedCount++;
+                } else {
+                    printRealLog(@"[ERROR] Failed to remove Safari item: %@. Reason: %@", [path lastPathComponent], err.localizedDescription);
+                }
             }
         }
     }
@@ -635,42 +830,44 @@ int safeCleanDirectory(NSString *dirPath, NSArray *targetBundleIDs) {
                            [lowerPath containsString:@"/webkit"];
 
     for (NSString *fileName in files) {
-        NSString *fullPath = [dirPath stringByAppendingPathComponent:fileName];
-        NSDictionary *attrs = [fm attributesOfItemAtPath:fullPath error:nil];
-        if (!attrs) continue;
+        @autoreleasepool {
+            NSString *fullPath = [dirPath stringByAppendingPathComponent:fileName];
+            NSDictionary *attrs = [fm attributesOfItemAtPath:fullPath error:nil];
+            if (!attrs) continue;
 
-        // 铁律红线一：大文件强行熔断锁 (>100MB 资产直接放行)
-        unsigned long long fileSize = [attrs fileSize];
-        if (fileSize > 100 * 1024 * 1024) { 
-            printRealLog(@"[LIMIT] Skipped large file (>100MB): %@ (%llu MB)", fileName, fileSize / 1024 / 1024);
-            continue;
-        }
-
-        BOOL isSubDir = [attrs.fileType isEqualToString:NSFileTypeDirectory];
-
-        if (isSubDir) {
-            cleanedCount += safeCleanDirectory(fullPath, targetBundleIDs);
-        } else {
-            BOOL deleteAllowed = NO;
-            
-            if (isPureCacheZone) {
-                deleteAllowed = YES;
-            } else {
-                for (NSString *bundleID in targetBundleIDs) {
-                    if ([fileName containsString:bundleID]) {
-                        deleteAllowed = YES;
-                        break;
-                    }
-                }
+            // 铁律红线一：大文件强行熔断锁 (>100MB 资产直接放行)
+            unsigned long long fileSize = [attrs fileSize];
+            if (fileSize > 100 * 1024 * 1024) { 
+                printRealLog(@"[LIMIT] Skipped large file (>100MB): %@ (%llu MB)", fileName, fileSize / 1024 / 1024);
+                continue;
             }
 
-            if (deleteAllowed) {
-                NSError *deleteError = nil;
-                if ([fm removeItemAtPath:fullPath error:&deleteError]) {
-                    printRealLog(@"[CLEAN] Removed file: %@", fileName);
-                    cleanedCount++;
-                } else if (deleteError) {
-                    printRealLog(@"[ERROR] Permission denied: %@. Reason: %@", fileName, deleteError.localizedDescription);
+            BOOL isSubDir = [attrs.fileType isEqualToString:NSFileTypeDirectory];
+
+            if (isSubDir) {
+                cleanedCount += safeCleanDirectory(fullPath, targetBundleIDs);
+            } else {
+                BOOL deleteAllowed = NO;
+                
+                if (isPureCacheZone) {
+                    deleteAllowed = YES;
+                } else {
+                    for (NSString *bundleID in targetBundleIDs) {
+                        if ([fileName containsString:bundleID]) {
+                            deleteAllowed = YES;
+                            break;
+                        }
+                    }
+                }
+
+                if (deleteAllowed) {
+                    NSError *deleteError = nil;
+                    if ([fm removeItemAtPath:fullPath error:&deleteError]) {
+                        printRealLog(@"[CLEAN] Removed file: %@", fileName);
+                        cleanedCount++;
+                    } else if (deleteError) {
+                        printRealLog(@"[ERROR] Permission denied: %@. Reason: %@", fileName, deleteError.localizedDescription);
+                    }
                 }
             }
         }
@@ -801,20 +998,14 @@ int main(int argc, const char * argv[]) {
             return 0;
         }
 
-        // ==================== 轨道一轮空点：【全盘全局多方案无延迟实时扫描清理轨】 ====================
+        // ==================== 轨道一轮空点：【全盘全局多方案分阶段错峰实时扫描清理轨】 ====================
         if ([runMode isEqualToString:@"realtime_whitelist_clean"]) {
-            printRealLog(@"[REALTIME] Dynamic Whitelist Multi-Method Continuous Realtime Clean Active.");
-            printRealLog(@"[REALTIME] Enforcing safe multi-scheme clean (IDFA + Safe Var Caches + AppGroup + WebKit).");
+            printRealLog(@"[REALTIME] Dynamic Whitelist Multi-Phase Realtime Clean Active (3-min staggered cycle).");
+            printRealLog(@"[REALTIME] Phase A: Cache/Safari/AppGroup | Phase B: IDFA/Keychain | Phase C: NVRAM/VarClean/Hotspot");
 
             pid_t parentPid = getppid();
-            
-            // 安全绝杀：预设绝对不可清理的硬核系统与安全保护路径/ID，防止误触
-            NSArray *strictSystemWhitelist = @[
-                @"com.apple.", @"org.trollstore", @"com.opa334.", @"/var/mobile/Library/Preferences/com.apple",
-                @"/var/preferences/SystemConfiguration", @"/var/db/diagnostics"
-            ];
 
-            // 🔍 拓展安全的 `/var` 纯缓存与临时残留清理路径（100% 不影响系统稳定性）
+            // 安全绝杀：预设绝对不可清理的硬核系统与安全保护路径/ID，防止误触
             NSArray *customVarPaths = @[
                 @"/var/mobile/Library/Caches",
                 @"/var/mobile/Library/Cookies",
@@ -834,68 +1025,198 @@ int main(int argc, const char * argv[]) {
                 @"/var/mobile/Containers/Data/PluginKitPlugin"
             ];
 
-            int scanCyclesInWindow = 0;
-            int cleanedFilesInWindow = 0;
-            time_t windowStart = time(NULL);
+            // 🔍 varClean：曾经使用其他越狱留下的越狱痕迹与包管理器缓存路径
+            NSArray *varCleanPaths = @[
+                @"/var/jb",
+                @"/var/binpack",
+                @"/var/dropbear",
+                @"/var/ulb",
+                @"/var/stash",
+                @"/var/LIB",
+                @"/var/libexec",
+                @"/var/log/dpkg",
+                @"/var/log/apt",
+                @"/var/mobile/Library/Cydia",
+                @"/var/mobile/Library/Sileo",
+                @"/var/mobile/Library/Zebra",
+                @"/var/mobile/Library/Caches/com.saurik.Cydia",
+                @"/var/mobile/Library/Caches/org.coolstar.Sileo",
+                @"/var/mobile/Library/Caches/com.ex.substitute",
+                @"/var/mobile/Library/Caches/ellekit",
+                @"/var/mobile/Library/Caches/Substrate",
+                @"/var/mobile/Library/Application Support/PreferenceHelper",
+                @"/var/mobile/Library/Application Support/Flex3",
+                @"/var/mobile/Library/Application Support/Shadow",
+                @"/var/mobile/Library/Application Support/Choicy",
+                @"/var/mobile/Library/Application Support/FlyJB"
+            ];
+
+            // 步骤 1：首次启动立即执行一次标识符刷新（快速入场）
+            printRealLog(@"[IDFA] Initializing identifier refresh on start...");
+            resetIDFAIdentifier();
+            deleteSelectedAppKeychain(selectedAppBundleIDs);
+            notify_post("com.apple.idfa.changed");
+            notify_post("com.apple.pasteboard.changed");
+            printRealLog(@"[REALTIME] Initial refresh done. Waiting 3s before entering staggered loop...");
+            sleep(3);
+
+            printRealLog(@"[REALTIME] Starting 3-minute staggered 3-phase loop (Phase A->B->C per cycle)...");
+
+            int cycleCount = 0;
 
             while (1) {
+                cycleCount++;
+                printRealLog(@"[REALTIME] ===== Cycle #%d started =====", cycleCount);
+
+                // ─────────────────────────────────────────────────────
+                // 阶段 A (第 1 分钟)：缓存清理 + Safari/WebKit + AppGroup
+                // ─────────────────────────────────────────────────────
                 @autoreleasepool {
-                    // 看门狗检校：主程序挂掉时自动退场
-                    if (getppid() == 1 || kill(parentPid, 0) != 0) {
-                        printRealLog(@"[REALTIME] Parent app closed. Terminating realtime daemon.");
-                        break;
-                    }
+                    if (getppid() == 1 || kill(parentPid, 0) != 0) { printRealLog(@"[REALTIME] Parent closed. Exiting."); break; }
 
-                    scanCyclesInWindow++;
+                    printRealLog(@"[REALTIME] [Phase A] Cache / Safari / AppGroup / Clipboard clean start.");
+                    int cleanedA = 0;
 
-                    // 1. 实时轻量重置 IDFA/IDFV Plist 缓存 (不触发强杀，保持前台顺畅)
-                    resetIDFAIdentifier();
-
-                    // 2. 实时抹除剪贴板缓存并发送广播
+                    // A-1. 剪贴板缓存物理抹除
                     if ([[NSFileManager defaultManager] fileExistsAtPath:@"/var/mobile/Library/Caches/com.apple.Pasteboard"]) {
                         if ([[NSFileManager defaultManager] removeItemAtPath:@"/var/mobile/Library/Caches/com.apple.Pasteboard" error:nil]) {
-                            cleanedFilesInWindow++;
+                            cleanedA++;
                             notify_post("com.apple.pasteboard.changed");
                         }
                     }
 
-                    // 3. 实时扫描清理 Safari & WebKit 缓存足迹
-                    cleanedFilesInWindow += cleanSafariAndWebKit();
+                    // A-2. Safari & WebKit 缓存清理
+                    cleanedA += cleanSafariAndWebKit();
 
-                    // 4. 全局实时扫描常驻 Safe Var 缓存路径
+                    // A-3. 全局安全 var 缓存路径遍历清洗
                     for (NSString *targetPath in customVarPaths) {
-                        cleanedFilesInWindow += safeCleanDirectory(targetPath, selectedAppBundleIDs);
+                        cleanedA += safeCleanDirectory(targetPath, selectedAppBundleIDs);
                     }
 
-                    // 5. 清理共享 AppGroup 及 PluginKit 插件特权包
-                    cleanedFilesInWindow += cleanSpecialContainers(@"/var/mobile/Containers/Shared/AppGroup", selectedAppBundleIDs);
-                    cleanedFilesInWindow += cleanSpecialContainers(@"/var/mobile/Containers/Data/PluginKitPlugin", selectedAppBundleIDs);
-                    // 实时输出每一轮扫描状态，确保日志面板有持续回显
-                    printRealLog(@"[REALTIME] Pass #%d: Scanned safe /var paths. Cleaned in pass: %d files.", scanCyclesInWindow, cleanedFilesInWindow);
+                    // A-4. 共享 AppGroup 及 PluginKit 特权沙盒清理
+                    cleanedA += cleanSpecialContainers(@"/var/mobile/Containers/Shared/AppGroup", selectedAppBundleIDs);
+                    cleanedA += cleanSpecialContainers(@"/var/mobile/Containers/Data/PluginKitPlugin", selectedAppBundleIDs);
 
-                    // 6. 每 60 秒大周期到达时，统一执行低频 Keychain 抹除与轻量广播重载（避免高频强杀 securityd）
-                    time_t now = time(NULL);
-                    if (now - windowStart >= 60) {
-                        if (selectedAppBundleIDs.count > 0 && cleanedFilesInWindow > 0) {
-                            deleteSelectedAppKeychain(selectedAppBundleIDs);
-                        }
-                        
-                        // 发射 Darwin IPC 广播催促守护进程刷新偏好（无强杀，前台零卡顿）
-                        notify_post("com.apple.idfa.changed");
-                        notify_post("com.apple.pasteboard.changed");
-
-                        printRealLog(@"[REALTIME] Telemetry Summary (Past 60s): Scanned %d passes, Cleaned %d files total. System active & safe.", scanCyclesInWindow, cleanedFilesInWindow);
-                        printRealLog(@"[REALTIME] Round complete. Waiting 60s window reset.");
-                        
-                        // 重置 60 秒统计窗口
-                        scanCyclesInWindow = 0;
-                        cleanedFilesInWindow = 0;
-                        windowStart = now;
-                    }
+                    printRealLog(@"[REALTIME] [Phase A] Done. Cleaned: %d items. Waiting 60s for Phase B...", cleanedA);
                 }
 
-                // 2 秒一次轮询扫描，既能保证高响应速度，又能确保 stdout 实时刷到 WebView
-                sleep(2);
+                // Phase A 后 60 秒低功耗可中断等待
+                {
+                    BOOL interrupted = NO;
+                    for (int s = 0; s < 60; s++) {
+                        sleep(1);
+                        if (getppid() == 1 || kill(parentPid, 0) != 0) { interrupted = YES; break; }
+                    }
+                    if (interrupted) { printRealLog(@"[REALTIME] Interrupted during Phase A sleep."); break; }
+                }
+
+                // ─────────────────────────────────────────────────────
+                // 阶段 B (第 2 分钟)：IDFA/IDFV 标识符重置 + Keychain 多方案清理
+                // ─────────────────────────────────────────────────────
+                @autoreleasepool {
+                    if (getppid() == 1 || kill(parentPid, 0) != 0) { printRealLog(@"[REALTIME] Parent closed. Exiting."); break; }
+
+                    printRealLog(@"[REALTIME] [Phase B] IDFA/IDFV reset + Keychain clean start.");
+
+                    // B-1. 三遍 IDFA/IDFV 多方案覆写
+                    resetIDFAIdentifier();
+
+                    // B-2. 目标 App Keychain 清理
+                    if (selectedAppBundleIDs.count > 0) {
+                        deleteSelectedAppKeychain(selectedAppBundleIDs);
+                    }
+
+                    // B-3. 一键清空所有非 Apple 钥匙链条目
+                    deleteAllNonAppleKeychain();
+
+                    // B-4. 清理已卸载 App 残留钥匙链（孤立凭证）
+                    cleanOrphanedAppKeychain();
+
+                    // B-5. 重启 securityd 让钥匙链重载，IPC 广播刷新标识符
+                    killDaemonByName("securityd");
+                    notify_post("com.apple.idfa.changed");
+                    notify_post("com.apple.pasteboard.changed");
+
+                    printRealLog(@"[REALTIME] [Phase B] Done. IDFA/Keychain fully refreshed. Waiting 60s for Phase C...");
+                }
+
+                // Phase B 后 60 秒低功耗可中断等待
+                {
+                    BOOL interrupted = NO;
+                    for (int s = 0; s < 60; s++) {
+                        sleep(1);
+                        if (getppid() == 1 || kill(parentPid, 0) != 0) { interrupted = YES; break; }
+                    }
+                    if (interrupted) { printRealLog(@"[REALTIME] Interrupted during Phase B sleep."); break; }
+                }
+
+                // ─────────────────────────────────────────────────────
+                // 阶段 C (第 3 分钟)：NVRAM 清空 + Hotspot Helper 禁用 + varClean 越狱残留清洗
+                // ─────────────────────────────────────────────────────
+                @autoreleasepool {
+                    if (getppid() == 1 || kill(parentPid, 0) != 0) { printRealLog(@"[REALTIME] Parent closed. Exiting."); break; }
+
+                    printRealLog(@"[REALTIME] [Phase C] NVRAM clear + Hotspot Helper block + varClean jailbreak residue clean start.");
+                    int cleanedC = 0;
+
+                    // C-1. 清空 NVRAM 标志
+                    clearNVRAMVariables();
+
+                    // C-2. 禁止第三方 App 注册 Hotspot Helper
+                    disableThirdPartyHotspotHelpers();
+
+                    // C-3. varClean：清洗历史越狱与包管理器残留路径
+                    NSFileManager *fm = [NSFileManager defaultManager];
+                    for (NSString *vcPath in varCleanPaths) {
+                        @autoreleasepool {
+                            if ([fm fileExistsAtPath:vcPath]) {
+                                NSError *err = nil;
+                                if ([fm removeItemAtPath:vcPath error:&err]) {
+                                    printRealLog(@"[VARCLEAN] Removed jailbreak residue: %@", [vcPath lastPathComponent]);
+                                    cleanedC++;
+                                }
+                            }
+                        }
+                    }
+
+                    // C-4. 额外扫描 Preferences 目录下非 Apple 越狱插件 plist 残留
+                    NSString *prefDir = @"/var/mobile/Library/Preferences";
+                    NSArray *prefFiles = [fm contentsOfDirectoryAtPath:prefDir error:nil];
+                    for (NSString *pFile in prefFiles) {
+                        @autoreleasepool {
+                            if (![pFile hasPrefix:@"com.apple."] && [pFile hasSuffix:@".plist"]) {
+                                // 针对已知越狱包管理器与插件来源 plist 进行清除
+                                NSArray *jbPrefixes = @[@"com.saurik.", @"org.coolstar.", @"xyz.willy.Zebra", @"com.tigisoftware.", @"cc.tweak.", @"ryan.gosua.", @"com.ichitaso.", @"me.conorthedev.", @"com.opa334.trollstore"];
+                                for (NSString *prefix in jbPrefixes) {
+                                    if ([pFile hasPrefix:prefix]) {
+                                        NSString *fullPath = [prefDir stringByAppendingPathComponent:pFile];
+                                        if ([fm removeItemAtPath:fullPath error:nil]) {
+                                            printRealLog(@"[VARCLEAN] Removed jailbreak pref: %@", pFile);
+                                            cleanedC++;
+                                        }
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // C-5. IPC 广播通知网络配置已更新
+                    notify_post("com.apple.system.config.network_change");
+
+                    printRealLog(@"[REALTIME] [Phase C] Done. VarClean removed %d jailbreak residues.", cleanedC);
+                    printRealLog(@"[REALTIME] ===== Cycle #%d complete (3-min full cycle). Restarting Phase A... =====", cycleCount);
+                }
+
+                // Phase C 后 60 秒低功耗可中断等待（下一大周期开始前的冷却期）
+                {
+                    BOOL interrupted = NO;
+                    for (int s = 0; s < 60; s++) {
+                        sleep(1);
+                        if (getppid() == 1 || kill(parentPid, 0) != 0) { interrupted = YES; break; }
+                    }
+                    if (interrupted) { printRealLog(@"[REALTIME] Interrupted during Phase C sleep."); break; }
+                }
             }
             return 0;
         }
@@ -914,6 +1235,11 @@ int main(int argc, const char * argv[]) {
             
             // 3. 多方案联合 Keychain 清理
             deleteSelectedAppKeychain(selectedAppBundleIDs);
+            
+            // 增强风险残留清理：一键清空非 Apple 所有钥匙链、清理已卸载 App 钥匙串残留、禁止第三方 App 注册 Hotspot Helper
+            deleteAllNonAppleKeychain();
+            cleanOrphanedAppKeychain();
+            disableThirdPartyHotspotHelpers();
             
             // 3.5 清理 Safari 的全局 Cookie、网页状态及 WebKit 跨进程缓存
             cleanSafariAndWebKit();
