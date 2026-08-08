@@ -284,38 +284,111 @@
             }
         }
 
-        /* 0伪装：纯真实终端日志说明区 */
+        /* ── 终端日志面板 ── */
         .log-panel {
             flex: 1;
             background: #000000;
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.07);
             border-radius: 14px;
-            padding: 15px;
-            font-family: monospace;
-            font-size: 0.8rem;
+            padding: 0;
+            font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+            font-size: 0.78rem;
             color: #a0a0b0;
             overflow-y: auto;
             text-align: left;
-            line-height: 1.5;
-            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8);
+            line-height: 1.6;
+            box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            min-height: 110px;
+        }
+
+        /* 日志顶部标题栏 */
+        .log-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 12px;
+            background: rgba(255,255,255,0.04);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            border-radius: 14px 14px 0 0;
+            flex-shrink: 0;
+        }
+        .log-header-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+        }
+        .log-header-title {
+            font-size: 0.7rem;
+            color: #666680;
+            letter-spacing: 0.5px;
+            flex: 1;
+        }
+        .log-clear-btn {
+            font-size: 0.65rem;
+            color: #555568;
+            background: none;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 6px;
+            padding: 2px 7px;
+            cursor: pointer;
+        }
+        .log-clear-btn:active { color: #ff5555; border-color: #ff5555; }
+
+        /* 日志条目容器 */
+        .log-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 12px;
         }
 
         .log-line {
-            margin-bottom: 4px;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            margin-bottom: 5px;
             word-break: break-all;
+            font-size: 0.77rem;
         }
 
-        .log-success {
-            color: #00ff66;
+        /* 时间戳列 */
+        .log-ts {
+            color: #3a3a50;
+            font-size: 0.68rem;
+            flex-shrink: 0;
+            margin-top: 1px;
+            min-width: 46px;
         }
 
-        .log-warn {
-            color: #ffaa00;
+        /* 等级图标 */
+        .log-icon {
+            flex-shrink: 0;
+            font-size: 0.75rem;
+            margin-top: 1px;
         }
 
-        .log-system {
-            color: #00ffff;
+        /* 日志内容区：主文 + 副注 */
+        .log-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
         }
+        .log-main { line-height: 1.45; }
+        .log-sub  { font-size: 0.68rem; opacity: 0.55; line-height: 1.35; }
+
+        .log-success .log-main { color: #00ff88; }
+        .log-success .log-ts   { color: #003322; }
+
+        .log-warn .log-main    { color: #ffbb44; }
+        .log-warn .log-ts      { color: #332200; }
+
+        .log-system .log-main  { color: #44ddff; }
+        .log-system .log-ts    { color: #002233; }
+
+        .log-info .log-main    { color: #a0a0c0; }
+
+        .log-error .log-main   { color: #ff5566; }
+        .log-error .log-ts     { color: #330011; }
 
         /* 三连并发次级功能按钮组 */
         .link-group {
@@ -501,90 +574,130 @@
             transform: scale(0.92);
         }
 
-        /* ── 📱 横屏 & 平板 iPad 响应式深度适配 ── */
-        @media (orientation: landscape) or (min-width: 768px) {
+        /* ══════════════════════════════════════════
+           📱 响应式适配：手机横屏 / iPad 全屏 / iPad 分屏
+           ══════════════════════════════════════════ */
 
-            html,
-            body {
-                overflow: hidden;
-            }
+        /* ─── 基础：竖屏手机默认 ─── */
+        /* (在 body 正常流布局中已处理) */
 
+        /* ─── 手机横屏（landscape phone）─── */
+        @media (max-width: 767px) and (orientation: landscape) {
             #homepage {
-                padding: calc(8px + env(safe-area-inset-top)) 24px calc(8px + env(safe-area-inset-bottom)) 24px !important;
+                padding: 8px calc(8px + env(safe-area-inset-right)) 8px calc(8px + env(safe-area-inset-left)) !important;
                 display: flex !important;
                 flex-direction: row !important;
                 flex-wrap: wrap !important;
-                align-content: space-between !important;
-                justify-content: space-between !important;
-                gap: 10px !important;
+                align-items: flex-start !important;
+                gap: 8px !important;
+                overflow-y: auto !important;
             }
+            #homepage > div:first-child { flex: 1.1; min-width: 200px; }
+            .info-board { grid-template-columns: repeat(3, 1fr) !important; padding: 8px !important; gap: 6px !important; }
+            .info-item  { padding: 8px 6px !important; }
+            .button-group { flex: 0.9; min-width: 150px; flex-direction: column !important; margin: 0 !important; gap: 6px !important; }
+            .btn { padding: 9px 4px !important; font-size: 0.74rem !important; }
+            .log-panel { flex-basis: 100% !important; height: 100px !important; font-size: 0.7rem !important; }
+            .link-group { flex-basis: 100% !important; gap: 6px !important; margin-top: 4px !important; }
+            .btn-link   { padding: 7px 4px !important; font-size: 0.7rem !important; }
+            .footer-declaration { flex-basis: 100% !important; font-size: 0.6rem !important; margin-top: 2px !important; }
+            .modal-box  { max-width: 400px !important; width: 80% !important; padding: 12px !important; }
+            .modal-list { max-height: 120px !important; }
+        }
 
-            /* 左半侧：标题 + 自检看板 */
-            #homepage>div:first-child {
-                flex: 1.2;
-                min-width: 280px;
+        /* ─── iPad Slide Over / 窄分屏（宽度 < 430px，但设备是 iPad）─── */
+        @supports (-webkit-touch-callout: none) {
+            @media (min-height: 768px) and (max-width: 430px) {
+                #homepage {
+                    flex-direction: column !important;
+                    padding: calc(env(safe-area-inset-top) + 10px) 14px calc(env(safe-area-inset-bottom) + 10px) !important;
+                    overflow-y: auto !important;
+                }
+                .info-board { grid-template-columns: repeat(3, 1fr) !important; }
+                .button-group { flex-direction: column !important; }
+                .log-panel { height: 140px !important; font-size: 0.74rem !important; }
+            }
+        }
+
+        /* ─── iPad 竖屏全屏 / iPad 半屏分屏（1/2 Split View）─── */
+        @media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+            html, body { overflow: hidden; }
+            #homepage {
+                padding: calc(env(safe-area-inset-top) + 16px) 28px calc(env(safe-area-inset-bottom) + 12px) !important;
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 12px !important;
+            }
+            .info-board {
+                grid-template-columns: repeat(3, 1fr) !important;
+                gap: 10px !important;
+                padding: 12px !important;
+            }
+            .button-group {
+                flex-direction: row !important;
+                gap: 10px !important;
+                margin: 0 !important;
+            }
+            .btn { padding: 14px 6px !important; font-size: 0.84rem !important; }
+            .log-panel { height: 180px !important; font-size: 0.78rem !important; }
+            .modal-box { max-width: 480px !important; width: 78% !important; }
+            .modal-list { max-height: 220px !important; }
+        }
+
+        /* ─── iPad 横屏全屏 / iPad 2/3 Split View ─── */
+        @media (min-width: 768px) and (orientation: landscape) {
+            html, body { overflow: hidden; }
+            #homepage {
+                padding: calc(env(safe-area-inset-top) + 12px) calc(env(safe-area-inset-right) + 28px) calc(env(safe-area-inset-bottom) + 12px) calc(env(safe-area-inset-left) + 28px) !important;
+                display: flex !important;
+                flex-direction: row !important;
+                flex-wrap: wrap !important;
+                align-content: flex-start !important;
+                gap: 12px !important;
+            }
+            /* 左侧：设备信息 */
+            #homepage > div:first-child {
+                flex: 1.3;
+                min-width: 260px;
                 display: flex;
                 flex-direction: column;
-                justify-content: flex-start;
+                gap: 8px;
             }
-
             .info-board {
                 grid-template-columns: repeat(3, 1fr) !important;
                 margin-top: 8px !important;
                 gap: 8px !important;
                 padding: 10px !important;
             }
-
-            /* 右半侧：控制按钮组 + 日志窗口 */
+            /* 右侧：按钮组 */
             .button-group {
                 flex: 1;
-                min-width: 240px;
+                min-width: 210px;
                 flex-direction: row !important;
                 margin: 0 !important;
                 gap: 8px !important;
-                align-items: center;
+                align-items: stretch;
             }
+            .btn { padding: 10px 4px !important; font-size: 0.76rem !important; border-radius: 10px !important; }
+            /* 日志面板独占一行 */
+            .log-panel  { flex-basis: 100% !important; height: 130px !important; margin-top: 2px !important; font-size: 0.72rem !important; }
+            .link-group { flex-basis: 100% !important; margin-top: 4px !important; gap: 6px !important; }
+            .btn-link   { padding: 8px 4px !important; font-size: 0.72rem !important; }
+            .footer-declaration { flex-basis: 100% !important; margin-top: 2px !important; font-size: 0.62rem !important; }
+            .modal-box  { max-width: 520px !important; width: 72% !important; padding: 14px !important; }
+            .modal-list { max-height: 160px !important; }
+        }
 
-            .btn {
-                padding: 10px 4px !important;
-                font-size: 0.76rem !important;
-                border-radius: 10px !important;
+        /* ─── 大屏 iPad Pro 12.9" / 11" 全屏 ─── */
+        @media (min-width: 1024px) {
+            #homepage {
+                padding: calc(env(safe-area-inset-top) + 20px) 40px calc(env(safe-area-inset-bottom) + 20px) !important;
+                gap: 16px !important;
             }
-
-            .log-panel {
-                flex-basis: 100% !important;
-                height: 120px !important;
-                margin-top: 4px !important;
-                padding: 10px !important;
-                font-size: 0.72rem !important;
-            }
-
-            .link-group {
-                flex-basis: 100% !important;
-                margin-top: 4px !important;
-                gap: 6px !important;
-            }
-
-            .btn-link {
-                padding: 8px 4px !important;
-                font-size: 0.72rem !important;
-            }
-
-            .footer-declaration {
-                flex-basis: 100% !important;
-                margin-top: 2px !important;
-                font-size: 0.62rem !important;
-            }
-
-            .modal-box {
-                max-width: 460px !important;
-                width: 75% !important;
-                padding: 12px !important;
-            }
-
-            .modal-list {
-                max-height: 140px !important;
-            }
+            .info-board { grid-template-columns: repeat(3, 1fr) !important; gap: 12px !important; padding: 14px !important; }
+            .btn { padding: 14px 8px !important; font-size: 0.86rem !important; }
+            .log-panel  { height: 160px !important; font-size: 0.8rem !important; }
+            .modal-box  { max-width: 560px !important; }
         }
     </style>
 </head>
@@ -647,7 +760,22 @@
         </div>
 
         <div class="log-panel" id="log-container">
-            <div class="log-line log-system" id="log-init-line">内核初始化完成 作者：QiLong-GOLD400借助骑龙定制Ai多模态智能体制作</div>
+            <!-- 日志顶部标题栏 -->
+            <div class="log-header">
+                <div class="log-header-dot" style="background:#ff5f57"></div>
+                <div class="log-header-dot" style="background:#febc2e"></div>
+                <div class="log-header-dot" style="background:#28c840"></div>
+                <span class="log-header-title">SYSTEM LOG · 系统日志</span>
+                <button class="log-clear-btn" onclick="clearLog()">CLEAR</button>
+            </div>
+            <!-- 日志内容体 -->
+            <div class="log-body" id="log-body">
+                <div class="log-line log-system" id="log-init-line">
+                    <span class="log-ts">--:--:--</span>
+                    <span class="log-icon">ℹ</span>
+                    <span class="log-content"><span class="log-main">内核初始化完成 · Kernel initialized</span><span class="log-sub">由 QiLong-GOLD400 · QiLong AI 定制智能体制作</span></span>
+                </div>
+            </div>
         </div>
 
         <div class="link-group">
@@ -1003,35 +1131,98 @@
             }, 600);
         }
 
+        // ── 日志双语翻译表（关键英文标签 → 中文注释）──
+        const LOG_TRANSLATIONS = {
+            '[IDFA]':       '[标识符]',
+            '[NVRAM]':      '[NVRAM]',
+            '[KERNEL]':     '[内核]',
+            '[REALTIME]':   '[实时]',
+            '[DAEMON]':     '[守护]',
+            '[BRIDGE]':     '[通信]',
+            '[LANG]':       '[语言]',
+            '[UI]':         '[界面]',
+            '[ERROR]':      '[错误]',
+            '[VARCLEAN]':   '[残留清理]',
+            '[KEYCHAIN]':   '[钥匙链]',
+            '[HOTSPOT]':    '[热点]',
+            '[SIMULATOR]':  '[模拟]',
+            'Phase A':      'A阶段(缓存)',
+            'Phase B':      'B阶段(钥匙链/标识)',
+            'Phase C':      'C阶段(NVRAM/越狱残留)',
+            'complete':     '完成',
+            'Done':         '完成',
+            'Starting':     '启动',
+            'Initializing': '初始化',
+            'Waiting':      '等待下轮',
+            'Exiting':      '退出',
+            'Removed':      '已移除',
+            'Cleaned':      '已清理',
+            'refreshed':    '已刷新',
+            'blocked':      '已禁用',
+        };
+
+        function getLogSub(text) {
+            let sub = text;
+            for (const [en, zh] of Object.entries(LOG_TRANSLATIONS)) {
+                sub = sub.replaceAll(en, zh);
+            }
+            // 去掉纯英文标签前缀让注释更简洁
+            return sub !== text ? sub : '';
+        }
+
+        function getLogIcon(type) {
+            return { success: '✓', warn: '⚠', system: 'ℹ', error: '✕', info: '·' }[type] || '·';
+        }
+
+        function getNow() {
+            const d = new Date();
+            return [d.getHours(), d.getMinutes(), d.getSeconds()].map(n => String(n).padStart(2,'0')).join(':');
+        }
+
         function appendLog(text, type = 'system') {
-            const container = document.getElementById('log-container');
+            const body = document.getElementById('log-body');
+            if (!body) return;
+
             const line = document.createElement('div');
             line.className = `log-line log-${type}`;
-            line.innerText = text;
-            container.appendChild(line);
 
-            // ⚠️ 动态白名单一轮刷新完成后追加中英文警告 (不区分大小写，匹配 round/complete/waiting/60s 关键字组合)
+            const sub = getLogSub(text);
+            line.innerHTML = `
+                <span class="log-ts">${getNow()}</span>
+                <span class="log-icon">${getLogIcon(type)}</span>
+                <span class="log-content">
+                    <span class="log-main">${text.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</span>
+                    ${sub && sub !== text ? `<span class="log-sub">${sub.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</span>` : ''}
+                </span>`;
+            body.appendChild(line);
+
+            // ⚠️ 3分钟周期阶段完成时追加防白苹果警告
             if (text) {
-                const lowerText = text.toLowerCase();
-                if ((lowerText.includes("complete") && lowerText.includes("waiting")) ||
-                    (lowerText.includes("round") && lowerText.includes("complete")) ||
-                    lowerText.includes("waiting 60s")) {
-
+                const t = text.toLowerCase();
+                const isPhaseEnd = (t.includes('phase') && (t.includes('done') || t.includes('complete')))
+                    || t.includes('cycle #') || t.includes('waiting 60s');
+                if (isPhaseEnd) {
                     const warnLine = document.createElement('div');
                     warnLine.className = 'log-line log-warn';
-                    warnLine.style.fontWeight = 'bold';
-                    warnLine.style.padding = '8px';
-                    warnLine.style.margin = '5px 0';
-                    warnLine.style.borderRadius = '8px';
-                    warnLine.style.background = 'rgba(255, 60, 60, 0.1)';
-                    warnLine.style.border = '1px dashed #ff3c3c';
-                    warnLine.style.color = '#ff8080';
-                    warnLine.innerText = "【警告】重启或越狱前请关闭该功能，否则可能白苹果或跳激活！\n[WARNING] Please turn off this feature before rebooting or jailbreaking, otherwise it may cause a bootloop (White Apple) or activation loops!";
-                    container.appendChild(warnLine);
+                    warnLine.style.cssText = 'font-weight:bold;padding:6px 10px;margin:4px 0;border-radius:8px;background:rgba(255,60,60,0.08);border:1px dashed #ff5555;';
+                    warnLine.innerHTML = `
+                        <span class="log-ts">${getNow()}</span>
+                        <span class="log-icon">⚠</span>
+                        <span class="log-content">
+                            <span class="log-main" style="color:#ff7070">重启/越狱前必须关闭本功能，否则可能白苹果！</span>
+                            <span class="log-sub">Turn off before reboot/jailbreak — risk of White Apple / boot-loop!</span>
+                        </span>`;
+                    body.appendChild(warnLine);
                 }
             }
 
-            container.scrollTop = container.scrollHeight;
+            body.scrollTop = body.scrollHeight;
+        }
+
+        function clearLog() {
+            const body = document.getElementById('log-body');
+            if (body) body.innerHTML = '';
+            appendLog('日志已清空 · Log cleared', 'system');
         }
 
         // ── 核心升级：唤出物理应用勾选舱 ──

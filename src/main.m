@@ -242,17 +242,19 @@ static pid_t global_bg_idfa_pid = 0;
             
             char buffer[1024];
             while (fgets(buffer, sizeof(buffer), stream) != NULL) {
-                NSString *line = [[NSString alloc] initWithUTF8String:buffer];
-                // 去除行尾换行
-                line = [line stringByTrimmingCharactersInSet:[NSCharacterSet newlineCharacterSet]];
-                if (line.length == 0) continue;
-                
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    // 转义单引号防止 JS 注入崩溃
-                    NSString *escaped = [line stringByReplacingOccurrencesOfString:@"'" withString:@"\\'"];
-                    NSString *js = [NSString stringWithFormat:@"appendLog('%@', 'system');", escaped];
-                    [self.webView evaluateJavaScript:js completionHandler:nil];
-                });
+                @autoreleasepool {
+                    NSString *line = [[NSString alloc] initWithUTF8String:buffer];
+                    // 去除行尾换行
+                    line = [line stringByTrimmingCharactersInSet:[NSCharacterSet newlineCharacterSet]];
+                    if (line.length == 0) continue;
+                    
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        // 转义单引号防止 JS 注入崩溃
+                        NSString *escaped = [line stringByReplacingOccurrencesOfString:@"'" withString:@"\\'"];
+                        NSString *js = [NSString stringWithFormat:@"appendLog('%@', 'system');", escaped];
+                        [self.webView evaluateJavaScript:js completionHandler:nil];
+                    });
+                }
             }
             fclose(stream);
         });
