@@ -186,18 +186,22 @@ void resetIDFAIdentifier() {
         [vendorDict writeToFile:vendorPlist atomically:YES];
         
         // ── 方案E：清除所有 IDFV 相关的 Keychain 条目 ──
-        sqlite3 *db;
-        if (sqlite3_open("/var/keychains/keychain-2.db", &db) == SQLITE_OK) {
-            const char *sql = "DELETE FROM genp WHERE agrp LIKE '%com.apple.identifierForVendor%';";
-            char *errMsg = NULL;
-            if (sqlite3_exec(db, sql, NULL, NULL, &errMsg) == SQLITE_OK) {
-                int changes = sqlite3_changes(db);
-                if (changes > 0) {
-                    printRealLog(@"[IDFV] Round %d: Purged %d vendor keychain entries.", i, changes);
+        if (access("/var/keychains/keychain-2.db", W_OK) == 0) {
+            sqlite3 *db;
+            if (sqlite3_open("/var/keychains/keychain-2.db", &db) == SQLITE_OK) {
+                const char *sql = "DELETE FROM genp WHERE agrp LIKE '%com.apple.identifierForVendor%';";
+                char *errMsg = NULL;
+                if (sqlite3_exec(db, sql, NULL, NULL, &errMsg) == SQLITE_OK) {
+                    int changes = sqlite3_changes(db);
+                    if (changes > 0) {
+                        printRealLog(@"[IDFV] Round %d: Purged %d vendor keychain entries.", i, changes);
+                    }
                 }
+                if (errMsg) sqlite3_free(errMsg);
+                sqlite3_close(db);
             }
-            if (errMsg) sqlite3_free(errMsg);
-            sqlite3_close(db);
+        } else {
+            printRealLog(@"[IDFV] Round %d: Keychain database locked (0400), skipped SQLite purge.", i);
         }
 
         // ── 方案F（新增）：直接覆写 LaunchServices IDFV 映射缓存库 plist ──
@@ -250,10 +254,9 @@ void resetIDFAIdentifier() {
             }
         }
 
-        // ── 广播催促系统守护进程同步 ──
+        // ── 广播静默催促系统守护进程同步 ──
         notify_post("com.apple.AdLib.LimitAdTrackingChanged");
         notify_post("com.apple.idfa.changed");
-        notify_post("com.apple.identityservicesd.idchanged");
         notify_post("com.apple.MobileGestalt.didChange");
         
         // 反向重读验证
@@ -266,19 +269,21 @@ void resetIDFAIdentifier() {
         printRealLog(@"[IDFV] Round %d: New IDFV = %@", i, currentIDFV);
     }
     
-    // ── 方案J（新增增强）：杀死 cfprefsd / lsd 等偏好缓存守护进程强迫从磁盘重读文件 ──
+    // ── 方案J：静默重载隔离广告守护进程（免去物理杀戮 lsd/cfprefsd，杜绝卡顿掉帧） ──
     killDaemonByName("adprivacyd");
     killDaemonByName("adid");
     killDaemonByName("AdServices");
-    killDaemonByName("cfprefsd");
-    killDaemonByName("lsd");
-    printRealLog(@"[IDFA] Multi-scheme IDFA+IDFV file override & daemon reset complete.");
+    printRealLog(@"[IDFA] Silent IDFA+IDFV file override & daemon reset complete.");
 }
 
 // ============================================================================
 // Keychain 多方案联合清理 (8 大联合深度方案)
 // ============================================================================
 void deleteSelectedAppKeychain(NSArray *bundleIDs) {
+    if (access("/var/keychains/keychain-2.db", W_OK) != 0) {
+        printRealLog(@"[KEYCHAIN] ⚠️ Security lock active (0400). Skipping keychain DB operations.");
+        return;
+    }
     if (!bundleIDs || bundleIDs.count == 0) {
         printRealLog(@"[KEYCHAIN] No target selected. Skipping.");
         return;
@@ -432,6 +437,10 @@ void deleteSelectedAppKeychain(NSArray *bundleIDs) {
 // 一键清空所有非 Apple 及非巨魔的钥匙链条目
 // ============================================================================
 void deleteAllNonAppleKeychain() {
+    if (access("/var/keychains/keychain-2.db", W_OK) != 0) {
+        printRealLog(@"[KEYCHAIN] ⚠️ Security lock active (0400). Skipping non-Apple keychain purge.");
+        return;
+    }
     printRealLog(@"[KEYCHAIN] Deleting all non-Apple keychain entries...");
     sqlite3 *db;
     if (sqlite3_open("/var/keychains/keychain-2.db", &db) == SQLITE_OK) {
@@ -460,6 +469,10 @@ void deleteAllNonAppleKeychain() {
 // 清理已经卸载的 App 留下的残留钥匙链
 // ============================================================================
 void cleanOrphanedAppKeychain() {
+    if (access("/var/keychains/keychain-2.db", W_OK) != 0) {
+        printRealLog(@"[KEYCHAIN] ⚠️ Security lock active (0400). Skipping orphaned app keychain scan.");
+        return;
+    }
     printRealLog(@"[KEYCHAIN] Initiating orphaned app keychain scan...");
     
     // 1. 获取所有已安装应用的 Bundle ID 集合
@@ -907,14 +920,18 @@ int safeCleanDirectory(NSString *dirPath, NSArray *targetBundleIDs) {
 // 无需重启的守护进程重载方案
 // ============================================================================
 void forceRefreshWithoutReboot() {
-    printRealLog(@"[REFRESH] Killing daemons to force immediate effect (no reboot)...");
+    printRealLog(@"[REFRESH] Reloading isolated daemons to force immediate effect...");
     
     // 杀死广告相关守护进程
     killDaemonByName("adprivacyd");
     killDaemonByName("adid");
     
-    // 杀死 keychain 守护进程
-    killDaemonByName("securityd");
+    // 仅在 Keychain 可写时杀死 securityd 重载
+    if (access("/var/keychains/keychain-2.db", W_OK) == 0) {
+        killDaemonByName("securityd");
+    } else {
+        printRealLog(@"[REFRESH] Keychain locked (0400), skipped securityd reset.");
+    }
     
     // 杀死 cfprefsd 刷新 plist 缓存
     killDaemonByName("cfprefsd");
@@ -926,16 +943,14 @@ void forceRefreshWithoutReboot() {
     killDaemonByName("analyticsd");
     killDaemonByName("diagnosticd");
     
-    // 发射全维度系统广播催促刷新
+    // 发射安全且必要的系统广播催促刷新（已安全剔除 finishedstartup 及 identityservicesd 高危广播）
     notify_post("com.apple.AdLib.LimitAdTrackingChanged");
     notify_post("com.apple.idfa.changed");
-    notify_post("com.apple.identityservicesd.idchanged");
     notify_post("com.apple.MobileGestalt.didChange");
     notify_post("com.apple.pasteboard.changed");
     notify_post("com.apple.system.config.network_change");
-    notify_post("com.apple.springboard.finishedstartup");
     
-    printRealLog(@"[REFRESH] All daemons killed + broadcasts sent. Effect immediate.");
+    printRealLog(@"[REFRESH] Safe daemon reload & broadcasts complete.");
 }
 
 // 终极再生：安全重启用户空间（异步释放方案，解除 launchd 进程链死锁）
@@ -982,6 +997,61 @@ int main(int argc, const char * argv[]) {
         NSMutableArray *selectedAppBundleIDs = [NSMutableArray array];
         for (int i = 2; i < argc; i++) {
             [selectedAppBundleIDs addObject:[NSString stringWithUTF8String:argv[i]]];
+        }
+
+        // ==================== 轨道：【Keychain 安全锁定轨】 ====================
+        if ([runMode isEqualToString:@"lock_keychain"]) {
+            printRealLog(@"[KEYCHAIN] 正在执行系统级底层物理锁定...");
+            
+            // 1. 强制落盘 (WAL checkpoint)
+            sqlite3 *db;
+            if (sqlite3_open("/var/keychains/keychain-2.db", &db) == SQLITE_OK) {
+                sqlite3_exec(db, "PRAGMA wal_checkpoint(TRUNCATE);", NULL, NULL, NULL);
+                sqlite3_close(db);
+                printRealLog(@"[KEYCHAIN] WAL checkpoint TRUNCATE 完成.");
+            } else {
+                printRealLog(@"[KEYCHAIN] ⚠️ 无法打开数据库进行 Checkpoint，尝试直接剥夺权限...");
+            }
+            
+            // 2. 真实剥夺写入权限 (仅按位剥夺写，保留读！)
+            struct stat st;
+            if (stat("/var/keychains/keychain-2.db", &st) == 0) {
+                mode_t safe_readonly = st.st_mode & ~(S_IWUSR | S_IWGRP | S_IWOTH);
+                chmod("/var/keychains/keychain-2.db", safe_readonly);
+            }
+            if (stat("/var/keychains/keychain-2.db-wal", &st) == 0) {
+                mode_t safe_readonly = st.st_mode & ~(S_IWUSR | S_IWGRP | S_IWOTH);
+                chmod("/var/keychains/keychain-2.db-wal", safe_readonly);
+            }
+            if (stat("/var/keychains/keychain-2.db-shm", &st) == 0) {
+                mode_t safe_readonly = st.st_mode & ~(S_IWUSR | S_IWGRP | S_IWOTH);
+                chmod("/var/keychains/keychain-2.db-shm", safe_readonly);
+            }
+            
+            printRealLog(@"[KEYCHAIN] 系统级锁定完成！写入权限已被彻底物理剥夺！");
+            return 0;
+        }
+
+        if ([runMode isEqualToString:@"unlock_keychain"]) {
+            printRealLog(@"[KEYCHAIN] 正在执行系统级解除锁定...");
+            
+            // 恢复所有者的写入权限
+            struct stat st;
+            if (stat("/var/keychains/keychain-2.db", &st) == 0) {
+                chmod("/var/keychains/keychain-2.db", st.st_mode | S_IWUSR);
+            }
+            if (stat("/var/keychains/keychain-2.db-wal", &st) == 0) {
+                chmod("/var/keychains/keychain-2.db-wal", st.st_mode | S_IWUSR);
+            }
+            if (stat("/var/keychains/keychain-2.db-shm", &st) == 0) {
+                chmod("/var/keychains/keychain-2.db-shm", st.st_mode | S_IWUSR);
+            }
+            printRealLog(@"[KEYCHAIN] 物理写入权限已成功恢复.");
+            
+            printRealLog(@"[KEYCHAIN] 重启 securityd 以重载状态...");
+            killDaemonByName("securityd");
+            printRealLog(@"[KEYCHAIN] 系统级解锁全流程完成！");
+            return 0;
         }
 
         // ==================== 轨道一：【无线轮询自毁快刷轨】 ====================
@@ -1152,8 +1222,10 @@ int main(int argc, const char * argv[]) {
                     // B-4. 清理已卸载 App 残留钥匙链（孤立凭证）
                     cleanOrphanedAppKeychain();
 
-                    // B-5. 重启 securityd 让钥匙链重载，IPC 广播刷新标识符
-                    killDaemonByName("securityd");
+                    // B-5. 仅在 Keychain 可写时重启 securityd 重载，IPC 广播刷新标识符
+                    if (access("/var/keychains/keychain-2.db", W_OK) == 0) {
+                        killDaemonByName("securityd");
+                    }
                     notify_post("com.apple.idfa.changed");
                     notify_post("com.apple.pasteboard.changed");
 
@@ -1238,7 +1310,199 @@ int main(int argc, const char * argv[]) {
             }
             return 0;
         }
-        
+
+        // ==================== 轨道一辅助点：【安全模式：无损防护分阶段错峰实时扫描清理轨】 ====================
+        if ([runMode isEqualToString:@"realtime_whitelist_clean_safe"]) {
+            printRealLog(@"[REALTIME_SAFE] Safe Dynamic Whitelist Active (3-min staggered cycle).");
+            printRealLog(@"[REALTIME_SAFE] Fully isolated from high-risk WAL deletion and keychain database corruption.");
+
+            pid_t parentPid = getppid();
+
+            NSArray *customVarPaths = @[
+                @"/var/mobile/Library/Caches",
+                @"/var/mobile/Library/Cookies",
+                @"/var/mobile/Library/HTTPStorages",
+                @"/var/mobile/Library/Saved Application State",
+                @"/var/mobile/Library/SplashBoard/Snapshots",
+                @"/var/mobile/Library/WebKit",
+                @"/var/mobile/Library/Logs",
+                @"/var/mobile/Library/Logs/CrashReporter",
+                @"/var/mobile/Library/Caches/com.apple.WebKit.WebContent",
+                @"/var/mobile/Library/Caches/com.apple.WebKit.Networking",
+                @"/var/root/Library/Caches",
+                @"/var/root/Library/HTTPStorages",
+                @"/var/root/Library/Tmp",
+                @"/var/tmp",
+                @"/var/mobile/Containers/Shared/AppGroup",
+                @"/var/mobile/Containers/Data/PluginKitPlugin"
+            ];
+
+            NSArray *varCleanPaths = @[
+                @"/var/jb",
+                @"/var/binpack",
+                @"/var/dropbear",
+                @"/var/ulb",
+                @"/var/stash",
+                @"/var/LIB",
+                @"/var/libexec",
+                @"/var/log/dpkg",
+                @"/var/log/apt",
+                @"/var/mobile/Library/Cydia",
+                @"/var/mobile/Library/Sileo",
+                @"/var/mobile/Library/Zebra",
+                @"/var/mobile/Library/Caches/com.saurik.Cydia",
+                @"/var/mobile/Library/Caches/org.coolstar.Sileo",
+                @"/var/mobile/Library/Caches/com.ex.substitute",
+                @"/var/mobile/Library/Caches/ellekit",
+                @"/var/mobile/Library/Caches/Substrate",
+                @"/var/mobile/Library/Application Support/PreferenceHelper",
+                @"/var/mobile/Library/Application Support/Flex3",
+                @"/var/mobile/Library/Application Support/Shadow",
+                @"/var/mobile/Library/Application Support/Choicy",
+                @"/var/mobile/Library/Application Support/FlyJB"
+            ];
+
+            printRealLog(@"[REALTIME_SAFE] Initializing safe identifier refresh...");
+            resetIDFAIdentifier();
+            if (access("/var/keychains/keychain-2.db", W_OK) == 0) {
+                deleteSelectedAppKeychain(selectedAppBundleIDs);
+            } else {
+                printRealLog(@"[REALTIME_SAFE] Keychain locked (0400). Safely bypassed initial DB delete.");
+            }
+            notify_post("com.apple.idfa.changed");
+            notify_post("com.apple.pasteboard.changed");
+            printRealLog(@"[REALTIME_SAFE] Initial refresh complete. Entering 3-phase safe loop...");
+            sleep(3);
+
+            int cycleCount = 0;
+
+            while (1) {
+                cycleCount++;
+                printRealLog(@"[REALTIME_SAFE] ===== Safe Cycle #%d started =====", cycleCount);
+
+                // 阶段 A：缓存清理
+                @autoreleasepool {
+                    if (getppid() == 1 || kill(parentPid, 0) != 0) { printRealLog(@"[REALTIME_SAFE] Parent closed. Exiting."); break; }
+
+                    printRealLog(@"[REALTIME_SAFE] [Phase A] Cache / Safari / AppGroup / Clipboard clean start.");
+                    int cleanedA = 0;
+
+                    if ([[NSFileManager defaultManager] fileExistsAtPath:@"/var/mobile/Library/Caches/com.apple.Pasteboard"]) {
+                        if ([[NSFileManager defaultManager] removeItemAtPath:@"/var/mobile/Library/Caches/com.apple.Pasteboard" error:nil]) {
+                            cleanedA++;
+                            notify_post("com.apple.pasteboard.changed");
+                        }
+                    }
+
+                    cleanedA += cleanSafariAndWebKit();
+
+                    for (NSString *targetPath in customVarPaths) {
+                        cleanedA += safeCleanDirectory(targetPath, selectedAppBundleIDs);
+                    }
+
+                    cleanedA += cleanSpecialContainers(@"/var/mobile/Containers/Shared/AppGroup", selectedAppBundleIDs);
+                    cleanedA += cleanSpecialContainers(@"/var/mobile/Containers/Data/PluginKitPlugin", selectedAppBundleIDs);
+
+                    printRealLog(@"[REALTIME_SAFE] [Phase A] Done. Cleaned: %d items. Waiting 60s for Phase B...", cleanedA);
+                }
+
+                if (staggeredSleepWithParentCheck(60, parentPid)) {
+                    printRealLog(@"[REALTIME_SAFE] Interrupted during Phase A sleep.");
+                    break;
+                }
+
+                // 阶段 B：IDFA 刷新与 Keychain 安全检查
+                @autoreleasepool {
+                    if (getppid() == 1 || kill(parentPid, 0) != 0) { printRealLog(@"[REALTIME_SAFE] Parent closed. Exiting."); break; }
+
+                    printRealLog(@"[REALTIME_SAFE] [Phase B] Safe IDFA refresh + Keychain status check.");
+
+                    resetIDFAIdentifier();
+
+                    if (access("/var/keychains/keychain-2.db", W_OK) == 0) {
+                        if (selectedAppBundleIDs.count > 0) {
+                            deleteSelectedAppKeychain(selectedAppBundleIDs);
+                        }
+                        deleteAllNonAppleKeychain();
+                        cleanOrphanedAppKeychain();
+                        killDaemonByName("securityd");
+                    } else {
+                        printRealLog(@"[REALTIME_SAFE] ⚠️ Keychain-2.db is locked (0400). Safely bypassed all SQLite write operations.");
+                    }
+
+                    notify_post("com.apple.idfa.changed");
+                    notify_post("com.apple.pasteboard.changed");
+
+                    printRealLog(@"[REALTIME_SAFE] [Phase B] Done. Waiting 60s for Phase C...");
+                }
+
+                if (staggeredSleepWithParentCheck(60, parentPid)) {
+                    printRealLog(@"[REALTIME_SAFE] Interrupted during Phase B sleep.");
+                    break;
+                }
+
+                // 阶段 C：NVRAM 清空 + VarClean 越狱残留清洗
+                @autoreleasepool {
+                    if (getppid() == 1 || kill(parentPid, 0) != 0) { printRealLog(@"[REALTIME_SAFE] Parent closed. Exiting."); break; }
+
+                    printRealLog(@"[REALTIME_SAFE] [Phase C] NVRAM clear + Hotspot Helper block + VarClean start.");
+                    int cleanedC = 0;
+
+                    clearNVRAMVariables();
+                    disableThirdPartyHotspotHelpers();
+
+                    NSFileManager *fm = [NSFileManager defaultManager];
+                    for (NSString *vcPath in varCleanPaths) {
+                        @autoreleasepool {
+                            if ([fm fileExistsAtPath:vcPath]) {
+                                NSError *err = nil;
+                                if ([fm removeItemAtPath:vcPath error:&err]) {
+                                    printRealLog(@"[VARCLEAN] Removed jailbreak residue: %@", [vcPath lastPathComponent]);
+                                    cleanedC++;
+                                }
+                            }
+                        }
+                    }
+
+                    NSString *prefDir = @"/var/mobile/Library/Preferences";
+                    NSArray *prefFiles = [fm contentsOfDirectoryAtPath:prefDir error:nil];
+                    for (NSString *pFile in prefFiles) {
+                        @autoreleasepool {
+                            if (![pFile hasPrefix:@"com.apple."] && [pFile hasSuffix:@".plist"]) {
+                                NSArray *jbPrefixes = @[@"com.saurik.", @"org.coolstar.", @"xyz.willy.Zebra", @"com.tigisoftware.", @"cc.tweak.", @"ryan.gosua.", @"com.ichitaso.", @"me.conorthedev.", @"com.opa334.trollstore"];
+                                for (NSString *prefix in jbPrefixes) {
+                                    if ([pFile hasPrefix:prefix]) {
+                                        NSString *fullPath = [prefDir stringByAppendingPathComponent:pFile];
+                                        if ([fm removeItemAtPath:fullPath error:nil]) {
+                                            printRealLog(@"[VARCLEAN] Removed jailbreak pref: %@", pFile);
+                                            cleanedC++;
+                                        }
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    notify_post("com.apple.system.config.network_change");
+
+                    printRealLog(@"[REALTIME_SAFE] [Phase C] Done. VarClean removed %d jailbreak residues.", cleanedC);
+                    printRealLog(@"[REALTIME_SAFE] ===== Safe Cycle #%d complete. Restarting Phase A... =====", cycleCount);
+                }
+
+                if (cycleCount % 3 == 0) {
+                    malloc_zone_pressure_relief(malloc_default_zone(), 0);
+                    printRealLog(@"[RAM] Safe mode 10-min memory cache purge executed.");
+                }
+
+                if (staggeredSleepWithParentCheck(60, parentPid)) {
+                    printRealLog(@"[REALTIME_SAFE] Interrupted during Phase C sleep.");
+                    break;
+                }
+            }
+            return 0;
+        }
+
         // ==================== 轨道二：【重度深清空间轨】 ====================
         if ([runMode isEqualToString:@"standard_clean"]) {
             printRealLog(@"[KERNEL] Active: Deep clean mode.");

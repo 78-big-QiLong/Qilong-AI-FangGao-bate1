@@ -731,7 +731,14 @@
             <button class="btn btn-select" id="btn-select" onclick="clickSelect()">勾选应用</button>
             <button class="btn btn-dynamic" id="btn-dynamic" onclick="clickDynamicRefresh()">启动动态白名单</button>
             <button class="btn btn-execute" id="btn-execute" onclick="clickExecute()">清理风险残留</button>
-            <button class="btn btn-keychain" id="btn-keychain-2db" onclick="clickKeychain2DB()">keychain-2db锁定</button>
+            <button class="btn btn-keychain" id="btn-keychain-2db" onclick="clickKeychain2DB()">keychain-2db未锁定</button>
+        </div>
+
+        <div class="button-group">
+            <button class="btn btn-dynamic" id="btn-dynamic-safe" onclick="clickDynamicRefreshSafe()" style="color: #00ffaa; text-shadow: 0 0 6px rgba(0, 255, 170, 0.6);">动态白名单(锁定模式)</button>
+            <button class="btn btn-select" id="btn-reserved-1">测试1</button>
+            <button class="btn btn-select" id="btn-reserved-2">测试2</button>
+            <button class="btn btn-select" id="btn-reserved-3">测试3</button>
         </div>
 
         <div class="log-panel" id="log-container">
@@ -808,32 +815,85 @@
     </div>
     <!-- ── 更新日志弹窗 ── -->
     <div class="modal-overlay" id="modal-update-log">
-        <div class="modal-box" style="max-width: 380px; width: 92%; padding: 22px;">
-            <div class="modal-title" style="color: #00ff66; font-size: 1.15rem; font-weight: 900;">📦 版本构建报告</div>
-            <div class="modal-list" style="max-height: 290px; text-align: left; gap: 12px; padding: 2px;">
+        <div class="modal-box" style="max-width: 420px; width: 92%; padding: 20px;">
+            <div class="modal-title" style="color: #00ff66; font-size: 1.15rem; font-weight: 900;">📦 开发/测试版本详细构建报告</div>
+            <div class="modal-list" style="max-height: 380px; text-align: left; gap: 10px; padding: 2px; overflow-y: auto;">
 
-                <div style="background: rgba(0,255,102,0.06); border: 1px solid rgba(0,255,102,0.15); border-radius: 12px; padding: 12px;">
-                    <div style="font-size: 0.92rem; font-weight: 800; color: #00ff66; margin-bottom: 6px;">构建信息</div>
-                    <p style="font-size: 0.8rem; color: #ccc; margin: 0; line-height: 1.45;">
-                        版本号: 1.0.5 (beta2)<br>
-                        打包时间: 2026-08-09 19:24<br>
-                        打包状态: ✅ 流程完整正确
+                <!-- 构建基本信息 -->
+                <div style="background: rgba(0,255,102,0.06); border: 1px solid rgba(0,255,102,0.15); border-radius: 10px; padding: 10px;">
+                    <div style="font-size: 0.88rem; font-weight: 800; color: #00ff66; margin-bottom: 4px;">🛠 构建元数据 (Build Meta)</div>
+                    <p style="font-size: 0.78rem; color: #ccc; margin: 0; line-height: 1.45;">
+                        • <strong>版本号</strong>: 1.0.6 (beta3 - Security & KeepAlive Build)<br>
+                        • <strong>编译时间</strong>: 2026-08-10 00:12<br>
+                        • <strong>适配环境</strong>: iOS 15.0 - 16.7 (RootHide / Dopamine / TrollStore)<br>
+                        • <strong>构建状态</strong>: ✅ 原生桥接 + C底层 + 防御矩阵完全就位
                     </p>
                 </div>
 
-                <div style="background: rgba(0,255,255,0.06); border: 1px solid rgba(0,255,255,0.15); border-radius: 12px; padding: 12px;">
-                    <div style="font-size: 0.92rem; font-weight: 800; color: #00ffff; margin-bottom: 6px;">本版核心更新</div>
-                    <p style="font-size: 0.8rem; color: #ccc; margin: 0; line-height: 1.45;">
-                        1. 修复了横竖屏切换时 UI 比例错乱的问题。<br>
-                        2. 修复了 iPad 顶部三点分屏按钮无法调出的问题。<br>
-                        3. 优化了日志区域的防逃逸滚动体验。
+                <!-- 1. Keychain 物理安全锁定 -->
+                <div style="background: rgba(0,255,255,0.06); border: 1px solid rgba(0,255,255,0.15); border-radius: 10px; padding: 10px;">
+                    <div style="font-size: 0.88rem; font-weight: 800; color: #00ffff; margin-bottom: 4px;">🔒 1. Keychain 物理安全锁定机制</div>
+                    <p style="font-size: 0.76rem; color: #bbb; margin: 0; line-height: 1.45;">
+                        • <strong>WAL 刷新落盘</strong>: 锁定前执行 <code>sqlite3 PRAGMA wal_checkpoint(TRUNCATE);</code> 强刷内存日志，防止数据库损坏。<br>
+                        • <strong>按位剥夺写权限 (Bitwise chmod)</strong>: 使用 <code>stat()</code> 刺探权限后执行 <code>st_mode & ~(S_IWUSR | S_IWGRP | S_IWOTH)</code>，保留读权限(R)，仅剥夺写权限(W)，防范 securityd 死锁与白苹果崩溃。<br>
+                        • <strong>Filza 自动化闭环</strong>: 自动生成临时 <code>.sh</code> 脚本并在末尾插入 <code>sleep 3 && uiopen -b &lt;bundleID&gt;</code>，实现 3 秒自动切回原应用。<br>
+                        • <strong>C 语言探针物理校验</strong>: App 苏醒时利用 <code>sys/stat.h</code> 的 <code>stat()</code> 实测物理文件 <code>st_mode</code>，带动态光效弹窗与真实 Log 汇报。
+                    </p>
+                </div>
+
+                <!-- 2. 后台永生保活 -->
+                <div style="background: rgba(255,0,255,0.06); border: 1px solid rgba(255,0,255,0.15); border-radius: 10px; padding: 10px;">
+                    <div style="font-size: 0.88rem; font-weight: 800; color: #ff00ff; margin-bottom: 4px;">🛸 2. 后台永生保活 (Background Keep-Alive)</div>
+                    <p style="font-size: 0.76rem; color: #bbb; margin: 0; line-height: 1.45;">
+                        • <strong>CoreLocation 保活</strong>: 启用 <code>CLLocationManager</code> 最低功耗定位（<code>kCLLocationAccuracyKilometer</code>），实现锁屏与退后台不冻结。<br>
+                        • <strong>Plist 声明配合</strong>: 已自动完成 <code>Info.plist</code> 的 <code>UIBackgroundModes (location/fetch)</code> 及权限文案注入。
+                    </p>
+                </div>
+
+                <!-- 3. 零损耗防御矩阵 -->
+                <div style="background: rgba(255,170,0,0.06); border: 1px solid rgba(255,170,0,0.15); border-radius: 10px; padding: 10px;">
+                    <div style="font-size: 0.88rem; font-weight: 800; color: #ffaa00; margin-bottom: 4px;">🛡️ 3. 零损耗防御矩阵 (Watchdog Failsafes)</div>
+                    <p style="font-size: 0.76rem; color: #bbb; margin: 0; line-height: 1.45;">
+                        • <strong>热熔断</strong>: 监听 <code>NSProcessInfoThermalStateDidChangeNotification</code>，达到 Serious/Critical 自动解锁。<br>
+                        • <strong>电量与省电模式熔断</strong>: 监听电量 ≤ 15% 或开启低电量模式，自动解锁并直接拦截前端发起的新锁定请求。<br>
+                        • <strong>杀后台抢答</strong>: 监听 <code>applicationWillTerminate</code>，上划强杀 App 瞬间抢答发出紧急解锁指令。
+                    </p>
+                </div>
+
+                <!-- 4. 崩溃自愈状态机 -->
+                <div style="background: rgba(255,50,50,0.06); border: 1px solid rgba(255,50,50,0.15); border-radius: 10px; padding: 10px;">
+                    <div style="font-size: 0.88rem; font-weight: 800; color: #ff3232; margin-bottom: 4px;">🏥 4. 崩溃自愈状态机 (State Journaling)</div>
+                    <p style="font-size: 0.76rem; color: #bbb; margin: 0; line-height: 1.45;">
+                        • <strong>lock_state.json 记账</strong>: 锁定状态实时持久化写盘。<br>
+                        • <strong>AppDelegate 开机自检</strong>: `didFinishLaunchingWithOptions` 读取状态，如因意外断电/强杀导致残留锁定，0.1 秒无条件自动自愈解锁。
                     </p>
                 </div>
 
             </div>
-            <div style="display: flex; gap: 10px; margin-top: 15px;">
-                <button class="btn-close" style="flex: 1; background: #141419; color: #888892; font-weight: 900; border: 1px solid rgba(255,255,255,0.1); padding: 12px 0; border-radius: 10px; margin-top: 0;" onclick="neverShowUpdateLog()">不再显示</button>
-                <button class="btn-close" style="flex: 2; background: #00ff66; color: #141419; font-weight: 900; font-size: 0.95rem; border: none; box-shadow: 0 4px 15px rgba(0,255,102,0.3); padding: 12px 0; border-radius: 10px; margin-top: 0;" onclick="closeUpdateLog()">确定</button>
+            <div style="display: flex; gap: 10px; margin-top: 12px;">
+                <button class="btn-close" style="flex: 1; background: #141419; color: #888892; font-weight: 900; border: 1px solid rgba(255,255,255,0.1); padding: 10px 0; border-radius: 8px; margin-top: 0;" onclick="neverShowUpdateLog()">不再显示</button>
+                <button class="btn-close" style="flex: 2; background: #00ff66; color: #141419; font-weight: 900; font-size: 0.92rem; border: none; box-shadow: 0 4px 15px rgba(0,255,102,0.3); padding: 10px 0; border-radius: 8px; margin-top: 0;" onclick="closeUpdateLog()">已掌握所有技术细节</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── keychain-2db锁定结果弹窗 ── -->
+    <div class="modal-overlay" id="modal-lock-result">
+        <div class="modal-box" style="max-width: 380px; width: 92%; padding: 22px; border: 1px solid rgba(0, 255, 255, 0.35);">
+            <div class="modal-title" style="color: #00ffff; font-size: 1.15rem; font-weight: 900;">🔒 物理锁定校验报告</div>
+            <div class="modal-list" style="text-align: left; gap: 12px; padding: 2px;">
+                <div id="lock-result-status" style="background: rgba(0,255,255,0.06); border: 1px solid rgba(0,255,255,0.15); border-radius: 12px; padding: 12px; color: #00ffff; font-weight: 800; font-size: 0.9rem; line-height: 1.5;">
+                    校验中...
+                </div>
+                <div style="font-size: 0.8rem; color: #ccc; line-height: 1.5; padding: 0 4px; margin-top: 10px;">
+                    <strong>底层执行日志：</strong>
+                    <div id="lock-result-log" style="background: rgba(0,0,0,0.5); padding: 8px; border-radius: 6px; font-family: monospace; font-size: 0.75rem; color: #00ff66; margin-top: 6px; white-space: pre-wrap; word-wrap: break-word; max-height: 150px; overflow-y: auto;">
+                        读取中...
+                    </div>
+                </div>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 20px; flex-direction: column;">
+                <button class="btn-close" style="width: 100%; background: #00ffff; color: #141419; font-weight: 900; font-size: 0.95rem; border: none; box-shadow: 0 4px 15px rgba(0,255,255,0.3); padding: 12px 0; border-radius: 10px; margin-top: 0;" onclick="toggleModal('modal-lock-result', false)">我知道了</button>
             </div>
         </div>
     </div>
@@ -855,9 +915,12 @@
                     </ul>
                 </div>
             </div>
-            <div style="display: flex; gap: 10px; margin-top: 20px;">
-                <button class="btn-close" style="flex: 1; background: #141419; color: #888892; font-weight: 900; border: 1px solid rgba(255,255,255,0.1); padding: 12px 0; border-radius: 10px; margin-top: 0;" onclick="toggleModal('modal-keychain-warn', false)">取消</button>
-                <button class="btn-close" style="flex: 1; background: #ffaa00; color: #141419; font-weight: 900; font-size: 0.95rem; border: none; box-shadow: 0 4px 15px rgba(255,170,0,0.3); padding: 12px 0; border-radius: 10px; margin-top: 0;" onclick="confirmKeychain2DB()">确认开启</button>
+            <div style="display: flex; gap: 10px; margin-top: 20px; flex-direction: column;">
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn-close" style="flex: 1; background: #00ffff; color: #141419; font-weight: 900; font-size: 0.95rem; border: none; box-shadow: 0 4px 15px rgba(0,255,255,0.3); padding: 12px 0; border-radius: 10px; margin-top: 0;" onclick="lockKeychainFilza()">借助filza锁定</button>
+                    <button class="btn-close" style="flex: 1; background: #ffaa00; color: #141419; font-weight: 900; font-size: 0.95rem; border: none; box-shadow: 0 4px 15px rgba(255,170,0,0.3); padding: 12px 0; border-radius: 10px; margin-top: 0;" onclick="lockKeychainSystem()">系统级锁定</button>
+                </div>
+                <button class="btn-close" style="width: 100%; background: #141419; color: #888892; font-weight: 900; border: 1px solid rgba(255,255,255,0.1); padding: 12px 0; border-radius: 10px; margin-top: 0;" onclick="toggleModal('modal-keychain-warn', false)">取消</button>
             </div>
         </div>
     </div>
@@ -1040,6 +1103,8 @@
             zh_CN: {
                 lblVersion: "系统版本(读取值)", lblModel: "机型名称", lblSn: "序列号(读取值)", lblCpu: "处理器型号", lblTroll: "巨魔状态(检测值)", lblJb: "越狱状态(检测值)",
                 btnSelect: "勾选应用", btnDynamicOff: "开启动态白名单", btnDynamicOn: "关闭动态白名单", btnExecute: "清理风险残留", btnTutorial: "使用教程", btnChannel: "交流频道", btnClose: "我已经全部关注了 点这里关闭",
+                btnDynamicSafeOff: "动态白名单(锁定模式)", btnDynamicSafeOn: "关闭白名单(锁定模式)",
+                btnKeychainUnlocked: "keychain-2db未锁定", btnKeychainLocked: "keychain-2db已锁定",
                 mdlTitle: "加入我们的社区", mdlAppsTitle: "勾选要清理的应用钥匙链", btnSave: "确定", textLoading: "扫描app列表中",
                 logInit: "内核初始化完成 作者：QiLong-GOLD400借助骑龙定制Ai多模态智能体制作", logReady: "系统初始化完毕，设备检测已就绪。",
                 footer: "https://github.com/78-big-QiLong拥有所有权与最终解释权 这是永久公益测试版本 如果是花钱买的说明是盗版或木马你被骗了",
@@ -1048,6 +1113,8 @@
             zh_TW: {
                 lblVersion: "系統版本(讀取值)", lblModel: "機型名稱", lblSn: "序列號(讀取值)", lblCpu: "處理器型號", lblTroll: "巨魔狀態(檢測值)", lblJb: "越獄狀態(檢測值)",
                 btnSelect: "勾選應用", btnDynamicOff: "啟動動態白名單", btnDynamicOn: "關閉動態白名單", btnExecute: "清理風險殘留", btnTutorial: "使用教程", btnChannel: "交流頻道", btnClose: "我已經全部關注了 點這裡關閉",
+                btnDynamicSafeOff: "動態白名單(鎖定模式)", btnDynamicSafeOn: "關閉白名單(鎖定模式)",
+                btnKeychainUnlocked: "keychain-2db未鎖定", btnKeychainLocked: "keychain-2db已鎖定",
                 mdlTitle: "加入我們的社區", mdlAppsTitle: "勾選要清理的應用鑰匙鏈", btnSave: "確定", textLoading: "掃描app列表中",
                 logInit: "內核編譯完畢 作者：QiLong-GOLD400借助騎龍定制Ai多模態智能體製作", logReady: "系統初始化完畢，設備檢測已就緒。",
                 footer: "https://github.com/78-big-QiLong擁有所有權與最終解釋權 這是永久公益測試版本 如果是花錢買的說明是盜版或木馬你被騙了",
@@ -1056,6 +1123,7 @@
             en: {
                 lblVersion: "iOS Version (Read)", lblModel: "Device Model", lblSn: "Serial Number", lblCpu: "Processor Model", lblTroll: "TrollStore Status", lblJb: "Jailbreak Status",
                 btnSelect: "Select Apps", btnDynamicOff: "Enable Dynamic Whitelist", btnDynamicOn: "Disable Dynamic Whitelist", btnExecute: "Clean Risk Residues", btnTutorial: "Usage Guide", btnChannel: "Community Channel", btnClose: "I have followed all, close here",
+                btnKeychainUnlocked: "keychain-2db Unlocked", btnKeychainLocked: "keychain-2db Locked",
                 mdlTitle: "Join Our Community", mdlAppsTitle: "Select Apps Keychain to Clean", btnSave: "Confirm", textLoading: "Scanning application list...",
                 logInit: "Kernel initialization complete. Powered by QiLong-GOLD400 & QiLong AI agent.", logReady: "System initialization completed. Device detection ready.",
                 footer: "https://github.com/78-big-QiLong holds all rights and final interpretation. This is a permanent public beta.",
@@ -1064,6 +1132,7 @@
             ja: {
                 lblVersion: "OSバージョン(取得値)", lblModel: "機種名", lblSn: "シリアル番号", lblCpu: "プロセッサモデル", lblTroll: "TrollStore状態", lblJb: "脱獄状態",
                 btnSelect: "アプリ選択", btnDynamicOff: "動的ホワイトリスト起動", btnDynamicOn: "動的ホワイトリスト停止", btnExecute: "リスク残留クリア", btnTutorial: "チュートリアル", btnChannel: "交流チャンネル", btnClose: "すべてフォローしました。閉じる",
+                btnKeychainUnlocked: "keychain-2db未ロック", btnKeychainLocked: "keychain-2dbロック中",
                 mdlTitle: "コミュニティに参加", mdlAppsTitle: "クリーンアップするアプリの選択", btnSave: "決定", textLoading: "アプリリストをスキャン中...",
                 logInit: "カーネルの初期化が完了しました。QiLong-GOLD400 & QiLong AIによって作成されました。", logReady: "システム初期化完了。デバイス検出の準備が整いました。",
                 footer: "https://github.com/78-big-QiLong がすべての権利と最終解釈権を有します。永久無料テスト版です。",
@@ -1072,6 +1141,7 @@
             ru: {
                 lblVersion: "这里填Версия ОС标签", lblModel: "这里填Модель标签", lblSn: "这里填Серийный номер标签", lblCpu: "这里填Процессор标签", lblTroll: "这里填Статус Troll标签", lblJb: "这里填Джейлбрейк标签",
                 btnSelect: "这里填Выбрать按钮", btnDynamicOff: "这里填Сброс IDFA按钮", btnDynamicOn: "这里填Стоп IDFA按钮", btnExecute: "这里填Очистить按钮", btnTutorial: "这里填Инструкция按钮", btnChannel: "这里填Каналы按钮", btnClose: "这里填Закрыть按钮",
+                btnKeychainUnlocked: "keychain-2db разблокирован", btnKeychainLocked: "keychain-2db заблокирован",
                 mdlTitle: "这里填Каналы弹窗标题", mdlAppsTitle: "这里填Выбор приложений弹窗标题", btnSave: "这里填Подтвердить按钮", textLoading: "这里填Список пуст文字",
                 logInit: "这里填Система ожидание日志", logReady: "这里填Система готов日志",
                 footer: "这里填Предупреждение文字",
@@ -1080,6 +1150,7 @@
             za: {
                 lblVersion: "这里填Heitungh Banzbwnz标签", lblModel: "这里填Coengzhingz Mingz标签", lblSn: "这里填Gaengh Swhleizhao标签", lblCpu: "这里填Cuwleiqi标签", lblTroll: "这里填Gvjmoz Canghdaiz标签", lblJb: "这里填Vietngvax Canghdaiz标签",
                 btnSelect: "这里填Swjndiengz按钮", btnDynamicOff: "这里填Caiqgauh IDFA按钮", btnDynamicOn: "这里填Dinghcij IDFA按钮", btnExecute: "这里填Caegit按钮", btnTutorial: "这里填Saengqcoenz按钮", btnChannel: "这里填Bwndauz按钮", btnClose: "这里填Daengz按钮",
+                btnKeychainUnlocked: "keychain-2db未锁定", btnKeychainLocked: "keychain-2db已锁定",
                 mdlTitle: "这里填Gvnghfangh Bwndauz弹窗标题", mdlAppsTitle: "这里填Swjndiengz Daenghdan弹窗标题", btnSave: "这里填Dingh按钮", textLoading: "这里填Mbuj gienqgauh文字",
                 logInit: "这里填Heitungh待机日志", logReady: "这里填Heitungh完了日志",
                 footer: "这里填Swhmingz声明文字",
@@ -1090,6 +1161,7 @@
         let currentLang = 'zh_CN';
         let globalRawAppList = []; // 存储全机完整 App 名单
         let idfaLoopRunning = false; // 【自锁开关闸】IDFA 后台轮询状态
+        let idfaLoopSafeRunning = false; // 【自锁开关闸】安全模式后台轮询状态
 
         function toggleModal(modalId, show) {
             const modal = document.getElementById(modalId);
@@ -1114,6 +1186,9 @@
             document.getElementById('btn-select').innerText = dict.btnSelect;
             document.getElementById('btn-dynamic').innerText = idfaLoopRunning ? dict.btnDynamicOn : dict.btnDynamicOff;
             document.getElementById('btn-execute').innerText = dict.btnExecute;
+            if (document.getElementById('btn-keychain-2db')) {
+                document.getElementById('btn-keychain-2db').innerText = keychain2DBLocked ? dict.btnKeychainLocked : dict.btnKeychainUnlocked;
+            }
             document.getElementById('btn-tutorial').innerText = dict.btnTutorial;
             document.getElementById('btn-lang').innerText = "🌐 " + (langCode === 'en' ? "Lang" : "语言");
             document.getElementById('btn-channel').innerText = dict.btnChannel;
@@ -1281,20 +1356,114 @@
         }
 
         // ── keychain-2db锁定高危功能按键交互 ──
+        let keychain2DBLocked = false;
+        let keychainLockMethod = ''; // 'filza' or 'system'
+        let needCheckLockStatus = false;
+        
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'visible' && needCheckLockStatus) {
+                needCheckLockStatus = false;
+                appendLog('[SYSTEM] 检测到应用切回前台，正在物理校验锁定状态...', 'system');
+                if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
+                    window.webkit.messageHandlers.TrollHandler.postMessage({action: "check_lock_status"});
+                }
+            }
+        });
+
+        window.showLockResult = function(status, log) {
+            toggleModal('modal-lock-result', true);
+            const statusEl = document.getElementById('lock-result-status');
+            const logEl = document.getElementById('lock-result-log');
+            if (status === 'locked') {
+                statusEl.innerHTML = '✅ 物理校验：已锁定 (只读)';
+                statusEl.style.color = '#00ffaa';
+                statusEl.style.background = 'rgba(0,255,170,0.06)';
+                statusEl.style.border = '1px solid rgba(0,255,170,0.15)';
+            } else if (status === 'unlocked') {
+                statusEl.innerHTML = '🔓 物理校验：已解锁 (读写)';
+                statusEl.style.color = '#ffaa00';
+                statusEl.style.background = 'rgba(255,170,0,0.06)';
+                statusEl.style.border = '1px solid rgba(255,170,0,0.15)';
+            } else {
+                statusEl.innerHTML = '⚠️ 物理校验：未知状态，可能失败';
+                statusEl.style.color = '#ff3c3c';
+                statusEl.style.background = 'rgba(255,60,60,0.06)';
+                statusEl.style.border = '1px solid rgba(255,60,60,0.15)';
+            }
+            logEl.innerText = log || "无相关日志输出";
+        };
+
         function clickKeychain2DB() {
-            appendLog('[UI] keychain-2db锁定 按钮被按下。', 'system');
-            toggleModal('modal-keychain-warn', true);
+            if (!keychain2DBLocked) {
+                appendLog('[UI] keychain-2db锁定 按钮被按下。', 'system');
+                toggleModal('modal-keychain-warn', true);
+            } else {
+                confirmUnlockKeychain2DB();
+            }
         }
 
-        function confirmKeychain2DB() {
+        function lockKeychainFilza() {
             toggleModal('modal-keychain-warn', false);
-            appendLog('[SYSTEM] keychain-2db锁定 已确认开启 (功能已预留空位)...', 'warn');
+            keychain2DBLocked = true;
+            keychainLockMethod = 'filza';
+            const dict = langDictionary[currentLang];
+            document.getElementById('btn-keychain-2db').innerText = dict.btnKeychainLocked + "(Filza)";
+            appendLog('[SYSTEM] 正在生成 Filza 自动化脚本，请稍后自动跳转...', 'warn');
+            needCheckLockStatus = true;
+            if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
+                window.webkit.messageHandlers.TrollHandler.postMessage({action: "lock_filza"});
+            }
+        }
+
+        function lockKeychainSystem() {
+            toggleModal('modal-keychain-warn', false);
+            keychain2DBLocked = true;
+            keychainLockMethod = 'system';
+            const dict = langDictionary[currentLang];
+            document.getElementById('btn-keychain-2db').innerText = dict.btnKeychainLocked + "(系统)";
+            appendLog('[SYSTEM] 正在执行系统级底层权限剥夺...', 'warn');
+            needCheckLockStatus = true;
+            if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
+                window.webkit.messageHandlers.TrollHandler.postMessage({action: "lock_system"});
+            }
+            // 稍等片刻自动检查（因为系统锁定不会切后台）
+            setTimeout(() => {
+                if (needCheckLockStatus) {
+                    needCheckLockStatus = false;
+                    if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
+                        window.webkit.messageHandlers.TrollHandler.postMessage({action: "check_lock_status"});
+                    }
+                }
+            }, 2000);
+        }
+
+        function confirmUnlockKeychain2DB() {
+            keychain2DBLocked = false;
+            const dict = langDictionary[currentLang];
+            document.getElementById('btn-keychain-2db').innerText = dict.btnKeychainUnlocked;
             
-            // ==========================================
-            // 【功能指向预留空位】
-            // 此处留空，方便后续对接真实的 keychain-2db 锁定逻辑
-            // ==========================================
-            
+            if (keychainLockMethod === 'filza') {
+                appendLog('[SYSTEM] 借助Filza解除锁定，正在唤起自动化脚本...', 'system');
+                needCheckLockStatus = true;
+                if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
+                    window.webkit.messageHandlers.TrollHandler.postMessage({action: "unlock_filza"});
+                }
+            } else if (keychainLockMethod === 'system') {
+                appendLog('[SYSTEM] 系统级解除锁定，正在恢复写权限并重启守护进程...', 'system');
+                needCheckLockStatus = true;
+                if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
+                    window.webkit.messageHandlers.TrollHandler.postMessage({action: "unlock_system"});
+                }
+                setTimeout(() => {
+                    if (needCheckLockStatus) {
+                        needCheckLockStatus = false;
+                        if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
+                            window.webkit.messageHandlers.TrollHandler.postMessage({action: "check_lock_status"});
+                        }
+                    }
+                }, 2000);
+            }
+            keychainLockMethod = '';
         }
 
         // ── 核心升级：唤出物理应用勾选舱 ──
@@ -1390,6 +1559,43 @@
                 appendLog("[CRITICAL WARNING] Dynamic whitelist background active. You MUST disable this feature before rebooting or jailbreaking, otherwise it may trigger bootloops (White Apple) or setup activation loops!", "warn");
             } else {
                 btn.innerText = dict.btnDynamicOff;
+                btn.style.boxShadow = '';
+            }
+        }
+
+        function clickDynamicRefreshSafe() {
+            if (!idfaLoopSafeRunning) {
+                const selectedApps = getSelectedBundleIDs();
+                appendLog(`[REALTIME_SAFE] Starting safe dynamic whitelist realtime scan daemon (Targets: ${selectedApps.length})...`, "system");
+                if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
+                    window.webkit.messageHandlers.TrollHandler.postMessage({
+                        action: "start_realtime_safe_clean",
+                        apps: selectedApps
+                    });
+                } else {
+                    appendLog("[SIMULATOR] Realtime safe timer active.", "warn");
+                    window.onIdfaSafeStateChanged(true);
+                }
+            } else {
+                appendLog("[DAEMON_SAFE] Stopping background safe process...", "system");
+                if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
+                    window.webkit.messageHandlers.TrollHandler.postMessage("stop_idfa_safe_loop");
+                } else {
+                    window.onIdfaSafeStateChanged(false);
+                }
+            }
+        }
+
+        window.onIdfaSafeStateChanged = function (running) {
+            idfaLoopSafeRunning = running;
+            const btn = document.getElementById('btn-dynamic-safe');
+            const dict = langDictionary[currentLang];
+            if (running) {
+                btn.innerText = dict.btnDynamicSafeOn || "关闭白名单(锁定模式)";
+                btn.style.boxShadow = '0 0 15px rgba(0,255,170,0.5)';
+                appendLog("【安全提示】动态白名单(锁定模式)守护进程已启动。此模式针对Keychain锁定态定制，彻底切断了数据库损坏风险。", "success");
+            } else {
+                btn.innerText = dict.btnDynamicSafeOff || "动态白名单(锁定模式)";
                 btn.style.boxShadow = '';
             }
         }

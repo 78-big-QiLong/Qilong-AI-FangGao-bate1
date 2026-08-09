@@ -4,7 +4,27 @@
 #import <sys/wait.h>
 #import <signal.h>
 #import <unistd.h>
+#import <malloc/malloc.h>
+#import <CoreLocation/CoreLocation.h>
 #import "DeviceInfo.h"
+
+// ── 状态机：持久化记录锁定状态，用于崩溃自愈 ──
+static NSString* getLockStatePath() {
+    return [[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject] stringByAppendingPathComponent:@"lock_state.json"];
+}
+static void writeLockState(BOOL locked) {
+    NSDictionary *dict = @{@"locked": @(locked)};
+    NSData *data = [NSJSONSerialization dataWithJSONObject:dict options:0 error:nil];
+    [data writeToFile:getLockStatePath() atomically:YES];
+}
+static BOOL readLockState() {
+    NSData *data = [NSData dataWithContentsOfFile:getLockStatePath()];
+    if (data) {
+        NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
+        return [dict[@"locked"] boolValue];
+    }
+    return NO;
+}
 
 // ── 核心：免声明动态绑定 iOS 底层私有应用管理服务 ──
 @interface NSObject (LSApplicationWorkspace_Private)
@@ -20,6 +40,7 @@
 
 // 【自锁开关闸】锁定后台 IDFA 轮询进程 PID，接通单按钮状态机
 static pid_t global_bg_idfa_pid = 0;
+static pid_t global_bg_idfa_safe_pid = 0;
 
 @interface ViewController : UIViewController <WKScriptMessageHandler, WKNavigationDelegate>
 @property (nonatomic, strong) WKWebView *webView;
@@ -29,6 +50,12 @@ static pid_t global_bg_idfa_pid = 0;
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    
+    // 【防御矩阵】：注册四大环境熔断监听
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(checkThermalState:) name:NSProcessInfoThermalStateDidChangeNotification object:nil];
+    [[UIDevice currentDevice] setBatteryMonitoringEnabled:YES];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(checkBatteryLevel:) name:UIDeviceBatteryLevelDidChangeNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(checkPowerMode:) name:NSProcessInfoPowerStateDidChangeNotification object:nil];
     
     // 1. 0伪装：开机首要任务，触发底层探针抓取真实的硬件底牌
     DeviceInfo *info = [DeviceInfo sharedInstance];
@@ -45,7 +72,12 @@ static pid_t global_bg_idfa_pid = 0;
     self.webView = [[WKWebView alloc] initWithFrame:self.view.bounds configuration:config];
     self.webView.navigationDelegate = self;
     self.webView.backgroundColor = [UIColor colorWithRed:0.04 green:0.04 blue:0.05 alpha:1.0];
-    self.webView.scrollView.bounces = NO; 
+    // 禁用原生滚动：HTML内部自己管理滚动容器，禁用后可防止WKWebView的scrollView
+    // 拦截系统级手势（如iPad上方三点分屏按钮触发的下滑手势）
+    self.webView.scrollView.scrollEnabled = NO;
+    self.webView.scrollView.bounces = NO;
+    // 设置自动调整mask，配合viewDidLayoutSubviews共同保障横竖屏切换时布局正确
+    self.webView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     [self.view addSubview:self.webView];
     
     // 4. 从 App Bundle 内部加载 HTML 页面
@@ -53,6 +85,19 @@ static pid_t global_bg_idfa_pid = 0;
     if (url) {
         [self.webView loadRequest:[NSURLRequest requestWithURL:url]];
     }
+
+    // 💡 性能与功耗优化：使用低功耗 GCD 定时器（带 10s 容差）每 10 分钟静默释放主进程 RAM 缓存
+    dispatch_queue_t bgQueue = dispatch_get_global_queue(QOS_CLASS_BACKGROUND, 0);
+    dispatch_source_t ramTimer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, bgQueue);
+    dispatch_source_set_timer(ramTimer, dispatch_time(DISPATCH_TIME_NOW, 600 * NSEC_PER_SEC), 600 * NSEC_PER_SEC, 10 * NSEC_PER_SEC);
+    dispatch_source_set_event_handler(ramTimer, ^{
+        @autoreleasepool {
+            [[NSURLCache sharedURLCache] removeAllCachedResponses];
+            malloc_zone_pressure_relief(malloc_default_zone(), 0);
+            NSLog(@"[RAM] Periodic 10-min memory cache purge executed.");
+        }
+    });
+    dispatch_resume(ramTimer);
 }
 
 // 📄 当网页加载完毕时，精准执行双重反向注入（硬件数据 + 真实App名单）
@@ -161,6 +206,13 @@ static pid_t global_bg_idfa_pid = 0;
                 global_bg_idfa_pid = 0;
             }
             [self.webView evaluateJavaScript:@"window.onIdfaStateChanged(false);" completionHandler:nil];
+        } else if ([body isEqualToString:@"stop_idfa_safe_loop"]) {
+            if (global_bg_idfa_safe_pid > 0) {
+                kill(global_bg_idfa_safe_pid, SIGKILL);
+                NSLog(@"[MAIN] Safe daemon process terminated (PID: %d)", global_bg_idfa_safe_pid);
+                global_bg_idfa_safe_pid = 0;
+            }
+            [self.webView evaluateJavaScript:@"window.onIdfaSafeStateChanged(false);" completionHandler:nil];
         } else if ([body isEqualToString:@"start_clean"]) {
             [self executeRootHelperWithMode:@"standard_clean" selectedApps:nil];
         }
@@ -179,6 +231,32 @@ static pid_t global_bg_idfa_pid = 0;
                 global_bg_idfa_pid = newPid;
                 [self.webView evaluateJavaScript:@"window.onIdfaStateChanged(true);" completionHandler:nil];
             }
+        } else if ([action isEqualToString:@"start_realtime_safe_clean"]) {
+            NSArray *apps = body[@"apps"];
+            pid_t newPid = [self executeRootHelperWithMode:@"realtime_whitelist_clean_safe" selectedApps:apps];
+            if (newPid > 0) {
+                global_bg_idfa_safe_pid = newPid;
+                [self.webView evaluateJavaScript:@"window.onIdfaSafeStateChanged(true);" completionHandler:nil];
+            }
+        } else if ([action isEqualToString:@"lock_filza"]) {
+            [self createAndOpenFilzaScript:@"lock"];
+        } else if ([action isEqualToString:@"unlock_filza"]) {
+            [self createAndOpenFilzaScript:@"unlock"];
+        } else if ([action isEqualToString:@"lock_system"]) {
+            float level = [[UIDevice currentDevice] batteryLevel];
+            if ((level > 0 && level <= 0.15f) || [[NSProcessInfo currentProcessInfo] isLowPowerModeEnabled]) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [self.webView evaluateJavaScript:@"window.showLockResult('unlocked', '[FAILSAVE 拦截] 当前电量极低(<=15%)或已开启省电模式。为防止意外关机导致系统永久死锁，安全矩阵已拒绝本次锁定请求！');" completionHandler:nil];
+                });
+                return;
+            }
+            [self executeRootHelperWithMode:@"lock_keychain" selectedApps:nil];
+            writeLockState(YES);
+        } else if ([action isEqualToString:@"unlock_system"]) {
+            [self executeRootHelperWithMode:@"unlock_keychain" selectedApps:nil];
+            writeLockState(NO);
+        } else if ([action isEqualToString:@"check_lock_status"]) {
+            [self checkLockStatusAndNotifyFrontend];
         } else if ([action isEqualToString:@"open_url"]) {
             NSString *urlString = body[@"url"];
             if (urlString) {
@@ -234,9 +312,9 @@ static pid_t global_bg_idfa_pid = 0;
     if (status == 0) {
         NSLog(@"[SPAWN] RootHelper launched with %d targets (PID: %d)", (argCount - 2), pid);
         
-        // 异步读取管道，将 RootHelper 的 stdout 实时转发至前端 WebView 日志面板
+        // 异步读取管道，将 RootHelper 的 stdout 实时转发至前端 WebView 日志面板（低功耗 QOS_CLASS_UTILITY 轨，避开大核）
         int readFd = pipefd[0];
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{
             FILE *stream = fdopen(readFd, "r");
             if (!stream) { close(readFd); return; }
             
@@ -267,6 +345,125 @@ static pid_t global_bg_idfa_pid = 0;
     }
 }
 
+- (void)createAndOpenFilzaScript:(NSString *)mode {
+    NSString *bundleID = [[NSBundle mainBundle] bundleIdentifier] ?: @"com.qilong.app";
+    NSString *scriptPath = [NSTemporaryDirectory() stringByAppendingPathComponent:@"qilong_keychain_job.sh"];
+    NSString *logPath = @"/var/mobile/Documents/qilong_lock_result.log";
+    
+    NSString *scriptContent = @"";
+    if ([mode isEqualToString:@"lock"]) {
+        scriptContent = [NSString stringWithFormat:
+            @"#!/bin/sh\n"
+            @"echo \"=== Filza Keychain 物理锁定 ===\" > \"%@\"\n"
+            @"echo \"[INFO] 正在剥夺 keychain-2.db 及相关文件的写入权限...\" >> \"%@\"\n"
+            @"chmod 0400 /var/keychains/keychain-2.db >> \"%@\" 2>&1\n"
+            @"chmod 0400 /var/keychains/keychain-2.db-wal >> \"%@\" 2>&1\n"
+            @"chmod 0400 /var/keychains/keychain-2.db-shm >> \"%@\" 2>&1\n"
+            @"echo \"[SUCCESS] 锁定指令已送达底层！\" >> \"%@\"\n"
+            @"echo \"[INFO] 正在停顿 3 秒，之后将自动跳回 QiLong 检验效果...\" >> \"%@\"\n"
+            @"sleep 3\n"
+            @"uiopen -b %@\n",
+            logPath, logPath, logPath, logPath, logPath, logPath, logPath, bundleID];
+    } else {
+        scriptContent = [NSString stringWithFormat:
+            @"#!/bin/sh\n"
+            @"echo \"=== Filza Keychain 物理解锁 ===\" > \"%@\"\n"
+            @"echo \"[INFO] 正在恢复 keychain-2.db 的写入权限...\" >> \"%@\"\n"
+            @"chmod 0600 /var/keychains/keychain-2.db >> \"%@\" 2>&1\n"
+            @"chmod 0600 /var/keychains/keychain-2.db-wal >> \"%@\" 2>&1\n"
+            @"chmod 0600 /var/keychains/keychain-2.db-shm >> \"%@\" 2>&1\n"
+            @"echo \"[INFO] 正在重启 securityd 守护进程...\" >> \"%@\"\n"
+            @"killall -9 securityd >> \"%@\" 2>&1\n"
+            @"echo \"[SUCCESS] 解锁指令已送达底层！\" >> \"%@\"\n"
+            @"echo \"[INFO] 正在停顿 3 秒，之后将自动跳回 QiLong 检验效果...\" >> \"%@\"\n"
+            @"sleep 3\n"
+            @"uiopen -b %@\n",
+            logPath, logPath, logPath, logPath, logPath, logPath, logPath, logPath, bundleID];
+    }
+    
+    [scriptContent writeToFile:scriptPath atomically:YES encoding:NSUTF8StringEncoding error:nil];
+    
+    // 打开 Filza 对应 URL scheme
+    NSString *filzaUrlString = [NSString stringWithFormat:@"filza://view%@", scriptPath];
+    NSURL *filzaUrl = [NSURL URLWithString:filzaUrlString];
+    
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [[UIApplication sharedApplication] openURL:filzaUrl options:@{} completionHandler:^(BOOL success) {
+            if (!success) {
+                [self.webView evaluateJavaScript:@"appendLog('[ERROR] 未检测到 Filza 环境！请先安装 Filza。', 'warn');" completionHandler:nil];
+            }
+        }];
+    });
+}
+
+#include <sys/stat.h>
+- (void)checkLockStatusAndNotifyFrontend {
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+        NSString *logPath = @"/var/mobile/Documents/qilong_lock_result.log";
+        NSString *logContent = [NSString stringWithContentsOfFile:logPath encoding:NSUTF8StringEncoding error:nil];
+        if (!logContent) {
+            logContent = @"[NOT_FOUND] 无法读取底层日志（qilong_lock_result.log 不存在）。\n如果是系统级锁定，并未生成独立日志；如果是Filza锁定，说明脚本未执行成功。";
+        }
+        
+        struct stat st;
+        NSString *statusStr = @"unknown";
+        if (stat("/var/keychains/keychain-2.db", &st) == 0) {
+            // Check if owner write bit is stripped
+            if ((st.st_mode & S_IWUSR) == 0) {
+                statusStr = @"locked";
+            } else {
+                statusStr = @"unlocked";
+            }
+        }
+        
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSString *escapedLog = [logContent stringByReplacingOccurrencesOfString:@"'" withString:@"\\'"];
+            escapedLog = [escapedLog stringByReplacingOccurrencesOfString:@"\n" withString:@"\\n"];
+            NSString *js = [NSString stringWithFormat:@"window.showLockResult('%@', '%@');", statusStr, escapedLog];
+            [self.webView evaluateJavaScript:js completionHandler:nil];
+        });
+    });
+}
+
+// ── 熔断防御矩阵逻辑 ──
+- (void)triggerEmergencyUnlock:(NSString *)reason {
+    if (readLockState()) {
+        NSLog(@"[FAILSAVE] 触发紧急熔断解锁，原因：%@", reason);
+        [self executeRootHelperWithMode:@"unlock_keychain" selectedApps:nil];
+        writeLockState(NO);
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSString *logMsg = [NSString stringWithFormat:@"[FAILSAVE] 紧急熔断：为了防止系统死锁，已自动解锁！原因：%@", reason];
+            NSString *jsLog = [NSString stringWithFormat:@"appendLog('%@', 'system');", logMsg];
+            [self.webView evaluateJavaScript:jsLog completionHandler:nil];
+            [self.webView evaluateJavaScript:@"window.showLockResult('unlocked', '由于电量/温度触发安全熔断保护，系统已自动切回未锁定状态。');" completionHandler:nil];
+        });
+    }
+}
+
+- (void)checkThermalState:(NSNotification *)notif {
+    NSProcessInfoThermalState state = [[NSProcessInfo currentProcessInfo] thermalState];
+    if (state == NSProcessInfoThermalStateSerious || state == NSProcessInfoThermalStateCritical) {
+        [self triggerEmergencyUnlock:@"设备温度过高(Serious/Critical)"];
+    }
+}
+
+- (void)checkBatteryLevel:(NSNotification *)notif {
+    float level = [[UIDevice currentDevice] batteryLevel];
+    if (level > 0 && level <= 0.15f) {
+        [self triggerEmergencyUnlock:@"电量极低(<=15%)"];
+    }
+}
+
+- (void)checkPowerMode:(NSNotification *)notif {
+    if ([[NSProcessInfo currentProcessInfo] isLowPowerModeEnabled]) {
+        [self triggerEmergencyUnlock:@"开启了低电量模式"];
+    }
+}
+
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
 - (void)viewDidLayoutSubviews {
     [super viewDidLayoutSubviews];
     // 强制将 WebView 视口界限物理拉伸/重置到当前屏幕物理大小，完美修复旋转时比例没有改变、内容掉到屏幕外的Bug
@@ -277,17 +474,53 @@ static pid_t global_bg_idfa_pid = 0;
 @end
 
 // ── 标准 AppDelegate 壳子 ──
-@interface AppDelegate : UIResponder <UIApplicationDelegate>
+@interface AppDelegate : UIResponder <UIApplicationDelegate, CLLocationManagerDelegate>
 @property (strong, nonatomic) UIWindow *window;
+@property (strong, nonatomic) CLLocationManager *locationManager;
 @end
 
 @implementation AppDelegate
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+    // 【崩溃自愈状态机】开机自检：若上次锁定后遭遇崩溃或强杀，立刻自愈解锁！
+    if (readLockState()) {
+        NSLog(@"[FAILSAVE] 发现上次锁定后遭遇强杀或崩溃，正在执行底层自愈解锁...");
+        NSString *helperPath = [[NSBundle mainBundle] pathForResource:@"RootHelper" ofType:nil];
+        if (helperPath) {
+            pid_t pid;
+            const char *argv[] = {[helperPath UTF8String], "unlock_keychain", NULL};
+            posix_spawn(&pid, argv[0], NULL, NULL, (char* const*)argv, NULL);
+        }
+        writeLockState(NO);
+    }
+
+    // 【后台永生保活】
+    self.locationManager = [[CLLocationManager alloc] init];
+    self.locationManager.delegate = self;
+    self.locationManager.desiredAccuracy = kCLLocationAccuracyKilometer; // 最低精度，极度省电
+    self.locationManager.allowsBackgroundLocationUpdates = YES;
+    self.locationManager.pausesLocationUpdatesAutomatically = NO;
+    [self.locationManager requestAlwaysAuthorization];
+    [self.locationManager startUpdatingLocation];
+
     self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
     ViewController *mainVC = [[ViewController alloc] init];
     self.window.rootViewController = mainVC;
     [self.window makeKeyAndVisible];
     return YES;
+}
+
+- (void)applicationWillTerminate:(UIApplication *)application {
+    // 【杀后台抢答熔断】：当用户在多任务卡片向上划掉 App 强制杀死时，抢答一波解锁！
+    if (readLockState()) {
+        NSLog(@"[FAILSAVE] 检测到应用即将被强制关闭，抢答执行紧急解锁 Keychain！");
+        NSString *helperPath = [[NSBundle mainBundle] pathForResource:@"RootHelper" ofType:nil];
+        if (helperPath) {
+            pid_t pid;
+            const char *argv[] = {[helperPath UTF8String], "unlock_keychain", NULL};
+            posix_spawn(&pid, argv[0], NULL, NULL, (char* const*)argv, NULL);
+        }
+        writeLockState(NO);
+    }
 }
 @end
 
