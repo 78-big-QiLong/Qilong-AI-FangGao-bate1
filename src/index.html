@@ -47,7 +47,7 @@
             height: 100vh;
             pointer-events: none;
             z-index: 9999;
-            box-shadow: inset 0 0 20px rgba(0, 255, 102, 0.2);
+            box-shadow: inset 0 0 25px rgba(0, 255, 102, 0.45), inset 0 0 10px rgba(0, 255, 255, 0.35);
         }
 
         .marquee-border::before {
@@ -57,24 +57,20 @@
             left: 0;
             right: 0;
             bottom: 0;
-            border: 4px solid transparent;
+            border: 5px solid transparent;
             border-image: linear-gradient(90deg, #00ff66, #00ffff, #ff007f, #7f00ff, #00ff66) 1;
-            will-change: opacity;
+            will-change: filter;
             transform: translateZ(0);
-            animation: borderGlow 3s ease-in-out infinite alternate;
+            animation: borderMove 1.2s linear infinite;
         }
 
-        @keyframes borderGlow {
+        @keyframes borderMove {
             0% {
-                opacity: 0.4;
-            }
-
-            50% {
-                opacity: 1.0;
+                filter: hue-rotate(0deg);
             }
 
             100% {
-                opacity: 0.4;
+                filter: hue-rotate(360deg);
             }
         }
 
@@ -240,7 +236,7 @@
             height: 200%;
             background: conic-gradient(#00ff66, #00ffff, #ff007f, #7f00ff, #00ff66);
             will-change: transform;
-            transform: translateZ(0);
+            transform: rotate(0deg);
             animation: rotateBtnBorder 3s linear infinite;
             z-index: -2;
         }
@@ -286,6 +282,10 @@
         }
 
         @keyframes rotateBtnBorder {
+            0% {
+                transform: rotate(0deg);
+            }
+
             100% {
                 transform: rotate(360deg);
             }
