@@ -30,6 +30,7 @@ static BOOL readLockState() {
 @interface NSObject (LSApplicationWorkspace_Private)
 + (id)defaultWorkspace;
 - (NSArray *)allInstalledApplications;
+- (BOOL)openURL:(NSURL *)url;
 @end
 
 @interface NSObject (LSApplicationProxy_Private)
@@ -398,36 +399,54 @@ static NSString* escapeForJS(NSString *input) {
         
         NSString *encodedPath = [targetPath stringByAddingPercentEncodingWithAllowedCharacters:
                                  [NSCharacterSet URLPathAllowedCharacterSet]];
+                                 
+        // 修复：生成合法的 URL scheme，避免因为连续 4 个斜杠导致 Filza 解析崩溃闪退
         NSArray<NSString *> *schemesToTry = @[
-            [NSString stringWithFormat:@"filza:///%@", [targetPath stringByReplacingOccurrencesOfString:@"/" withString:@"/"]],
+            [NSString stringWithFormat:@"filza://%@", targetPath],
             [NSString stringWithFormat:@"filza://view%@", encodedPath],
             [NSString stringWithFormat:@"filza://x-callback-url/open?path=%@", encodedPath]
         ];
         
-        // 安全遍历唤起 Filza，废弃可能导致野指针崩溃的递归 Block
         BOOL opened = NO;
+        Class lsaw = NSClassFromString(@"LSApplicationWorkspace");
+        id workspace = nil;
+        if (lsaw) {
+            workspace = [lsaw performSelector:@selector(defaultWorkspace)];
+        }
+        
         for (NSString *schemeStr in schemesToTry) {
             NSURL *url = [NSURL URLWithString:schemeStr];
             if (!url) continue;
             
+            // 优先使用私有 API LSApplicationWorkspace，绕过部分 UIApplication 限制
+            if (workspace && [workspace respondsToSelector:@selector(openURL:)]) {
+                if ([workspace openURL:url]) {
+                    opened = YES;
+                    NSString *okLog = [NSString stringWithFormat:@"appendLog('[FILZA] ✅ 成功唤起 Filza (通过 LSApplicationWorkspace)', 'success');"];
+                    [self.webView evaluateJavaScript:okLog completionHandler:nil];
+                    break;
+                }
+            }
+            
+            // 降级使用 UIApplication
             if ([app canOpenURL:url]) {
                 [app openURL:url options:@{} completionHandler:nil];
                 opened = YES;
-                NSString *okLog = [NSString stringWithFormat:@"appendLog('[FILZA] ✅ 成功唤起 Filza 导航至目标文件', 'success');"];
+                NSString *okLog = [NSString stringWithFormat:@"appendLog('[FILZA] ✅ 成功唤起 Filza (通过 UIApplication)', 'success');"];
                 [self.webView evaluateJavaScript:okLog completionHandler:nil];
                 break;
             }
         }
         
         if (!opened) {
-            // 兜底：直接唤起第一个 scheme（针对未在 Info.plist 声明 canOpenURL 的场景）
+            // 兜底强制执行
             NSURL *fallbackUrl = [NSURL URLWithString:schemesToTry.firstObject];
             if (fallbackUrl) {
                 [app openURL:fallbackUrl options:@{} completionHandler:nil];
-                NSString *tryLog = [NSString stringWithFormat:@"appendLog('[FILZA] 尝试唤起 Filza URL Scheme: %@', 'system');", escapeForJS(schemesToTry.firstObject)];
+                NSString *tryLog = [NSString stringWithFormat:@"appendLog('[FILZA] 尝试强制唤起 Filza 兜底 URL: %@', 'system');", escapeForJS(schemesToTry.firstObject)];
                 [self.webView evaluateJavaScript:tryLog completionHandler:nil];
             } else {
-                NSString *diagLog = [NSString stringWithFormat:@"appendLog('[ERROR] Filza 唤起失败，请确认 Filza 已安装。', 'warn');"];
+                NSString *diagLog = [NSString stringWithFormat:@"appendLog('[ERROR] Filza 唤起失败，请确认已安装巨魔版 Filza。', 'warn');"];
                 [self.webView evaluateJavaScript:diagLog completionHandler:nil];
             }
         }
