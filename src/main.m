@@ -26,7 +26,7 @@ static BOOL readLockState() {
     return NO;
 }
 
-// ── 核心：免声明动态绑定 iOS 底层私有应用管理服务 ──
+// ── 核心：免声明动态绑�?iOS 底层私有应用管理服务 ──
 @interface NSObject (LSApplicationWorkspace_Private)
 + (id)defaultWorkspace;
 - (NSArray *)allInstalledApplications;
@@ -39,7 +39,7 @@ static BOOL readLockState() {
 - (NSString *)applicationType;
 @end
 
-// 【自锁开关闸】锁定后台 IDFA 轮询进程 PID，接通单按钮状态机
+// 【自锁开关闸】锁定后�?IDFA 轮询进程 PID，接通单按钮状态机
 static pid_t global_bg_idfa_pid = 0;
 static pid_t global_bg_idfa_safe_pid = 0;
 
@@ -58,7 +58,7 @@ static pid_t global_bg_idfa_safe_pid = 0;
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(checkBatteryLevel:) name:UIDeviceBatteryLevelDidChangeNotification object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(checkPowerMode:) name:NSProcessInfoPowerStateDidChangeNotification object:nil];
     
-    // 1. 0伪装：开机首要任务，触发底层探针抓取真实的硬件底牌
+    // 1. 0伪装：开机首要任务，触发底层探针抓取真实的硬件底�?
     DeviceInfo *info = [DeviceInfo sharedInstance];
     NSLog(@"[MAIN] Init complete. iOS: %@, Model: %@", info.systemVersion, info.deviceModel);
     
@@ -69,7 +69,7 @@ static pid_t global_bg_idfa_safe_pid = 0;
     WKWebViewConfiguration *config = [[WKWebViewConfiguration alloc] init];
     config.userContentController = userController;
     
-    // 3. 初始化全屏 WebView 容器
+    // 3. 初始化全�?WebView 容器
     self.webView = [[WKWebView alloc] initWithFrame:self.view.bounds configuration:config];
     self.webView.navigationDelegate = self;
     self.webView.backgroundColor = [UIColor colorWithRed:0.04 green:0.04 blue:0.05 alpha:1.0];
@@ -81,13 +81,13 @@ static pid_t global_bg_idfa_safe_pid = 0;
     self.webView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     [self.view addSubview:self.webView];
     
-    // 4. 从 App Bundle 内部加载 HTML 页面
+    // 4. �?App Bundle 内部加载 HTML 页面
     NSURL *url = [[NSBundle mainBundle] URLForResource:@"index" withExtension:@"html"];
     if (url) {
         [self.webView loadRequest:[NSURLRequest requestWithURL:url]];
     }
 
-    // 💡 性能与功耗优化：使用低功耗 GCD 定时器（带 10s 容差）每 10 分钟静默释放主进程 RAM 缓存
+    // 💡 性能与功耗优化：使用低功�?GCD 定时器（�?10s 容差）每 10 分钟静默释放主进�?RAM 缓存
     dispatch_queue_t bgQueue = dispatch_get_global_queue(QOS_CLASS_BACKGROUND, 0);
     dispatch_source_t ramTimer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, bgQueue);
     dispatch_source_set_timer(ramTimer, dispatch_time(DISPATCH_TIME_NOW, 600 * NSEC_PER_SEC), 600 * NSEC_PER_SEC, 10 * NSEC_PER_SEC);
@@ -101,17 +101,17 @@ static pid_t global_bg_idfa_safe_pid = 0;
     dispatch_resume(ramTimer);
 }
 
-// 📄 当网页加载完毕时，精准执行双重反向注入（硬件数据 + 真实App名单）
+// 📄 当网页加载完毕时，精准执行双重反向注入（硬件数据 + 真实App名单�?
 - (void)webView:(WKWebView *)webView didFinishNavigation:(WKNavigation *)navigation {
     DeviceInfo *info = [DeviceInfo sharedInstance];
     
     // 注入 A：将硬件底牌送达前端看板
-    // ✅ 修复：将 js 变量内中文字符改为干净的英文字符
+    // �?修复：将 js 变量内中文字符改为干净的英文字�?
     NSString *jsDevice = [NSString stringWithFormat:@"window.updateDevicePayload('%@', '%@', '%@', '%@', %@, %@);",
                         info.systemVersion, info.deviceModel, info.serialNumber, info.processor,
                         info.isTrollStore ? @"true" : @"false", info.isJailbroken ? @"true" : @"false"];
     
-    // 注入 B：动态抓取真实 App 列表并转为 JSON 字符串
+    // 注入 B：动态抓取真�?App 列表并转�?JSON 字符�?
     NSString *jsAppList = [NSString stringWithFormat:@"window.updateAppList('%@');", [self fetchUserAppListJSON]];
     
     // 延迟 0.5 秒，配合前端开屏飞入动画滑行完毕后完美灌入
@@ -126,7 +126,7 @@ static pid_t global_bg_idfa_safe_pid = 0;
 - (NSString *)fetchUserAppListJSON {
     NSMutableArray *appArray = [NSMutableArray array];
     
-    // 动态反射获取系统应用工作空间
+    // 动态反射获取系统应用工作空�?
     Class workspaceClass = NSClassFromString(@"LSApplicationWorkspace");
     if (workspaceClass) {
         @try {
@@ -158,7 +158,7 @@ static pid_t global_bg_idfa_safe_pid = 0;
                     }
                     
                     if (bundleID && appName) {
-                        // 移除原有的 User/System 过滤，允许全部应用抓取到勾选面板
+                        // 移除原有�?User/System 过滤，允许全部应用抓取到勾选面�?
                         [appArray addObject:@{@"bundleID": bundleID, @"name": appName}];
                     }
                 } @catch (NSException *e) {
@@ -170,12 +170,12 @@ static pid_t global_bg_idfa_safe_pid = 0;
         }
     }
     
-    // 按名称字母表排序，方便用户查找
+    // 按名称字母表排序，方便用户查�?
     [appArray sortUsingComparator:^NSComparisonResult(NSDictionary *obj1, NSDictionary *obj2) {
         return [obj1[@"name"] localizedCompare:obj2[@"name"]];
     }];
     
-    // 序列化为标准不带换行的 JSON 纯文本，供前端 JS 直接解析
+    // 序列化为标准不带换行�?JSON 纯文本，供前�?JS 直接解析
     NSError *error;
     NSData *jsonData = [NSJSONSerialization dataWithJSONObject:appArray options:0 error:&error];
     if (!error && jsonData) {
@@ -200,7 +200,7 @@ static pid_t global_bg_idfa_safe_pid = 0;
                 [self.webView evaluateJavaScript:@"window.onIdfaStateChanged(true);" completionHandler:nil];
             }
         } else if ([body isEqualToString:@"stop_idfa_loop"]) {
-            // 二次点击：下发 SIGKILL 物理截杀后台
+            // 二次点击：下�?SIGKILL 物理截杀后台
             if (global_bg_idfa_pid > 0) {
                 kill(global_bg_idfa_pid, SIGKILL);
                 NSLog(@"[MAIN] Daemon process terminated (PID: %d)", global_bg_idfa_pid);
@@ -247,7 +247,7 @@ static pid_t global_bg_idfa_safe_pid = 0;
             float level = [[UIDevice currentDevice] batteryLevel];
             if ((level > 0 && level <= 0.15f) || [[NSProcessInfo processInfo] isLowPowerModeEnabled]) {
                 dispatch_async(dispatch_get_main_queue(), ^{
-                    [self.webView evaluateJavaScript:@"window.showLockResult('unlocked', '[FAILSAVE 拦截] 当前电量极低(<=15%)或已开启省电模式。为防止意外关机导致系统永久死锁，安全矩阵已拒绝本次锁定请求！');" completionHandler:nil];
+                    [self.webView evaluateJavaScript:@"window.showLockResult('unlocked', '[FAILSAVE 拦截] 当前电量极低(<=15%)或已开启省电模式。为防止意外关机导致系统永久死锁，安全矩阵已拒绝本次锁定请求�?);" completionHandler:nil];
                 });
                 return;
             }
@@ -279,12 +279,12 @@ static NSString* escapeForJS(NSString *input) {
     return s;
 }
 
-// 🚀 动态派生提权进程（完美传递用户勾选的应用名单参数 + stdout 管道实时回传）
+// 🚀 动态派生提权进程（完美传递用户勾选的应用名单参数 + stdout 管道实时回传�?
 - (pid_t)executeRootHelperWithMode:(NSString *)mode selectedApps:(NSArray *)selectedApps {
     NSString *bundleHelperPath = [[NSBundle mainBundle] pathForResource:@"RootHelper" ofType:nil];
     if (!bundleHelperPath) return 0;
     
-    // 【致命雷区 3 修复】脱离 App Bundle 沙盒，将 helper 拷贝到公用目录执行，防止 setuid(0) 被静默降级
+    // 【致命雷�?3 修复】脱�?App Bundle 沙盒，将 helper 拷贝到公用目录执行，防止 setuid(0) 被静默降�?
     NSString *helperPath = @"/var/mobile/RootHelper";
     NSFileManager *fm = [NSFileManager defaultManager];
     
@@ -292,19 +292,19 @@ static NSString* escapeForJS(NSString *input) {
     NSError *copyErr = nil;
     if (![fm copyItemAtPath:bundleHelperPath toPath:helperPath error:&copyErr]) {
         NSLog(@"[ERROR] Failed to copy RootHelper to /var/mobile/: %@", copyErr);
-        // 若拷贝失败则降级使用原路径
+        // 若拷贝失败则降级使用原路�?
         helperPath = bundleHelperPath;
     } else {
         // 赋予执行权限
         chmod([helperPath UTF8String], 0755);
     }
     
-    // 构建 C 语言标准的 argv 动态参数列数组
+    // 构建 C 语言标准�?argv 动态参数列数组
     NSMutableArray *argsArray = [NSMutableArray array];
-    [argsArray addObject:helperPath]; // argv[0] 是程序自身路径
+    [argsArray addObject:helperPath]; // argv[0] 是程序自身路�?
     [argsArray addObject:mode];       // argv[1] 是运行模式轨
     
-    // 将用户勾选的名单追加到 argv[2], argv[3]... 后面，实现数据物理咬合
+    // 将用户勾选的名单追加�?argv[2], argv[3]... 后面，实现数据物理咬�?
     if (selectedApps && selectedApps.count > 0) {
         [argsArray addObjectsFromArray:selectedApps];
     }
@@ -315,9 +315,9 @@ static NSString* escapeForJS(NSString *input) {
     for (int i = 0; i < argCount; i++) {
         argv[i] = [argsArray[i] UTF8String];
     }
-    argv[argCount] = NULL; // 结构体结尾必须置空
+    argv[argCount] = NULL; // 结构体结尾必须置�?
     
-    // 建立管道，接通 RootHelper 的 stdout 实时日志流
+    // 建立管道，接�?RootHelper �?stdout 实时日志�?
     int pipefd[2];
     if (pipe(pipefd) != 0) {
         free(argv);
@@ -329,14 +329,14 @@ static NSString* escapeForJS(NSString *input) {
     posix_spawn_file_actions_adddup2(&actions, pipefd[1], STDOUT_FILENO);
     posix_spawn_file_actions_addclose(&actions, pipefd[0]);
     
-    // 【致命雷区 2 修复】使用 posix_spawnattr_t 设置特权标志与身份穿透 (Persona)
+    // 【致命雷�?2 修复】使�?posix_spawnattr_t 设置特权标志与身份穿�?(Persona)
     posix_spawnattr_t attr;
     posix_spawnattr_init(&attr);
     // 注入 POSIX_SPAWN_START_SUSPENDED
     short flags = POSIX_SPAWN_START_SUSPENDED;
     posix_spawnattr_setflags(&attr, flags);
     
-    // 【TrollStore 核心提权骑捷】利用 persona-mgmt entitlement 强制覆盖 UID 0
+    // 【TrollStore 核心提权骑捷】利�?persona-mgmt entitlement 强制覆盖 UID 0
     #define POSIX_SPAWN_PERSONA_FLAGS_OVERRIDE 1
     extern int posix_spawnattr_set_persona_np(const posix_spawnattr_t* __restrict, uid_t, uint32_t);
     extern int posix_spawnattr_set_persona_uid_np(const posix_spawnattr_t* __restrict, uid_t);
@@ -352,13 +352,13 @@ static NSString* escapeForJS(NSString *input) {
     
     posix_spawn_file_actions_destroy(&actions);
     free(argv);
-    close(pipefd[1]); // 父进程关闭管道写端
+    close(pipefd[1]); // 父进程关闭管道写�?
     
     if (status == 0) {
-        kill(pid, SIGCONT); // 恢复运行 (因为使用了 POSIX_SPAWN_START_SUSPENDED)
+        kill(pid, SIGCONT); // 恢复运行 (因为使用�?POSIX_SPAWN_START_SUSPENDED)
         NSLog(@"[SPAWN] RootHelper launched with %d targets (PID: %d)", (argCount - 2), pid);
         
-        // 异步读取管道，将 RootHelper 的 stdout 实时转发至前端 WebView 日志面板（低功耗 QOS_CLASS_UTILITY 轨，避开大核）
+        // 异步读取管道，将 RootHelper �?stdout 实时转发至前�?WebView 日志面板（低功�?QOS_CLASS_UTILITY 轨，避开大核�?
         int readFd = pipefd[0];
         dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{
             FILE *stream = fdopen(readFd, "r");
@@ -373,7 +373,7 @@ static NSString* escapeForJS(NSString *input) {
                     if (line.length == 0) continue;
                     
                     dispatch_async(dispatch_get_main_queue(), ^{
-                        // 安全转义字符，防止 JS 注入或解析语法错误引发 WebKit 崩溃
+                        // 安全转义字符，防�?JS 注入或解析语法错误引�?WebKit 崩溃
                         NSString *escaped = escapeForJS(line);
                         NSString *js = [NSString stringWithFormat:@"appendLog('%@', 'system');", escaped];
                         [self.webView evaluateJavaScript:js completionHandler:nil];
@@ -424,14 +424,14 @@ static NSString* escapeForJS(NSString *input) {
             return;
         }
         
-        // 赋予可执行权限
+        // 赋予可执行权�?
         chmod([scriptPath UTF8String], 0755);
         
-        NSString *okLog = [NSString stringWithFormat:@"appendLog('[FILZA] ✅ 自动化脚本已生成至: %@', 'success');", scriptPath];
+        NSString *okLog = [NSString stringWithFormat:@"appendLog('[FILZA] �?自动化脚本已生成�? %@', 'success');", scriptPath];
         [self.webView evaluateJavaScript:okLog completionHandler:nil];
         
         UIApplication *app = [UIApplication sharedApplication];
-        // 去除开头的 '/' 形成两条斜杠的 URL: filza://var/mobile/...
+        // 去除开头的 '/' 形成两条斜杠�?URL: filza://var/mobile/...
         NSString *relativePath = [scriptPath hasPrefix:@"/"] ? [scriptPath substringFromIndex:1] : scriptPath;
         
         NSArray<NSString *> *schemesToTry = @[
@@ -450,11 +450,11 @@ static NSString* escapeForJS(NSString *input) {
             NSURL *url = [NSURL URLWithString:schemeStr];
             if (!url) continue;
             
-            // 优先使用私有 API LSApplicationWorkspace，绕过部分 UIApplication 限制
+            // 优先使用私有 API LSApplicationWorkspace，绕过部�?UIApplication 限制
             if (workspace && [workspace respondsToSelector:@selector(openURL:)]) {
                 if ([workspace openURL:url]) {
                     opened = YES;
-                    NSString *invokeLog = [NSString stringWithFormat:@"appendLog('[FILZA] ✅ 成功唤起 Filza 导航至脚本', 'success');"];
+                    NSString *invokeLog = [NSString stringWithFormat:@"appendLog('[FILZA] �?成功唤起 Filza 导航至脚�?, 'success');"];
                     [self.webView evaluateJavaScript:invokeLog completionHandler:nil];
                     break;
                 }
@@ -464,7 +464,7 @@ static NSString* escapeForJS(NSString *input) {
             if ([app canOpenURL:url]) {
                 [app openURL:url options:@{} completionHandler:nil];
                 opened = YES;
-                NSString *invokeLog = [NSString stringWithFormat:@"appendLog('[FILZA] ✅ 成功唤起 Filza (通过 UIApplication)', 'success');"];
+                NSString *invokeLog = [NSString stringWithFormat:@"appendLog('[FILZA] �?成功唤起 Filza (通过 UIApplication)', 'success');"];
                 [self.webView evaluateJavaScript:invokeLog completionHandler:nil];
                 break;
             }
@@ -478,7 +478,7 @@ static NSString* escapeForJS(NSString *input) {
                 NSString *tryLog = [NSString stringWithFormat:@"appendLog('[FILZA] 尝试强制唤起 Filza 兜底 URL: %@', 'system');", escapeForJS(schemesToTry.firstObject)];
                 [self.webView evaluateJavaScript:tryLog completionHandler:nil];
             } else {
-                NSString *diagLog = [NSString stringWithFormat:@"appendLog('[ERROR] Filza 唤起失败，请确认已安装巨魔版 Filza。', 'warn');"];
+                NSString *diagLog = [NSString stringWithFormat:@"appendLog('[ERROR] Filza 唤起失败，请确认已安装巨魔版 Filza�?, 'warn');"];
                 [self.webView evaluateJavaScript:diagLog completionHandler:nil];
             }
         }
@@ -491,7 +491,7 @@ static NSString* escapeForJS(NSString *input) {
         NSString *logPath = @"/var/mobile/Documents/qilong_lock_result.log";
         NSString *logContent = [NSString stringWithContentsOfFile:logPath encoding:NSUTF8StringEncoding error:nil];
         if (!logContent) {
-            logContent = @"[NOT_FOUND] 无法读取底层日志（qilong_lock_result.log 不存在）。\n如果是系统级锁定，并未生成独立日志；如果是Filza锁定，说明脚本未执行成功。";
+            logContent = @"[NOT_FOUND] 无法读取底层日志（qilong_lock_result.log 不存在）。\n如果是系统级锁定，并未生成独立日志；如果是Filza锁定，说明脚本未执行成功�?;
         }
         
         struct stat st;
@@ -516,14 +516,14 @@ static NSString* escapeForJS(NSString *input) {
 // ── 熔断防御矩阵逻辑 ──
 - (void)triggerEmergencyUnlock:(NSString *)reason {
     if (readLockState()) {
-        NSLog(@"[FAILSAVE] 触发紧急熔断解锁，原因：%@", reason);
+        NSLog(@"[FAILSAVE] 触发紧急熔断解锁，原因�?@", reason);
         [self executeRootHelperWithMode:@"unlock_keychain" selectedApps:nil];
         writeLockState(NO);
         dispatch_async(dispatch_get_main_queue(), ^{
             NSString *logMsg = [NSString stringWithFormat:@"[FAILSAVE] 紧急熔断：为了防止系统死锁，已自动解锁！原因：%@", reason];
             NSString *jsLog = [NSString stringWithFormat:@"appendLog('%@', 'system');", logMsg];
             [self.webView evaluateJavaScript:jsLog completionHandler:nil];
-            [self.webView evaluateJavaScript:@"window.showLockResult('unlocked', '由于电量/温度触发安全熔断保护，系统已自动切回未锁定状态。');" completionHandler:nil];
+            [self.webView evaluateJavaScript:@"window.showLockResult('unlocked', '由于电量/温度触发安全熔断保护，系统已自动切回未锁定状态�?);" completionHandler:nil];
         });
     }
 }
@@ -544,7 +544,7 @@ static NSString* escapeForJS(NSString *input) {
 
 - (void)checkPowerMode:(NSNotification *)notif {
     if ([[NSProcessInfo processInfo] isLowPowerModeEnabled]) {
-        [self triggerEmergencyUnlock:@"开启了低电量模式"];
+        [self triggerEmergencyUnlock:@"开启了低电量模�?];
     }
 }
 
@@ -554,7 +554,7 @@ static NSString* escapeForJS(NSString *input) {
 
 - (void)viewDidLayoutSubviews {
     [super viewDidLayoutSubviews];
-    // 强制将 WebView 视口界限物理拉伸/重置到当前屏幕物理大小，完美修复旋转时比例没有改变、内容掉到屏幕外的Bug
+    // 强制�?WebView 视口界限物理拉伸/重置到当前屏幕物理大小，完美修复旋转时比例没有改变、内容掉到屏幕外的Bug
     self.webView.frame = self.view.bounds;
 }
 
@@ -593,7 +593,7 @@ static NSString* escapeForJS(NSString *input) {
         writeLockState(NO);
     }
 
-    // 【后台永生保活】
+    // 【后台永生保活�?
     self.locationManager = [[CLLocationManager alloc] init];
     self.locationManager.delegate = self;
     self.locationManager.desiredAccuracy = kCLLocationAccuracyKilometer; // 最低精度，极度省电
@@ -610,9 +610,9 @@ static NSString* escapeForJS(NSString *input) {
 }
 
 - (void)applicationDidEnterBackground:(UIApplication *)application {
-    // 【退后台熔断】按 PRD 原则：严格执行“退后台即解锁”以防止重启白苹果
+    // 【退后台熔断】按 PRD 原则：严格执行“退后台即解锁”以防止重启白苹�?
     if (readLockState()) {
-        NSLog(@"[FAILSAVE] 检测到应用退入后台，执行防死锁紧急解锁 Keychain！");
+        NSLog(@"[FAILSAVE] 检测到应用退入后台，执行防死锁紧急解�?Keychain�?);
         NSString *bundleHelperPath = [[NSBundle mainBundle] pathForResource:@"RootHelper" ofType:nil];
         if (bundleHelperPath) {
             NSString *helperPath = @"/var/mobile/RootHelper";
@@ -643,9 +643,9 @@ static NSString* escapeForJS(NSString *input) {
 }
 
 - (void)applicationWillTerminate:(UIApplication *)application {
-    // 【杀后台抢答熔断】：当用户在多任务卡片向上划掉 App 强制杀死时，抢答一波解锁！
+    // 【杀后台抢答熔断】：当用户在多任务卡片向上划�?App 强制杀死时，抢答一波解锁！
     if (readLockState()) {
-        NSLog(@"[FAILSAVE] 检测到应用即将被强制关闭，抢答执行紧急解锁 Keychain！");
+        NSLog(@"[FAILSAVE] 检测到应用即将被强制关闭，抢答执行紧急解�?Keychain�?);
         NSString *bundleHelperPath = [[NSBundle mainBundle] pathForResource:@"RootHelper" ofType:nil];
         if (bundleHelperPath) {
             NSString *helperPath = @"/var/mobile/RootHelper";
