@@ -20,6 +20,8 @@
     </array>
     <key>MinimumOSVersion</key>
     <string>15.0</string>
+    <key>UIRequiresFullScreen</key>
+    <false/>
     <key>UIDeviceFamily</key>
     <array>
         <integer>1</integer>

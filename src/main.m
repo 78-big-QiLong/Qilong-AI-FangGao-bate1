@@ -45,7 +45,12 @@ static pid_t global_bg_idfa_pid = 0;
     self.webView = [[WKWebView alloc] initWithFrame:self.view.bounds configuration:config];
     self.webView.navigationDelegate = self;
     self.webView.backgroundColor = [UIColor colorWithRed:0.04 green:0.04 blue:0.05 alpha:1.0];
-    self.webView.scrollView.bounces = NO; 
+    // 禁用原生滚动：HTML内部自己管理滚动容器，禁用后可防止WKWebView的scrollView
+    // 拦截系统级手势（如iPad上方三点分屏按钮触发的下滑手势）
+    self.webView.scrollView.scrollEnabled = NO;
+    self.webView.scrollView.bounces = NO;
+    // 设置自动调整mask，配合viewDidLayoutSubviews共同保障横竖屏切换时布局正确
+    self.webView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     [self.view addSubview:self.webView];
     
     // 4. 从 App Bundle 内部加载 HTML 页面
