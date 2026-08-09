@@ -267,6 +267,17 @@ static pid_t global_bg_idfa_safe_pid = 0;
     }
 }
 
+static NSString* escapeForJS(NSString *input) {
+    if (!input) return @"";
+    NSMutableString *s = [input mutableCopy];
+    [s replaceOccurrencesOfString:@"\\" withString:@"\\\\" options:0 range:NSMakeRange(0, s.length)];
+    [s replaceOccurrencesOfString:@"'" withString:@"\\'" options:0 range:NSMakeRange(0, s.length)];
+    [s replaceOccurrencesOfString:@"\"" withString:@"\\\"" options:0 range:NSMakeRange(0, s.length)];
+    [s replaceOccurrencesOfString:@"\n" withString:@"\\n" options:0 range:NSMakeRange(0, s.length)];
+    [s replaceOccurrencesOfString:@"\r" withString:@"" options:0 range:NSMakeRange(0, s.length)];
+    return s;
+}
+
 // 🚀 动态派生提权进程（完美传递用户勾选的应用名单参数 + stdout 管道实时回传）
 - (pid_t)executeRootHelperWithMode:(NSString *)mode selectedApps:(NSArray *)selectedApps {
     NSString *bundleHelperPath = [[NSBundle mainBundle] pathForResource:@"RootHelper" ofType:nil];
@@ -361,8 +372,8 @@ static pid_t global_bg_idfa_safe_pid = 0;
                     if (line.length == 0) continue;
                     
                     dispatch_async(dispatch_get_main_queue(), ^{
-                        // 转义单引号防止 JS 注入崩溃
-                        NSString *escaped = [line stringByReplacingOccurrencesOfString:@"'" withString:@"\\'"];
+                        // 安全转义字符，防止 JS 注入或解析语法错误引发 WebKit 崩溃
+                        NSString *escaped = escapeForJS(line);
                         NSString *js = [NSString stringWithFormat:@"appendLog('%@', 'system');", escaped];
                         [self.webView evaluateJavaScript:js completionHandler:nil];
                     });
@@ -380,57 +391,46 @@ static pid_t global_bg_idfa_safe_pid = 0;
 }
 
 - (void)createAndOpenFilzaScript:(NSString *)mode {
-    // 用户的核心诉求：直接将 Filza 导航到真实的物理数据库文件，拒绝使用无效的 .sh 脚本过家家
     NSString *targetPath = @"/private/var/Keychains/keychain-2.db";
     
-    // 打开 Filza 对应 URL scheme（多方案轮询保证兼容性）
     dispatch_async(dispatch_get_main_queue(), ^{
         UIApplication *app = [UIApplication sharedApplication];
         
-        // Filza 已知可用的 URL Scheme 格式，按优先级轮询
         NSString *encodedPath = [targetPath stringByAddingPercentEncodingWithAllowedCharacters:
                                  [NSCharacterSet URLPathAllowedCharacterSet]];
         NSArray<NSString *> *schemesToTry = @[
             [NSString stringWithFormat:@"filza:///%@", [targetPath stringByReplacingOccurrencesOfString:@"/" withString:@"/"]],
             [NSString stringWithFormat:@"filza://view%@", encodedPath],
-            [NSString stringWithFormat:@"filza://x-callback-url/open?path=%@", encodedPath],
+            [NSString stringWithFormat:@"filza://x-callback-url/open?path=%@", encodedPath]
         ];
         
-        __block BOOL opened = NO;
-        __block NSUInteger idx = 0;
-        
-        void (^tryNext)(void);
-        tryNext = ^{
-            if (opened || idx >= schemesToTry.count) {
-                if (!opened) {
-                    NSString *diagLog = [NSString stringWithFormat:
-                        @"appendLog('[ERROR] Filza 全部 URL Scheme 均无响应。\\n"
-                        @"已尝试方案数: %lu\\n"
-                        @"目标路径: %@\\n"
-                        @"请确认：①Filza 已安装 ②Filza 版本支持 filza:// scheme ③重启一次 Filza', 'warn');",
-                        (unsigned long)schemesToTry.count, targetPath];
-                    [self.webView evaluateJavaScript:diagLog completionHandler:nil];
-                }
-                return;
-            }
-            NSString *schemeStr = schemesToTry[idx++];
+        // 安全遍历唤起 Filza，废弃可能导致野指针崩溃的递归 Block
+        BOOL opened = NO;
+        for (NSString *schemeStr in schemesToTry) {
             NSURL *url = [NSURL URLWithString:schemeStr];
-            if (!url) { tryNext(); return; }
+            if (!url) continue;
             
-            NSString *tryLog = [NSString stringWithFormat:@"appendLog('[FILZA] 正在尝试 URL Scheme: %@', 'system');", schemeStr];
-            [self.webView evaluateJavaScript:tryLog completionHandler:nil];
-            
-            [app openURL:url options:@{} completionHandler:^(BOOL success) {
-                if (success) {
-                    opened = YES;
-                    NSString *okLog = [NSString stringWithFormat:@"appendLog('[FILZA] ✅ 成功唤起 Filza！使用方案: %@', 'success');", schemeStr];
-                    [self.webView evaluateJavaScript:okLog completionHandler:nil];
-                } else {
-                    tryNext();
-                }
-            }];
-        };
-        tryNext();
+            if ([app canOpenURL:url]) {
+                [app openURL:url options:@{} completionHandler:nil];
+                opened = YES;
+                NSString *okLog = [NSString stringWithFormat:@"appendLog('[FILZA] ✅ 成功唤起 Filza 导航至目标文件', 'success');"];
+                [self.webView evaluateJavaScript:okLog completionHandler:nil];
+                break;
+            }
+        }
+        
+        if (!opened) {
+            // 兜底：直接唤起第一个 scheme（针对未在 Info.plist 声明 canOpenURL 的场景）
+            NSURL *fallbackUrl = [NSURL URLWithString:schemesToTry.firstObject];
+            if (fallbackUrl) {
+                [app openURL:fallbackUrl options:@{} completionHandler:nil];
+                NSString *tryLog = [NSString stringWithFormat:@"appendLog('[FILZA] 尝试唤起 Filza URL Scheme: %@', 'system');", escapeForJS(schemesToTry.firstObject)];
+                [self.webView evaluateJavaScript:tryLog completionHandler:nil];
+            } else {
+                NSString *diagLog = [NSString stringWithFormat:@"appendLog('[ERROR] Filza 唤起失败，请确认 Filza 已安装。', 'warn');"];
+                [self.webView evaluateJavaScript:diagLog completionHandler:nil];
+            }
+        }
     });
 }
 
@@ -446,8 +446,8 @@ static pid_t global_bg_idfa_safe_pid = 0;
         struct stat st;
         NSString *statusStr = @"unknown";
         if (stat("/private/var/Keychains/keychain-2.db", &st) == 0) {
-            // Check if owner write bit is stripped
-            if ((st.st_mode & S_IWUSR) == 0) {
+            // Check if owner write bit is stripped or APFS immutable flag is set
+            if ((st.st_mode & S_IWUSR) == 0 || (st.st_flags & (UF_IMMUTABLE | SF_IMMUTABLE)) != 0) {
                 statusStr = @"locked";
             } else {
                 statusStr = @"unlocked";
@@ -455,8 +455,7 @@ static pid_t global_bg_idfa_safe_pid = 0;
         }
         
         dispatch_async(dispatch_get_main_queue(), ^{
-            NSString *escapedLog = [logContent stringByReplacingOccurrencesOfString:@"'" withString:@"\\'"];
-            escapedLog = [escapedLog stringByReplacingOccurrencesOfString:@"\n" withString:@"\\n"];
+            NSString *escapedLog = escapeForJS(logContent);
             NSString *js = [NSString stringWithFormat:@"window.showLockResult('%@', '%@');", statusStr, escapedLog];
             [self.webView evaluateJavaScript:js completionHandler:nil];
         });

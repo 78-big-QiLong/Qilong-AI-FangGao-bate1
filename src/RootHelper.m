@@ -1026,7 +1026,7 @@ int main(int argc, const char * argv[]) {
                 printRealLog(@"[KEYCHAIN] 路径无效或权限不足！errno: %d (%s)", errno, strerror(errno));
                 return 1;
             }
-            printRealLog(@"[KEYCHAIN] 文件路径模索成功，当前权限位: %o  owner uid: %d", st.st_mode & 0777, (int)st.st_uid);
+            printRealLog(@"[KEYCHAIN] 文件路径探索成功，当前权限位: %o  owner uid: %d", st.st_mode & 0777, (int)st.st_uid);
             
             // 2. 强制落盘 (WAL checkpoint)
             sqlite3 *db;
@@ -1035,79 +1035,55 @@ int main(int argc, const char * argv[]) {
                 sqlite3_close(db);
                 printRealLog(@"[KEYCHAIN] WAL checkpoint TRUNCATE 完成.");
             } else {
-                printRealLog(@"[KEYCHAIN] 无法打开数据库进行 Checkpoint，尝试直接剥夺权限...");
+                printRealLog(@"[KEYCHAIN] 无法打开数据库进行 Checkpoint，尝试直接物理剥夺权限...");
             }
             
-            // 3. 升级方案：先用 open()+fchmod(fd) 绕过路径层 MAC 检查
-            //    如果仍失败，则降级到 SQLite EXCLUSIVE 事务永久展开锁
-            BOOL lockSuccess = NO;
-            if (stat(db_path, &st) == 0) {
-                mode_t safe_mode = st.st_mode & ~(S_IWUSR | S_IWGRP | S_IWOTH);
-                int fd = open(db_path, O_RDONLY);
-                if (fd >= 0) {
-                    int r = fchmod(fd, safe_mode);
-                    int err = errno;
-                    printRealLog(@"[KEYCHAIN] fchmod(fd=%d) result=%d errno=%d (%s) 目标权限: %o",
-                                 fd, r, (r < 0) ? err : 0, (r < 0) ? strerror(err) : "ok", safe_mode & 0777);
-                    close(fd);
-                    if (r == 0) {
-                        lockSuccess = YES;
-                    } else {
-                        // fchmod 失败 => 尝试 path-chmod 并记录 errno
-                        int r2 = chmod(db_path, safe_mode);
-                        int err2 = errno;
-                        printRealLog(@"[KEYCHAIN] fallback chmod result=%d errno=%d (%s)", r2, (r2 < 0) ? err2 : 0, (r2 < 0) ? strerror(err2) : "ok");
-                        if (r2 == 0) lockSuccess = YES;
-                    }
-                } else {
-                    printRealLog(@"[KEYCHAIN] open() 失败 errno=%d (%s)", errno, strerror(errno));
-                }
-            }
-            // WAL / SHM
-            for (int i = 0; i < 2; i++) {
-                const char *p = (i == 0) ? wal_path : shm_path;
-                const char *nm = (i == 0) ? "wal" : "shm";
+            // 3. 物理三重锁：chown -> chmod 0400 -> chflags UF_IMMUTABLE/SF_IMMUTABLE
+            const char *paths[] = {db_path, wal_path, shm_path};
+            const char *names[] = {"db", "wal", "shm"};
+            BOOL allLocked = YES;
+            
+            for (int i = 0; i < 3; i++) {
+                const char *p = paths[i];
+                const char *nm = names[i];
                 if (stat(p, &st) == 0) {
-                    mode_t safe_mode = st.st_mode & ~(S_IWUSR | S_IWGRP | S_IWOTH);
+                    // A. 变更所有权为 root:wheel (0:0)，剥夺原属主 _keychain (64:64) 修改特权
+                    int c_res = chown(p, 0, 0);
+                    if (c_res != 0) {
+                        printRealLog(@"[KEYCHAIN] chown(%s) result=%d errno=%d (%s)", nm, c_res, errno, strerror(errno));
+                    }
+                    
+                    // B. 物理剥夺所有人写权限 (0400)
+                    mode_t safe_mode = (st.st_mode & 0777) & ~(S_IWUSR | S_IWGRP | S_IWOTH);
                     int fd = open(p, O_RDONLY);
                     if (fd >= 0) {
-                        int r = fchmod(fd, safe_mode);
-                        if (r != 0) chmod(p, safe_mode);
-                        printRealLog(@"[KEYCHAIN] fchmod(%s) result=%d", nm, r);
+                        fchmod(fd, safe_mode);
                         close(fd);
                     }
-                }
-            }
-            
-            if (!lockSuccess) {
-                // 最后武器：SQLite EXCLUSIVE 事务永久展开（保持连接不关闭）
-                printRealLog(@"[KEYCHAIN] chmod/fchmod 全部失败，切换到 SQLite EXCLUSIVE 事务锁模式...");
-                static sqlite3 *exclusiveLockDb = NULL;
-                if (exclusiveLockDb == NULL) {
-                    if (sqlite3_open(db_path, &exclusiveLockDb) == SQLITE_OK) {
-                        if (sqlite3_exec(exclusiveLockDb, "BEGIN EXCLUSIVE;", NULL, NULL, NULL) == SQLITE_OK) {
-                            printRealLog(@"[KEYCHAIN] SQLite EXCLUSIVE 事务已展开并保持！securityd 将无法写入。");
-                            lockSuccess = YES;
-                        } else {
-                            printRealLog(@"[KEYCHAIN] SQLite EXCLUSIVE 事务展开失败，所有方式均已穷尽。");
-                            sqlite3_close(exclusiveLockDb);
-                            exclusiveLockDb = NULL;
-                        }
+                    chmod(p, safe_mode);
+                    
+                    // C. 关键：设置 APFS 文件不可变物理锁 (UF_IMMUTABLE / SF_IMMUTABLE)
+                    int f_res = chflags(p, UF_IMMUTABLE | SF_IMMUTABLE);
+                    if (f_res != 0) {
+                        chflags(p, UF_IMMUTABLE);
                     }
-                } else {
-                    printRealLog(@"[KEYCHAIN] SQLite EXCLUSIVE 锁已在持有中。");
-                    lockSuccess = YES;
+                    
+                    stat(p, &st);
+                    printRealLog(@"[KEYCHAIN] 文件 %s 状态 -> 权限: %o owner: %d flags: 0x%x",
+                                 nm, st.st_mode & 0777, (int)st.st_uid, st.st_flags);
+                    
+                    if ((st.st_mode & S_IWUSR) != 0 && !(st.st_flags & (UF_IMMUTABLE | SF_IMMUTABLE))) {
+                        allLocked = NO;
+                    }
                 }
             }
             
             // 4. 终极校验
             if (stat(db_path, &st) == 0) {
-                if ((st.st_mode & S_IWUSR) == 0) {
-                    printRealLog(@"[KEYCHAIN] 系统级锁定完成！写入权限已被彻底物理剥夺！最终权限位: %o", st.st_mode & 0777);
-                } else if (lockSuccess) {
-                    printRealLog(@"[KEYCHAIN] 锁定就绪方式已切换到 SQLite EXCLUSIVE 事务模式！文件权限位仍为 %o（正常）", st.st_mode & 0777);
+                if ((st.st_mode & S_IWUSR) == 0 || (st.st_flags & (UF_IMMUTABLE | SF_IMMUTABLE)) != 0) {
+                    printRealLog(@"[KEYCHAIN] ✅ 系统级锁定完成！写权限已被物理剥夺！(APFS Immutable + 0400 已生效)");
                 } else {
-                    printRealLog(@"[KEYCHAIN] 警告：chmod 执行了但权限未变化！当前: %o", st.st_mode & 0777);
+                    printRealLog(@"[KEYCHAIN] ⚠️ 警告：物理剥夺后仍检测到写权限，当前权限位: %o", st.st_mode & 0777);
                 }
             }
             return 0;
@@ -1119,50 +1095,43 @@ int main(int argc, const char * argv[]) {
             const char *db_path    = "/private/var/Keychains/keychain-2.db";
             const char *wal_path   = "/private/var/Keychains/keychain-2.db-wal";
             const char *shm_path   = "/private/var/Keychains/keychain-2.db-shm";
+            const char *paths[]    = {db_path, wal_path, shm_path};
+            const char *names[]    = {"db", "wal", "shm"};
             
             struct stat st;
             
-            // 1. 释放 SQLite EXCLUSIVE 锁（如果存在）
-            static sqlite3 *exclusiveLockDb = NULL;
-            if (exclusiveLockDb != NULL) {
-                sqlite3_exec(exclusiveLockDb, "ROLLBACK;", NULL, NULL, NULL);
-                sqlite3_close(exclusiveLockDb);
-                exclusiveLockDb = NULL;
-                printRealLog(@"[KEYCHAIN] SQLite EXCLUSIVE 锁已释放.");
-            } else {
-                // 尝试打开并关闭一次数据库，以清除可能残留的 WAL 锁
-                sqlite3 *tmpDb;
-                if (sqlite3_open(db_path, &tmpDb) == SQLITE_OK) {
-                    sqlite3_close(tmpDb);
-                }
+            // 1. 尝试打开并关闭一次数据库
+            sqlite3 *tmpDb;
+            if (sqlite3_open(db_path, &tmpDb) == SQLITE_OK) {
+                sqlite3_close(tmpDb);
             }
             
-            // 2. 恢复所有者的写入权限 (0600) 和所有权 (64)
+            // 2. 解除 APFS 不可变标志 -> 恢复所有权 (64:64) -> 恢复写权限 (0600)
             for (int i = 0; i < 3; i++) {
-                const char *p = (i == 0) ? db_path : ((i == 1) ? wal_path : shm_path);
-                const char *nm = (i == 0) ? "db" : ((i == 1) ? "wal" : "shm");
+                const char *p = paths[i];
+                const char *nm = names[i];
                 if (stat(p, &st) == 0) {
-                    // 兜底：确保所有权属于 _securityd (UID: 64, GID: 64)
+                    // A. 解除物理不可变标志 (flags = 0)
+                    chflags(p, 0);
+                    
+                    // B. 确保所有权归还给 _securityd (UID: 64, GID: 64)
                     int c_res = chown(p, 64, 64);
                     if (c_res != 0) {
-                        printRealLog(@"[KEYCHAIN] chown(%s) 失败 errno=%d (%s)", nm, errno, strerror(errno));
+                        printRealLog(@"[KEYCHAIN] chown(%s) 恢复失败 errno=%d (%s)", nm, errno, strerror(errno));
                     }
                     
-                    mode_t target_mode = st.st_mode | S_IWUSR;
+                    // C. 恢复写权限 (0600)
+                    mode_t target_mode = (st.st_mode & 0777) | S_IRUSR | S_IWUSR;
                     int fd = open(p, O_RDONLY);
                     if (fd >= 0) {
-                        int r = fchmod(fd, target_mode);
-                        if (r != 0) chmod(p, target_mode);
-                        printRealLog(@"[KEYCHAIN] 恢复 %s 写权限 fchmod result=%d", nm, r);
+                        fchmod(fd, target_mode);
                         close(fd);
-                    } else {
-                        int r = chmod(p, target_mode);
-                        printRealLog(@"[KEYCHAIN] 恢复 %s 写权限 chmod result=%d", nm, r);
                     }
+                    chmod(p, target_mode);
                 }
             }
             
-            printRealLog(@"[KEYCHAIN] 物理写入权限已成功恢复.");
+            printRealLog(@"[KEYCHAIN] 物理写入权限与文件标志已成功恢复.");
             
             printRealLog(@"[KEYCHAIN] 重启 securityd 以重载状态...");
             killDaemonByName("securityd");
