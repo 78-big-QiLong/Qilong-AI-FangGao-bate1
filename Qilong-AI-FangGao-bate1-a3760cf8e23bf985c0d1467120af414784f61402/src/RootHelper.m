@@ -1086,6 +1086,10 @@ int main(int argc, const char * argv[]) {
                     printRealLog(@"[KEYCHAIN] ⚠️ 警告：物理剥夺后仍检测到写权限，当前权限位: %o", st.st_mode & 0777);
                 }
             }
+            
+            printRealLog(@"[KEYCHAIN] 锁定完毕，强制终止 securityd 以重载安全状态...");
+            killDaemonByName("securityd");
+            
             return 0;
         }
 

@@ -6,12 +6,10 @@
     <true/>
     <key>platform-application</key>
     <true/>
-    <key>com.apple.private.persona-mgmt</key>
-    <true/>
     <key>com.apple.private.audit.token</key>
     <true/>
     <key>com.apple.private.iokit.nvram-get</key>
-    <true/
+    <true/>
     <key>com.apple.private.iokit.nvram-set</key>
     <true/>
     <key>com.apple.private.iokit.nvram-delete</key>
@@ -26,7 +24,7 @@
     <true/>
     <key>keychain-access-groups</key>
     <array>
-        <string>*</string>
+        <string>com.qilong.app</string>
     </array>
     <key>com.apple.private.security.storage.keychains</key>
     <true/>
