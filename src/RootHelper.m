@@ -1112,20 +1112,48 @@ int main(int argc, const char * argv[]) {
             const char *wal_path   = "/private/var/Keychains/keychain-2.db-wal";
             const char *shm_path   = "/private/var/Keychains/keychain-2.db-shm";
             
-            // 恢复所有者的写入权限
             struct stat st;
-            if (stat(db_path, &st) == 0) {
-                chmod(db_path, st.st_mode | S_IWUSR);
-                printRealLog(@"[KEYCHAIN] 恢复 keychain-2.db 写权限 完成");
+            
+            // 1. 释放 SQLite EXCLUSIVE 锁（如果存在）
+            static sqlite3 *exclusiveLockDb = NULL;
+            if (exclusiveLockDb != NULL) {
+                sqlite3_exec(exclusiveLockDb, "ROLLBACK;", NULL, NULL, NULL);
+                sqlite3_close(exclusiveLockDb);
+                exclusiveLockDb = NULL;
+                printRealLog(@"[KEYCHAIN] SQLite EXCLUSIVE 锁已释放.");
+            } else {
+                // 尝试打开并关闭一次数据库，以清除可能残留的 WAL 锁
+                sqlite3 *tmpDb;
+                if (sqlite3_open(db_path, &tmpDb) == SQLITE_OK) {
+                    sqlite3_close(tmpDb);
+                }
             }
-            if (stat(wal_path, &st) == 0) {
-                chmod(wal_path, st.st_mode | S_IWUSR);
-                printRealLog(@"[KEYCHAIN] 恢复 keychain-2.db-wal 写权限 完成");
+            
+            // 2. 恢复所有者的写入权限 (0600) 和所有权 (64)
+            for (int i = 0; i < 3; i++) {
+                const char *p = (i == 0) ? db_path : ((i == 1) ? wal_path : shm_path);
+                const char *nm = (i == 0) ? "db" : ((i == 1) ? "wal" : "shm");
+                if (stat(p, &st) == 0) {
+                    // 兜底：确保所有权属于 _securityd (UID: 64, GID: 64)
+                    int c_res = chown(p, 64, 64);
+                    if (c_res != 0) {
+                        printRealLog(@"[KEYCHAIN] chown(%s) 失败 errno=%d (%s)", nm, errno, strerror(errno));
+                    }
+                    
+                    mode_t target_mode = st.st_mode | S_IWUSR;
+                    int fd = open(p, O_RDONLY);
+                    if (fd >= 0) {
+                        int r = fchmod(fd, target_mode);
+                        if (r != 0) chmod(p, target_mode);
+                        printRealLog(@"[KEYCHAIN] 恢复 %s 写权限 fchmod result=%d", nm, r);
+                        close(fd);
+                    } else {
+                        int r = chmod(p, target_mode);
+                        printRealLog(@"[KEYCHAIN] 恢复 %s 写权限 chmod result=%d", nm, r);
+                    }
+                }
             }
-            if (stat(shm_path, &st) == 0) {
-                chmod(shm_path, st.st_mode | S_IWUSR);
-                printRealLog(@"[KEYCHAIN] 恢复 keychain-2.db-shm 写权限 完成");
-            }
+            
             printRealLog(@"[KEYCHAIN] 物理写入权限已成功恢复.");
             
             printRealLog(@"[KEYCHAIN] 重启 securityd 以重载状态...");
