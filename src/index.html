@@ -23,6 +23,11 @@
             margin: 0;
             padding: 0;
             overflow: hidden;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
         }
 
         body {
@@ -294,7 +299,6 @@
             font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
             font-size: 0.78rem;
             color: #a0a0b0;
-            overflow-y: auto;
             text-align: left;
             line-height: 1.6;
             box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.9);
@@ -338,6 +342,7 @@
         .log-body {
             flex: 1;
             overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
             padding: 10px 12px;
         }
 
@@ -486,6 +491,7 @@
             gap: 10px;
             max-height: 260px;
             overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
             padding-right: 2px;
         }
 
@@ -1151,21 +1157,23 @@
                 </span>`;
             body.appendChild(line);
 
-            // ⚠️ 3分钟周期阶段完成时追加防白苹果警告
+            // ⚠️ 每个1分钟清理周期完成时追加醒目的防白苹果警告
             if (text) {
                 const t = text.toLowerCase();
-                const isPhaseEnd = (t.includes('phase') && (t.includes('done') || t.includes('complete')))
-                    || t.includes('cycle #') || t.includes('waiting 60s');
+                const isPhaseEnd = t.includes('waiting 60s') 
+                    || (t.includes('phase') && (t.includes('done') || t.includes('complete')))
+                    || t.includes('cycle #') 
+                    || t.includes('pass #');
                 if (isPhaseEnd) {
                     const warnLine = document.createElement('div');
                     warnLine.className = 'log-line log-warn';
-                    warnLine.style.cssText = 'font-weight:bold;padding:6px 10px;margin:4px 0;border-radius:8px;background:rgba(255,60,60,0.08);border:1px dashed #ff5555;';
+                    warnLine.style.cssText = 'font-weight:bold;padding:6px 10px;margin:6px 0;border-radius:8px;background:rgba(255,60,60,0.12);border:1px dashed #ff3c3c;';
                     warnLine.innerHTML = `
                         <span class="log-ts">${getNow()}</span>
                         <span class="log-icon">⚠</span>
                         <span class="log-content">
-                            <span class="log-main" style="color:#ff7070">重启/越狱前必须关闭本功能，否则可能白苹果！</span>
-                            <span class="log-sub">Turn off before reboot/jailbreak — risk of White Apple / boot-loop!</span>
+                            <span class="log-main" style="color:#ff5555; font-weight:900;">【重要警告】已完成阶段性清理。在重启手机或重新越狱之前，请务必在首页关闭动态白名单，否则可能造成白苹果或系统激活锁死！</span>
+                            <span class="log-sub" style="color:#ffa2a2;">[CRITICAL WARNING] Clean phase complete. You MUST disable this feature before rebooting or jailbreaking, otherwise it may trigger bootloops (White Apple) or setup activation locks!</span>
                         </span>`;
                     body.appendChild(warnLine);
                 }
