@@ -392,19 +392,51 @@ static NSString* escapeForJS(NSString *input) {
 }
 
 - (void)createAndOpenFilzaScript:(NSString *)mode {
-    NSString *targetPath = @"/private/var/Keychains/keychain-2.db";
-    
     dispatch_async(dispatch_get_main_queue(), ^{
-        UIApplication *app = [UIApplication sharedApplication];
+        NSString *scriptName = [mode isEqualToString:@"lock"] ? @"QiLong_Lock.sh" : @"QiLong_Unlock.sh";
+        NSString *scriptPath = [NSString stringWithFormat:@"/var/mobile/Documents/%@", scriptName];
         
-        NSString *encodedPath = [targetPath stringByAddingPercentEncodingWithAllowedCharacters:
-                                 [NSCharacterSet URLPathAllowedCharacterSet]];
-                                 
-        // 修复：生成合法的 URL scheme，避免因为连续 4 个斜杠导致 Filza 解析崩溃闪退
+        NSMutableString *script = [NSMutableString string];
+        [script appendString:@"#!/bin/sh\n"];
+        [script appendFormat:@"echo \"=== QiLong Filza Automation: %@ ===\"\n", [mode uppercaseString]];
+        
+        if ([mode isEqualToString:@"lock"]) {
+            [script appendString:@"sqlite3 /private/var/Keychains/keychain-2.db \"PRAGMA wal_checkpoint(TRUNCATE);\"\n"];
+            [script appendString:@"chown 0:0 /private/var/Keychains/keychain-2.db\n"];
+            [script appendString:@"chmod 0400 /private/var/Keychains/keychain-2.db\n"];
+            [script appendString:@"chflags uchg /private/var/Keychains/keychain-2.db\n"];
+            [script appendString:@"chflags schg /private/var/Keychains/keychain-2.db\n"];
+        } else {
+            [script appendString:@"chflags nouchg /private/var/Keychains/keychain-2.db\n"];
+            [script appendString:@"chflags noschg /private/var/Keychains/keychain-2.db\n"];
+            [script appendString:@"chown 64:64 /private/var/Keychains/keychain-2.db\n"];
+            [script appendString:@"chmod 0600 /private/var/Keychains/keychain-2.db\n"];
+        }
+        [script appendString:@"killall -9 securityd\n"];
+        [script appendString:@"echo \"Operation completed.\"\n"];
+        
+        NSError *writeError = nil;
+        [script writeToFile:scriptPath atomically:YES encoding:NSUTF8StringEncoding error:&writeError];
+        
+        if (writeError) {
+            NSString *errLog = [NSString stringWithFormat:@"appendLog('[ERROR] 脚本生成失败: %@', 'warn');", escapeForJS(writeError.localizedDescription)];
+            [self.webView evaluateJavaScript:errLog completionHandler:nil];
+            return;
+        }
+        
+        // 赋予可执行权限
+        chmod([scriptPath UTF8String], 0755);
+        
+        NSString *okLog = [NSString stringWithFormat:@"appendLog('[FILZA] ✅ 自动化脚本已生成至: %@', 'success');", scriptPath];
+        [self.webView evaluateJavaScript:okLog completionHandler:nil];
+        
+        UIApplication *app = [UIApplication sharedApplication];
+        // 去除开头的 '/' 形成两条斜杠的 URL: filza://var/mobile/...
+        NSString *relativePath = [scriptPath hasPrefix:@"/"] ? [scriptPath substringFromIndex:1] : scriptPath;
+        
         NSArray<NSString *> *schemesToTry = @[
-            [NSString stringWithFormat:@"filza://%@", targetPath],
-            [NSString stringWithFormat:@"filza://view%@", encodedPath],
-            [NSString stringWithFormat:@"filza://x-callback-url/open?path=%@", encodedPath]
+            [NSString stringWithFormat:@"filza://%@", relativePath],
+            [NSString stringWithFormat:@"filza://view/%@", relativePath]
         ];
         
         BOOL opened = NO;
@@ -422,8 +454,8 @@ static NSString* escapeForJS(NSString *input) {
             if (workspace && [workspace respondsToSelector:@selector(openURL:)]) {
                 if ([workspace openURL:url]) {
                     opened = YES;
-                    NSString *okLog = [NSString stringWithFormat:@"appendLog('[FILZA] ✅ 成功唤起 Filza (通过 LSApplicationWorkspace)', 'success');"];
-                    [self.webView evaluateJavaScript:okLog completionHandler:nil];
+                    NSString *invokeLog = [NSString stringWithFormat:@"appendLog('[FILZA] ✅ 成功唤起 Filza 导航至脚本', 'success');"];
+                    [self.webView evaluateJavaScript:invokeLog completionHandler:nil];
                     break;
                 }
             }
@@ -432,8 +464,8 @@ static NSString* escapeForJS(NSString *input) {
             if ([app canOpenURL:url]) {
                 [app openURL:url options:@{} completionHandler:nil];
                 opened = YES;
-                NSString *okLog = [NSString stringWithFormat:@"appendLog('[FILZA] ✅ 成功唤起 Filza (通过 UIApplication)', 'success');"];
-                [self.webView evaluateJavaScript:okLog completionHandler:nil];
+                NSString *invokeLog = [NSString stringWithFormat:@"appendLog('[FILZA] ✅ 成功唤起 Filza (通过 UIApplication)', 'success');"];
+                [self.webView evaluateJavaScript:invokeLog completionHandler:nil];
                 break;
             }
         }
