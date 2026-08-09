@@ -979,6 +979,10 @@ void triggerUserspaceReboot() {
 
 // ── 提权辅助器核心多轨总调度入口 ──
 int main(int argc, const char * argv[]) {
+    // 强制尝试提权为 Root (uid=0)
+    setuid(0);
+    setgid(0);
+    
     @autoreleasepool {
         // 参数越界防错
         if (argc < 2) {
