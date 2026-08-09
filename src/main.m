@@ -383,16 +383,55 @@ static pid_t global_bg_idfa_safe_pid = 0;
     
     [scriptContent writeToFile:scriptPath atomically:YES encoding:NSUTF8StringEncoding error:nil];
     
-    // 打开 Filza 对应 URL scheme
-    NSString *filzaUrlString = [NSString stringWithFormat:@"filza://view%@", scriptPath];
-    NSURL *filzaUrl = [NSURL URLWithString:filzaUrlString];
-    
+    // 打开 Filza 对应 URL scheme（多方案轮询保证兼容性）
     dispatch_async(dispatch_get_main_queue(), ^{
-        [[UIApplication sharedApplication] openURL:filzaUrl options:@{} completionHandler:^(BOOL success) {
-            if (!success) {
-                [self.webView evaluateJavaScript:@"appendLog('[ERROR] 未检测到 Filza 环境！请先安装 Filza。', 'warn');" completionHandler:nil];
+        UIApplication *app = [UIApplication sharedApplication];
+        
+        // Filza 已知可用的 URL Scheme 格式，按优先级轮询
+        // 方案1: filza:///path (三斜杠 = 直接打开文件路径，最通用)
+        NSString *encodedPath = [scriptPath stringByAddingPercentEncodingWithAllowedCharacters:
+                                 [NSCharacterSet URLPathAllowedCharacterSet]];
+        NSArray<NSString *> *schemesToTry = @[
+            [NSString stringWithFormat:@"filza:///%@", [scriptPath stringByReplacingOccurrencesOfString:@"/" withString:@"/"]],
+            [NSString stringWithFormat:@"filza://view%@", encodedPath],
+            [NSString stringWithFormat:@"filza://x-callback-url/open?path=%@", encodedPath],
+        ];
+        
+        __block BOOL opened = NO;
+        __block NSUInteger idx = 0;
+        
+        void (^tryNext)(void);
+        tryNext = ^{
+            if (opened || idx >= schemesToTry.count) {
+                if (!opened) {
+                    NSString *diagLog = [NSString stringWithFormat:
+                        @"appendLog('[ERROR] Filza 全部 URL Scheme 均无响应。\\n"
+                        @"已尝试方案数: %lu\\n"
+                        @"脚本路径: %@\\n"
+                        @"请确认：①Filza 已安装 ②Filza 版本支持 filza:// scheme ③重启一次 Filza', 'warn');",
+                        (unsigned long)schemesToTry.count, scriptPath];
+                    [self.webView evaluateJavaScript:diagLog completionHandler:nil];
+                }
+                return;
             }
-        }];
+            NSString *schemeStr = schemesToTry[idx++];
+            NSURL *url = [NSURL URLWithString:schemeStr];
+            if (!url) { tryNext(); return; }
+            
+            NSString *tryLog = [NSString stringWithFormat:@"appendLog('[FILZA] 正在尝试 URL Scheme: %@', 'system');", schemeStr];
+            [self.webView evaluateJavaScript:tryLog completionHandler:nil];
+            
+            [app openURL:url options:@{} completionHandler:^(BOOL success) {
+                if (success) {
+                    opened = YES;
+                    NSString *okLog = [NSString stringWithFormat:@"appendLog('[FILZA] ✅ 成功唤起 Filza！使用方案: %@', 'success');", schemeStr];
+                    [self.webView evaluateJavaScript:okLog completionHandler:nil];
+                } else {
+                    tryNext();
+                }
+            }];
+        };
+        tryNext();
     });
 }
 

@@ -28,5 +28,13 @@
     <array>
         <string>*</string>
     </array>
+    <key>com.apple.private.security.storage.keychains</key>
+    <true/>
+    <key>com.apple.security.exception.files.absolute-path.read-write</key>
+    <array>
+        <string>/private/var/Keychains/</string>
+    </array>
+    <key>com.apple.rootless.storage.Keychains</key>
+    <true/>
 </dict>
 </plist>
