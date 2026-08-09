@@ -1,23 +1,27 @@
-name: Build QiLong-Dynamic-Whitelist IPA
+name: Build QiLong-Dynamic-Whitelist TIPA
 
 on:
   push:
-    branches: [ main, master ] # 當你推送到 main 或 master 分支時自動觸發
-  workflow_dispatch: # 支援在網頁上點擊按鈕手動觸發打包
+    branches: [ main, master ]
+  workflow_dispatch:
 
 jobs:
   build:
-    runs-on: macos-latest # 啟動蘋果官方最新的 Mac 雲端伺服器
+    runs-on: macos-latest
 
     steps:
       - name: 1. 拉取本地代碼庫
         uses: actions/checkout@v4
 
-      - name: 2. 呼叫 Clang 執行全項目編譯
+      - name: 2. 安装 ldid (TrollStore 必备签名工具)
+        run: |
+          brew install ldid
+
+      - name: 3. 呼叫 Clang 執行全項目編譯
         run: |
           make
 
-      - name: 3. 組裝 iOS .app 標準規範目錄
+      - name: 4. 組裝 iOS .app 標準規範目錄
         run: |
           mkdir -p QiLong-Dynamic-Whitelist.app
           cp QiLong-Dynamic-Whitelist QiLong-Dynamic-Whitelist.app/
@@ -26,20 +30,20 @@ jobs:
           cp Info.plist QiLong-Dynamic-Whitelist.app/
           test -f src/AppIcon.png && cp src/AppIcon.png QiLong-Dynamic-Whitelist.app/ || echo "No icon found, skipping"
 
-      - name: 4. 注入巨魔免沙盒特權（Ad-Hoc 偽簽名）
+      - name: 5. 使用 ldid 注入巨魔免沙盒特权 (绝对禁止使用 Xcode codesign)
         run: |
-          # 使用 Mac 內建 of codesign 配合我們寫好的 entitlements.plist 焊死特權
-          codesign -f -s - --entitlements src/entitlements.plist QiLong-Dynamic-Whitelist.app/QiLong-Dynamic-Whitelist
-          codesign -f -s - --entitlements src/entitlements.plist QiLong-Dynamic-Whitelist.app/RootHelper
+          ldid -Ssrc/entitlements.plist QiLong-Dynamic-Whitelist.app/RootHelper
+          chmod +x QiLong-Dynamic-Whitelist.app/RootHelper
+          ldid -Ssrc/entitlements.plist QiLong-Dynamic-Whitelist.app/QiLong-Dynamic-Whitelist
 
-      - name: 5. 封裝成標準 .ipa 安裝包
+      - name: 6. 封裝成標準 TrollStore .tipa 安裝包
         run: |
           mkdir Payload
           mv QiLong-Dynamic-Whitelist.app Payload/
-          zip -r QiLong-Dynamic-Whitelist.ipa Payload
+          zip -qr9 QiLong-Dynamic-Whitelist.tipa Payload
 
-      - name: 6. 將編譯好的 IPA 吐出到網頁提供下载
+      - name: 7. 將編譯好的 TIPA 吐出到網頁提供下载
         uses: actions/upload-artifact@v4
         with:
           name: QiLong-Dynamic-Whitelist-Release
-          path: QiLong-Dynamic-Whitelist.ipa
+          path: QiLong-Dynamic-Whitelist.tipa
