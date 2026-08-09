@@ -685,12 +685,12 @@
             style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%;">
             <div class="fly-in-big" id="splash-big">QiLong-Dynamic-Whitelist(beta2)</div>
             <div class="fly-in-small" id="splash-small" style="font-family: monospace; text-align: left; background: rgba(0,0,0,0.4); padding: 10px; border-radius: 8px;">
-                [BUILD 6] UID 501 降级终极修复:<br>
-                1. Sandbox 逃脱：Native 桥接执行前自动剥离 Bundle，将 RootHelper 移至 /var/mobile 运行<br>
-                2. 内核拦截绕过：posix_spawn 注入 POSIX_SPAWN_START_SUSPENDED 绕过沙盒上下文污染<br>
-                3. C 语言高阶越权：严格部署 setgid/setegid/setuid/seteuid 四重权限拔高矩阵<br>
-                4. 特权闭环：entitlements 新增 persona-mgmt 身份穿透，打通 UID 0 最后一公里<br>
-                5. Filza 直达：废弃 .sh 脚本中转，直引 keychain-2.db 防止 Watchdog 误判
+                [BUILD 7] TrollStore Persona 99 零级提权终极版:<br>
+                1. TSRootBinaries 注册：Info.plist 显式声明 TSRootBinaries 提权二进制矩阵<br>
+                2. Persona 99 穿透：posix_spawn 注入 posix_spawnattr_set_persona_np (UID=0, GID=0, Persona=99)<br>
+                3. 彻底告别 501 降级：复刻 TrollStore 官方 spawnRoot 机制，彻底根除 setuid EPERM 拒绝<br>
+                4. Entitlements 纯化：清理重复 persona-mgmt 键值，修正钥匙链访问组精确映射<br>
+                5. Filza 物理直通：直接打开 keychain-2.db 物理路径，废弃 .sh 中转中枢
             </div>
         </div>
         <div class="splash-disclaimer">
@@ -831,10 +831,20 @@
                 <div style="background: rgba(0,255,102,0.06); border: 1px solid rgba(0,255,102,0.15); border-radius: 10px; padding: 10px;">
                     <div style="font-size: 0.88rem; font-weight: 800; color: #00ff66; margin-bottom: 4px;">🛠 构建元数据 (Build Meta)</div>
                     <p style="font-size: 0.78rem; color: #ccc; margin: 0; line-height: 1.45;">
-                        • <strong>版本号</strong>: 1.0.6 (beta3 - Security & KeepAlive Build)<br>
-                        • <strong>编译时间</strong>: 2026-08-10 00:12<br>
+                        • <strong>版本号</strong>: 1.0.7 (beta3 - TrollStore spawnRoot Persona 99 Build)<br>
+                        • <strong>编译时间</strong>: 2026-08-10 04:25<br>
                         • <strong>适配环境</strong>: iOS 15.0 - 16.7 (RootHide / Dopamine / TrollStore)<br>
-                        • <strong>构建状态</strong>: ✅ 原生桥接 + C底层 + 防御矩阵完全就位
+                        • <strong>构建状态</strong>: ✅ TrollStore spawnRoot 特权穿透 + Persona 99 重构完成
+                    </p>
+                </div>
+
+                <!-- 5. TrollStore Persona 99 零级提权 -->
+                <div style="background: rgba(255,215,0,0.06); border: 1px solid rgba(255,215,0,0.15); border-radius: 10px; padding: 10px;">
+                    <div style="font-size: 0.88rem; font-weight: 800; color: #ffd700; margin-bottom: 4px;">👑 5. TrollStore Persona 99 零级提权</div>
+                    <p style="font-size: 0.76rem; color: #bbb; margin: 0; line-height: 1.45;">
+                        • <strong>TSRootBinaries 显式绑定</strong>: Info.plist 注入 <code>TSRootBinaries</code> 数组声明，使 TrollStore 安装时识别并授权 RootHelper 提权。<br>
+                        • <strong>posix_spawnattr_set_persona_np 私有提权</strong>: 复刻 TrollStore 源码 <code>spawnRoot</code> 算法，注入 <code>Persona=99</code>、<code>UID=0</code>、<code>GID=0</code> 上下文，彻底突破 mobile(501) 用户组限制。<br>
+                        • <strong>Filza 物理直连</strong>: 直接导航至 <code>filza:////private/var/Keychains/keychain-2.db</code>，彻底废弃 .sh 临时脚本。
                     </p>
                 </div>
 

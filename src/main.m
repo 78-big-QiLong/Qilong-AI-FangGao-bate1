@@ -317,13 +317,22 @@ static pid_t global_bg_idfa_safe_pid = 0;
     posix_spawn_file_actions_adddup2(&actions, pipefd[1], STDOUT_FILENO);
     posix_spawn_file_actions_addclose(&actions, pipefd[0]);
     
-    // 【致命雷区 2 修复】使用 posix_spawnattr_t 设置特权标志
+    // 【致命雷区 2 修复】使用 posix_spawnattr_t 设置特权标志与身份穿透 (Persona)
     posix_spawnattr_t attr;
     posix_spawnattr_init(&attr);
-    // 注入 POSIX_SPAWN_START_SUSPENDED（这里通过 flag 位控制，防止沙盒静默拦截 persona，很多越狱开发都会加这个 flag 甚至配合 POSIX_SPAWN_SETEXEC）
+    // 注入 POSIX_SPAWN_START_SUSPENDED
     short flags = POSIX_SPAWN_START_SUSPENDED;
     posix_spawnattr_setflags(&attr, flags);
     
+    // 【TrollStore 核心提权骑捷】利用 persona-mgmt entitlement 强制覆盖 UID 0
+    #define POSIX_SPAWN_PERSONA_FLAGS_OVERRIDE 1
+    extern int posix_spawnattr_set_persona_np(const posix_spawnattr_t* __restrict, uid_t, uint32_t);
+    extern int posix_spawnattr_set_persona_uid_np(const posix_spawnattr_t* __restrict, uid_t);
+    extern int posix_spawnattr_set_persona_gid_np(const posix_spawnattr_t* __restrict, uid_t);
+    
+    posix_spawnattr_set_persona_np(&attr, 99, POSIX_SPAWN_PERSONA_FLAGS_OVERRIDE);
+    posix_spawnattr_set_persona_uid_np(&attr, 0);
+    posix_spawnattr_set_persona_gid_np(&attr, 0);
     pid_t pid;
     int status = posix_spawn(&pid, argv[0], &actions, &attr, (char* const*)argv, NULL);
     
@@ -568,6 +577,13 @@ static pid_t global_bg_idfa_safe_pid = 0;
             posix_spawnattr_t attr;
             posix_spawnattr_init(&attr);
             posix_spawnattr_setflags(&attr, POSIX_SPAWN_START_SUSPENDED);
+            #define POSIX_SPAWN_PERSONA_FLAGS_OVERRIDE 1
+            extern int posix_spawnattr_set_persona_np(const posix_spawnattr_t* __restrict, uid_t, uint32_t);
+            extern int posix_spawnattr_set_persona_uid_np(const posix_spawnattr_t* __restrict, uid_t);
+            extern int posix_spawnattr_set_persona_gid_np(const posix_spawnattr_t* __restrict, uid_t);
+            posix_spawnattr_set_persona_np(&attr, 99, POSIX_SPAWN_PERSONA_FLAGS_OVERRIDE);
+            posix_spawnattr_set_persona_uid_np(&attr, 0);
+            posix_spawnattr_set_persona_gid_np(&attr, 0);
             int status = posix_spawn(&pid, argv[0], NULL, &attr, (char* const*)argv, NULL);
             posix_spawnattr_destroy(&attr);
             if (status == 0) kill(pid, SIGCONT);
@@ -594,6 +610,13 @@ static pid_t global_bg_idfa_safe_pid = 0;
             posix_spawnattr_t attr;
             posix_spawnattr_init(&attr);
             posix_spawnattr_setflags(&attr, POSIX_SPAWN_START_SUSPENDED);
+            #define POSIX_SPAWN_PERSONA_FLAGS_OVERRIDE 1
+            extern int posix_spawnattr_set_persona_np(const posix_spawnattr_t* __restrict, uid_t, uint32_t);
+            extern int posix_spawnattr_set_persona_uid_np(const posix_spawnattr_t* __restrict, uid_t);
+            extern int posix_spawnattr_set_persona_gid_np(const posix_spawnattr_t* __restrict, uid_t);
+            posix_spawnattr_set_persona_np(&attr, 99, POSIX_SPAWN_PERSONA_FLAGS_OVERRIDE);
+            posix_spawnattr_set_persona_uid_np(&attr, 0);
+            posix_spawnattr_set_persona_gid_np(&attr, 0);
             int status = posix_spawn(&pid, argv[0], NULL, &attr, (char* const*)argv, NULL);
             posix_spawnattr_destroy(&attr);
             if (status == 0) kill(pid, SIGCONT);

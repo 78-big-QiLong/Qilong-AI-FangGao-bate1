@@ -987,7 +987,7 @@ int main(int argc, const char * argv[]) {
     
     // 校验是否成功拿到了 root 权限 (UID 0)
     if (getuid() != 0) {
-        printf("[ERROR] RootHelper 提权失败！当前 UID: %d。请确保使用 ldid 签名并通过 TrollStore 安装。\n", getuid());
+        printf("[ERROR] RootHelper does not have root credential.\nEntitlements are present but UID remains %d.\nA root launch daemon or jailbreak environment is required.\n", getuid());
         return -1;
     }
     

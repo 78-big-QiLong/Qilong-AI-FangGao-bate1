@@ -54,5 +54,9 @@
         <string>filza</string>
         <string>filza-x-callback</string>
     </array>
+    <key>TSRootBinaries</key>
+    <array>
+        <string>RootHelper</string>
+    </array>
 </dict>
 </plist>
