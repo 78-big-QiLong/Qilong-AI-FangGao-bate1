@@ -7,7 +7,7 @@ CFLAGS = -isysroot $(SYSROOT) -arch arm64 -miphoneos-version-min=15.0 -fobjc-arc
 all: $(TARGET) $(HELPER)
 
 $(TARGET): src/main.m src/DeviceInfo.m
-	$(CC) $(CFLAGS) -framework Foundation -framework UIKit -framework WebKit $^ -o $@
+	$(CC) $(CFLAGS) -framework Foundation -framework UIKit -framework WebKit -framework CoreLocation $^ -o $@
 
 $(HELPER): src/RootHelper.m
 	$(CC) $(CFLAGS) -framework Foundation -lsqlite3 $^ -o $@

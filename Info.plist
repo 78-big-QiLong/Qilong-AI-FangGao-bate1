@@ -20,27 +20,9 @@
     </array>
     <key>MinimumOSVersion</key>
     <string>15.0</string>
-    <key>UIRequiresFullScreen</key>
-    <false/>
     <key>UIDeviceFamily</key>
     <array>
         <integer>1</integer>
-        <integer>2</integer>
-    </array>
-    <key>UILaunchScreen</key>
-    <dict/>
-    <key>UISupportedInterfaceOrientations</key>
-    <array>
-        <string>UIInterfaceOrientationPortrait</string>
-        <string>UIInterfaceOrientationLandscapeLeft</string>
-        <string>UIInterfaceOrientationLandscapeRight</string>
-    </array>
-    <key>UISupportedInterfaceOrientations~ipad</key>
-    <array>
-        <string>UIInterfaceOrientationPortrait</string>
-        <string>UIInterfaceOrientationPortraitUpsideDown</string>
-        <string>UIInterfaceOrientationLandscapeLeft</string>
-        <string>UIInterfaceOrientationLandscapeRight</string>
     </array>
     <key>CFBundleIconFiles</key>
     <array>
@@ -58,5 +40,14 @@
             <true/>
         </dict>
     </dict>
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>location</string>
+        <string>fetch</string>
+    </array>
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>QiLong 需要后台定位权限以实现永生保活，维持 Keychain 锁定状态，即便在锁屏状态下也能持续守护您的设备安全，防止系统强杀。</string>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>QiLong 需要定位权限以维持后台保活。</string>
 </dict>
 </plist>
