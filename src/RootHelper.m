@@ -1003,9 +1003,22 @@ int main(int argc, const char * argv[]) {
         if ([runMode isEqualToString:@"lock_keychain"]) {
             printRealLog(@"[KEYCHAIN] 正在执行系统级底层物理锁定...");
             
-            // 1. 强制落盘 (WAL checkpoint)
+            // 真实路径：/private/var/Keychains/keychain-2.db
+            const char *db_path    = "/private/var/Keychains/keychain-2.db";
+            const char *wal_path   = "/private/var/Keychains/keychain-2.db-wal";
+            const char *shm_path   = "/private/var/Keychains/keychain-2.db-shm";
+            
+            // 1. 先证明自己能读到文件，否则路径错误
+            struct stat st;
+            if (stat(db_path, &st) != 0) {
+                printRealLog(@"[KEYCHAIN] ❗路径无效或权限不足！stat(keychain-2.db) 失败，无法执行锁定。");
+                return 1;
+            }
+            printRealLog(@"[KEYCHAIN] 文件路径模索成功，当前权限位: %o", st.st_mode & 0777);
+            
+            // 2. 强制落盘 (WAL checkpoint)
             sqlite3 *db;
-            if (sqlite3_open("/var/keychains/keychain-2.db", &db) == SQLITE_OK) {
+            if (sqlite3_open(db_path, &db) == SQLITE_OK) {
                 sqlite3_exec(db, "PRAGMA wal_checkpoint(TRUNCATE);", NULL, NULL, NULL);
                 sqlite3_close(db);
                 printRealLog(@"[KEYCHAIN] WAL checkpoint TRUNCATE 完成.");
@@ -1013,38 +1026,54 @@ int main(int argc, const char * argv[]) {
                 printRealLog(@"[KEYCHAIN] ⚠️ 无法打开数据库进行 Checkpoint，尝试直接剥夺权限...");
             }
             
-            // 2. 真实剥夺写入权限 (仅按位剥夺写，保留读！)
-            struct stat st;
-            if (stat("/var/keychains/keychain-2.db", &st) == 0) {
+            // 3. 真实剥夺写入权限 (仅按位剥夺写，保留读！)
+            if (stat(db_path, &st) == 0) {
                 mode_t safe_readonly = st.st_mode & ~(S_IWUSR | S_IWGRP | S_IWOTH);
-                chmod("/var/keychains/keychain-2.db", safe_readonly);
+                int r = chmod(db_path, safe_readonly);
+                printRealLog(@"[KEYCHAIN] chmod keychain-2.db -> result: %d, 新权限: %o", r, safe_readonly & 0777);
             }
-            if (stat("/var/keychains/keychain-2.db-wal", &st) == 0) {
+            if (stat(wal_path, &st) == 0) {
                 mode_t safe_readonly = st.st_mode & ~(S_IWUSR | S_IWGRP | S_IWOTH);
-                chmod("/var/keychains/keychain-2.db-wal", safe_readonly);
+                chmod(wal_path, safe_readonly);
+                printRealLog(@"[KEYCHAIN] chmod keychain-2.db-wal 完成");
             }
-            if (stat("/var/keychains/keychain-2.db-shm", &st) == 0) {
+            if (stat(shm_path, &st) == 0) {
                 mode_t safe_readonly = st.st_mode & ~(S_IWUSR | S_IWGRP | S_IWOTH);
-                chmod("/var/keychains/keychain-2.db-shm", safe_readonly);
+                chmod(shm_path, safe_readonly);
+                printRealLog(@"[KEYCHAIN] chmod keychain-2.db-shm 完成");
             }
             
-            printRealLog(@"[KEYCHAIN] 系统级锁定完成！写入权限已被彻底物理剥夺！");
+            // 4. 終极校验：再度探针确认写权限已被剥夺
+            if (stat(db_path, &st) == 0) {
+                if ((st.st_mode & S_IWUSR) == 0) {
+                    printRealLog(@"[KEYCHAIN] ✅ 系统级锁定完成！写入权限已被彻底物理剥夺！最终权限位: %o", st.st_mode & 0777);
+                } else {
+                    printRealLog(@"[KEYCHAIN] ⚠️ chmod 执行了但权限未变化！可能缺少 root 特权签名或 entitlements。当前: %o", st.st_mode & 0777);
+                }
+            }
             return 0;
         }
 
         if ([runMode isEqualToString:@"unlock_keychain"]) {
             printRealLog(@"[KEYCHAIN] 正在执行系统级解除锁定...");
             
+            const char *db_path    = "/private/var/Keychains/keychain-2.db";
+            const char *wal_path   = "/private/var/Keychains/keychain-2.db-wal";
+            const char *shm_path   = "/private/var/Keychains/keychain-2.db-shm";
+            
             // 恢复所有者的写入权限
             struct stat st;
-            if (stat("/var/keychains/keychain-2.db", &st) == 0) {
-                chmod("/var/keychains/keychain-2.db", st.st_mode | S_IWUSR);
+            if (stat(db_path, &st) == 0) {
+                chmod(db_path, st.st_mode | S_IWUSR);
+                printRealLog(@"[KEYCHAIN] 恢复 keychain-2.db 写权限 完成");
             }
-            if (stat("/var/keychains/keychain-2.db-wal", &st) == 0) {
-                chmod("/var/keychains/keychain-2.db-wal", st.st_mode | S_IWUSR);
+            if (stat(wal_path, &st) == 0) {
+                chmod(wal_path, st.st_mode | S_IWUSR);
+                printRealLog(@"[KEYCHAIN] 恢复 keychain-2.db-wal 写权限 完成");
             }
-            if (stat("/var/keychains/keychain-2.db-shm", &st) == 0) {
-                chmod("/var/keychains/keychain-2.db-shm", st.st_mode | S_IWUSR);
+            if (stat(shm_path, &st) == 0) {
+                chmod(shm_path, st.st_mode | S_IWUSR);
+                printRealLog(@"[KEYCHAIN] 恢复 keychain-2.db-shm 写权限 完成");
             }
             printRealLog(@"[KEYCHAIN] 物理写入权限已成功恢复.");
             

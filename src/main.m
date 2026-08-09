@@ -356,9 +356,9 @@ static pid_t global_bg_idfa_safe_pid = 0;
             @"#!/bin/sh\n"
             @"echo \"=== Filza Keychain 物理锁定 ===\" > \"%@\"\n"
             @"echo \"[INFO] 正在剥夺 keychain-2.db 及相关文件的写入权限...\" >> \"%@\"\n"
-            @"chmod 0400 /var/keychains/keychain-2.db >> \"%@\" 2>&1\n"
-            @"chmod 0400 /var/keychains/keychain-2.db-wal >> \"%@\" 2>&1\n"
-            @"chmod 0400 /var/keychains/keychain-2.db-shm >> \"%@\" 2>&1\n"
+            @"chmod 0400 /private/var/Keychains/keychain-2.db >> \"%@\" 2>&1\n"
+            @"chmod 0400 /private/var/Keychains/keychain-2.db-wal >> \"%@\" 2>&1\n"
+            @"chmod 0400 /private/var/Keychains/keychain-2.db-shm >> \"%@\" 2>&1\n"
             @"echo \"[SUCCESS] 锁定指令已送达底层！\" >> \"%@\"\n"
             @"echo \"[INFO] 正在停顿 3 秒，之后将自动跳回 QiLong 检验效果...\" >> \"%@\"\n"
             @"sleep 3\n"
@@ -407,7 +407,7 @@ static pid_t global_bg_idfa_safe_pid = 0;
         
         struct stat st;
         NSString *statusStr = @"unknown";
-        if (stat("/var/keychains/keychain-2.db", &st) == 0) {
+        if (stat("/private/var/Keychains/keychain-2.db", &st) == 0) {
             // Check if owner write bit is stripped
             if ((st.st_mode & S_IWUSR) == 0) {
                 statusStr = @"locked";
