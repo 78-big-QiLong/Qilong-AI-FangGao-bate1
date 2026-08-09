@@ -768,17 +768,16 @@
 
         <div class="button-group">
             <button class="btn btn-select" id="btn-select" onclick="clickSelect()">勾选应用</button>
-            <button class="btn btn-dynamic" id="btn-dynamic" onclick="clickDynamicRefresh()">启动动态白名单</button>
+            <button class="btn btn-dynamic" id="btn-dynamic-menu" onclick="toggleModal('modal-dynamic-menu', true)">启动动态白名单</button>
             <button class="btn btn-execute" id="btn-execute" onclick="clickExecute()">清理风险残留</button>
             <button class="btn btn-keychain" id="btn-keychain-2.db" onclick="clickKeychain2DB()">keychain-2.db未锁定</button>
         </div>
 
         <div class="button-group">
-            <button class="btn btn-dynamic" id="btn-dynamic-safe" onclick="clickDynamicRefreshSafe()" style="color: #00ffaa; text-shadow: 0 0 6px rgba(0, 255, 170, 0.6);">动态白名单(锁定模式)</button>
+            <button class="btn btn-select" id="btn-reserved-4">测试4</button>
             <button class="btn btn-select" id="btn-reserved-1">测试1</button>
             <button class="btn btn-select" id="btn-reserved-2">测试2</button>
             <button class="btn btn-select" id="btn-reserved-3">测试3</button>
-            <button class="btn" id="btn-verbose-log" onclick="toggleModal('modal-verbose-log', true)" style="background: linear-gradient(135deg, rgba(100,0,255,0.18), rgba(0,200,255,0.10)); color: #bb88ff; border: 1px solid rgba(140,80,255,0.35); text-shadow: 0 0 8px rgba(150,80,255,0.5);">🔬 详细日志</button>
         </div>
 
         <div class="log-panel" id="log-container">
@@ -802,6 +801,7 @@
         </div>
 
         <div class="link-group">
+            <button class="btn-link" id="btn-verbose-log" onclick="toggleModal('modal-verbose-log', true)" style="color: #bb88ff;">🔬 详细日志</button>
             <button class="btn-link" id="btn-tutorial" onclick="toggleModal('modal-tutorial', true)">使用教程</button>
             <button class="btn-link" id="btn-lang" onclick="toggleModal('modal-lang', true)">🌐语言</button>
             <button class="btn-link" id="btn-channel" onclick="toggleModal('modal-channel', true)">交流频道</button>
@@ -809,6 +809,19 @@
 
         <div class="footer-declaration" id="text-footer">
             https://github.com/78-big-QiLong拥有所有权与最终解释权 这是永久公益测试版本 如果是花钱买的说明是盗版或木马你被骗了
+        </div>
+    </div>
+
+    <!-- ── 动态白名单二级菜单弹窗 ── -->
+    <div class="modal-overlay" id="modal-dynamic-menu">
+        <div class="modal-box" style="max-width: 320px; width: 85%; padding: 22px;">
+            <div class="modal-title" style="color: #ff5555; font-size: 1.15rem; font-weight: 900; margin-bottom: 20px;">选择白名单模式</div>
+            <div class="modal-list" style="text-align: center; display: flex; flex-direction: column; gap: 15px; padding: 10px;">
+                <button class="btn btn-dynamic" id="btn-dynamic" onclick="toggleModal('modal-dynamic-menu', false); clickDynamicRefresh();" style="width: 100%;">动态白名单(普通模式)</button>
+                <button class="btn btn-dynamic" id="btn-dynamic-safe" onclick="toggleModal('modal-dynamic-menu', false); clickDynamicRefreshSafe();" style="width: 100%; color: #00ffaa; text-shadow: 0 0 6px rgba(0, 255, 170, 0.6);">动态白名单(锁定模式)</button>
+                <button class="btn btn-dynamic" id="btn-dynamic-light" onclick="toggleModal('modal-dynamic-menu', false); alert('轻量模式功能开发中...');" style="width: 100%; color: #00ccff; text-shadow: 0 0 6px rgba(0, 204, 255, 0.6);">动态白名单(轻量模式)</button>
+            </div>
+            <button class="btn-close" style="margin-top: 20px;" onclick="toggleModal('modal-dynamic-menu', false)">取消</button>
         </div>
     </div>
 
@@ -1669,16 +1682,25 @@
         window.onIdfaStateChanged = function (running) {
             idfaLoopRunning = running;
             const btn = document.getElementById('btn-dynamic');
+            const menuBtn = document.getElementById('btn-dynamic-menu');
             const dict = langDictionary[currentLang];
             if (running) {
                 btn.innerText = dict.btnDynamicOn;
                 btn.style.boxShadow = '0 0 15px rgba(255,0,0,0.5)';
+                if (menuBtn) {
+                    menuBtn.innerText = "白名单(普通)运行中";
+                    menuBtn.style.boxShadow = '0 0 15px rgba(255,0,0,0.5)';
+                }
                 // ⚠️ 开启时立即向日志面板打印中英文醒目警告！
                 appendLog("【重要警告】动态白名单后台守护进程已启动。在重启手机或重新越狱之前，请务必手动关闭此功能，否则可能造成白苹果或激活状态锁死！", "warn");
                 appendLog("[CRITICAL WARNING] Dynamic whitelist background active. You MUST disable this feature before rebooting or jailbreaking, otherwise it may trigger bootloops (White Apple) or setup activation loops!", "warn");
             } else {
                 btn.innerText = dict.btnDynamicOff;
                 btn.style.boxShadow = '';
+                if (menuBtn) {
+                    menuBtn.innerText = "启动动态白名单";
+                    menuBtn.style.boxShadow = '';
+                }
             }
         }
 
@@ -1708,14 +1730,23 @@
         window.onIdfaSafeStateChanged = function (running) {
             idfaLoopSafeRunning = running;
             const btn = document.getElementById('btn-dynamic-safe');
+            const menuBtn = document.getElementById('btn-dynamic-menu');
             const dict = langDictionary[currentLang];
             if (running) {
                 btn.innerText = dict.btnDynamicSafeOn || "关闭白名单(锁定模式)";
                 btn.style.boxShadow = '0 0 15px rgba(0,255,170,0.5)';
+                if (menuBtn) {
+                    menuBtn.innerText = "白名单(锁定)运行中";
+                    menuBtn.style.boxShadow = '0 0 15px rgba(0,255,170,0.5)';
+                }
                 appendLog("【安全提示】动态白名单(锁定模式)守护进程已启动。此模式针对Keychain锁定态定制，彻底切断了数据库损坏风险。", "success");
             } else {
                 btn.innerText = dict.btnDynamicSafeOff || "动态白名单(锁定模式)";
                 btn.style.boxShadow = '';
+                if (menuBtn) {
+                    menuBtn.innerText = "启动动态白名单";
+                    menuBtn.style.boxShadow = '';
+                }
             }
         }
 
