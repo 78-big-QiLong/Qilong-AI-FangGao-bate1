@@ -432,11 +432,11 @@ static NSString* escapeForJS(NSString *input) {
         
         UIApplication *app = [UIApplication sharedApplication];
         // 去除开头的 '/' 形成两条斜杠�?URL: filza://var/mobile/...
-        NSString *relativePath = [scriptPath hasPrefix:@"/"] ? [scriptPath substringFromIndex:1] : scriptPath;
+        NSString *scriptPath = [scriptPath hasPrefix:@"/"] ? [scriptPath substringFromIndex:1] : scriptPath;
         
         NSArray<NSString *> *schemesToTry = @[
-            [NSString stringWithFormat:@"filza://%@", relativePath],
-            [NSString stringWithFormat:@"filza://view/%@", relativePath]
+            [NSString stringWithFormat:@"filza:///%@", scriptPath],
+            [NSString stringWithFormat:@"filza://view/%@", scriptPath]
         ];
         
         BOOL opened = NO;
