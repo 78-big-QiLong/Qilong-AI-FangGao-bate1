@@ -739,6 +739,7 @@
             <button class="btn btn-select" id="btn-reserved-1">测试1</button>
             <button class="btn btn-select" id="btn-reserved-2">测试2</button>
             <button class="btn btn-select" id="btn-reserved-3">测试3</button>
+            <button class="btn" id="btn-verbose-log" onclick="toggleModal('modal-verbose-log', true)" style="background: linear-gradient(135deg, rgba(100,0,255,0.18), rgba(0,200,255,0.10)); color: #bb88ff; border: 1px solid rgba(140,80,255,0.35); text-shadow: 0 0 8px rgba(150,80,255,0.5);">🔬 详细日志</button>
         </div>
 
         <div class="log-panel" id="log-container">
@@ -748,6 +749,7 @@
                 <div class="log-header-dot" style="background:#febc2e"></div>
                 <div class="log-header-dot" style="background:#28c840"></div>
                 <span class="log-header-title">SYSTEM LOG · 系统日志</span>
+                <button class="log-clear-btn" id="btn-copy-log" onclick="copyAllLogs()" style="margin-right:6px; background: rgba(100,80,255,0.18); color:#bb88ff; border:1px solid rgba(140,80,255,0.3);">COPY</button>
                 <button class="log-clear-btn" onclick="clearLog()">CLEAR</button>
             </div>
             <!-- 日志内容体 -->
@@ -873,6 +875,59 @@
             <div style="display: flex; gap: 10px; margin-top: 12px;">
                 <button class="btn-close" style="flex: 1; background: #141419; color: #888892; font-weight: 900; border: 1px solid rgba(255,255,255,0.1); padding: 10px 0; border-radius: 8px; margin-top: 0;" onclick="neverShowUpdateLog()">不再显示</button>
                 <button class="btn-close" style="flex: 2; background: #00ff66; color: #141419; font-weight: 900; font-size: 0.92rem; border: none; box-shadow: 0 4px 15px rgba(0,255,102,0.3); padding: 10px 0; border-radius: 8px; margin-top: 0;" onclick="closeUpdateLog()">已掌握所有技术细节</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── 详细日志设置弹窗 ── -->
+    <div class="modal-overlay" id="modal-verbose-log">
+        <div class="modal-box" style="max-width: 400px; width: 92%; padding: 20px;">
+            <div class="modal-title" style="color: #bb88ff; font-size: 1.1rem; font-weight: 900;">🔬 详细日志 (Verbose Log)</div>
+            <div class="modal-list" style="max-height: 340px; text-align: left; gap: 10px; padding: 2px; overflow-y: auto;">
+
+                <!-- 开关 -->
+                <div style="background: rgba(140,80,255,0.08); border: 1px solid rgba(140,80,255,0.25); border-radius: 10px; padding: 12px; display: flex; align-items: center; justify-content: space-between;">
+                    <div>
+                        <div style="font-size: 0.9rem; font-weight: 800; color: #cc99ff;">记录源码级详细日志</div>
+                        <div style="font-size: 0.72rem; color: #888; margin-top: 3px;">含文件、函数、行号、系统响应码</div>
+                    </div>
+                    <label style="position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0;">
+                        <input type="checkbox" id="toggle-verbose" onchange="onVerboseToggle(this)" style="opacity:0; width:0; height:0;">
+                        <span style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background:#333; border-radius:24px; transition:.3s;" id="verbose-slider"></span>
+                        <span style="position:absolute; content:''; height:18px; width:18px; left:3px; bottom:3px; background:#fff; border-radius:50%; transition:.3s; pointer-events:none;" id="verbose-knob"></span>
+                    </label>
+                </div>
+
+                <div style="background: rgba(255,170,0,0.06); border: 1px solid rgba(255,170,0,0.2); border-radius: 8px; padding: 8px 10px;">
+                    <div style="font-size: 0.72rem; color: #ffaa00; line-height: 1.5;">
+                        ⚠️ <strong>非开发者/测试者不建议开启</strong><br>
+                        详细日志会记录每条底层系统调用与响应（含 chmod 结果、stat 返回码、securityd 状态等），占用日志缓存较多，影响日志面板滚动性能。<br>
+                        <span style="color: #888;">日志不会上传至任何服务器，仅在本次 App 运行期间保存在内存中。</span>
+                    </div>
+                </div>
+
+                <!-- 日志过滤选项 -->
+                <div style="background: rgba(0,200,255,0.05); border: 1px solid rgba(0,200,255,0.15); border-radius: 8px; padding: 10px;">
+                    <div style="font-size: 0.8rem; font-weight: 800; color: #00ccff; margin-bottom: 6px;">📋 详细日志包含内容：</div>
+                    <div style="font-size: 0.72rem; color: #bbb; line-height: 1.7;">
+                        ✓ &nbsp;源文件 / 函数名 / 行号 (如 <code style="color:#00ffaa">RootHelper.m:1020 chmod()</code>)<br>
+                        ✓ &nbsp;系统调用返回值 (如 <code style="color:#00ffaa">result: 0 = 成功, -1 = 拒绝</code>)<br>
+                        ✓ &nbsp;stat() 物理权限位 (如 <code style="color:#00ffaa">st_mode: 0o444</code>)<br>
+                        ✓ &nbsp;securityd / Keychain 守护进程状态响应<br>
+                        ✓ &nbsp;Bridge 通信 IPC 完整包体<br>
+                        ✓ &nbsp;时间戳精确到毫秒
+                    </div>
+                </div>
+
+                <!-- 当前日志区 -->
+                <div id="verbose-status-tag" style="font-size: 0.72rem; color: #555; text-align: center; padding: 4px;">
+                    当前状态：<span id="verbose-status-text" style="color:#555;">🔴 已关闭（不记录）</span>
+                </div>
+
+            </div>
+            <div style="display: flex; gap: 8px; margin-top: 12px;">
+                <button class="btn-close" style="flex: 1; background: #1a0040; color: #888; border: 1px solid rgba(140,80,255,0.2); padding: 10px 0; border-radius: 8px; margin-top:0;" onclick="copyAllLogs()">📋 复制所有日志</button>
+                <button class="btn-close" style="flex: 1; background: linear-gradient(135deg,#6600cc,#220066); color: #fff; border: none; padding: 10px 0; border-radius: 8px; margin-top:0; font-weight:900;" onclick="toggleModal('modal-verbose-log', false)">完成</button>
             </div>
         </div>
     </div>
@@ -1300,6 +1355,101 @@
         function getNow() {
             const d = new Date();
             return [d.getHours(), d.getMinutes(), d.getSeconds()].map(n => String(n).padStart(2,'0')).join(':');
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        //  详细日志 (Verbose Log) 控制中枢
+        // ─────────────────────────────────────────────────────────────
+        let verboseEnabled = false;
+        // 内存日志缓冲（仅在 verboseEnabled 时才向此数组写入）
+        const verboseBuffer = [];
+
+        function onVerboseToggle(checkbox) {
+            verboseEnabled = checkbox.checked;
+            const slider = document.getElementById('verbose-slider');
+            const knob   = document.getElementById('verbose-knob');
+            const txt    = document.getElementById('verbose-status-text');
+            if (verboseEnabled) {
+                slider.style.background = '#7700ee';
+                knob.style.transform    = 'translateX(20px)';
+                txt.style.color         = '#00ffaa';
+                txt.textContent         = '🟢 已开启（记录中）';
+                appendVerbose('[VerboseLog] ✅ 源码级详细日志已启动。以下所有系统调用、IPC 包体、stat/chmod 响应均将被完整记录。', 'verbose_meta');
+            } else {
+                slider.style.background = '#333';
+                knob.style.transform    = 'translateX(0)';
+                txt.style.color         = '#555';
+                txt.textContent         = '🔴 已关闭（不记录）';
+                appendVerbose('[VerboseLog] 🔴 详细日志已关闭。', 'verbose_meta');
+            }
+        }
+
+        // 源码级详细日志追加（只有 verboseEnabled 时才实际写入 DOM + buffer）
+        function appendVerbose(text, src) {
+            const nowMs = new Date();
+            const ts = [nowMs.getHours(), nowMs.getMinutes(), nowMs.getSeconds()].map(n => String(n).padStart(2,'0')).join(':')
+                     + '.' + String(nowMs.getMilliseconds()).padStart(3,'0');
+            const entry = `[${ts}] [${src || 'VERBOSE'}] ${text}`;
+            verboseBuffer.push(entry);
+
+            if (!verboseEnabled) return; // 关闭时只入 buffer 不渲染
+
+            const body = document.getElementById('log-body');
+            if (!body) return;
+            const line = document.createElement('div');
+            line.className = 'log-line log-system';
+            line.style.cssText = 'border-left: 2px solid rgba(150,80,255,0.5); background: rgba(100,0,200,0.07); padding-left: 8px; font-family: monospace; font-size: 0.72rem;';
+            line.innerHTML = `<span class="log-ts" style="color:#aa66ff">${ts}</span>`
+                + `<span class="log-icon" style="color:#8844dd">❯</span>`
+                + `<span class="log-content"><span class="log-main" style="color:#cc99ff; font-family:monospace;">${text.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</span>`
+                + `<span class="log-sub" style="color:#6633aa;">${src || 'VERBOSE'}</span></span>`;
+            body.appendChild(line);
+            while (body.children.length > 150) body.removeChild(body.firstElementChild);
+            body.scrollTop = body.scrollHeight;
+        }
+
+        // 一键复制所有日志
+        function copyAllLogs() {
+            const body = document.getElementById('log-body');
+            let text = '';
+            if (body) {
+                Array.from(body.children).forEach(el => {
+                    const ts   = el.querySelector('.log-ts')?.textContent  || '';
+                    const main = el.querySelector('.log-main')?.textContent || '';
+                    const sub  = el.querySelector('.log-sub')?.textContent  || '';
+                    text += `[${ts}] ${main}${sub ? ' | ' + sub : ''}\n`;
+                });
+            }
+            if (verboseBuffer.length > 0) {
+                text += '\n───── VERBOSE BUFFER (源码级日志) ─────\n' + verboseBuffer.join('\n');
+            }
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(text).then(() => {
+                    const btn = document.getElementById('btn-copy-log');
+                    if (btn) { btn.textContent = '✓ 已复制'; setTimeout(() => { btn.textContent = 'COPY'; }, 2000); }
+                    appendLog('[UI] 全部日志已复制到剪贴板！', 'success');
+                }).catch(() => fallbackCopy(text));
+            } else { fallbackCopy(text); }
+        }
+
+        function fallbackCopy(text) {
+            const ta = document.createElement('textarea');
+            ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+            document.body.appendChild(ta); ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            appendLog('[UI] 全部日志已复制到剪贴板（兼容模式）！', 'success');
+        }
+
+        // 拦截所有发往原生层的 IPC，verbose 模式下打印完整包体
+        const _origPostMessage = (window.webkit && window.webkit.messageHandlers.TrollHandler)
+            ? window.webkit.messageHandlers.TrollHandler.postMessage.bind(window.webkit.messageHandlers.TrollHandler)
+            : null;
+        if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
+            window.webkit.messageHandlers.TrollHandler.postMessage = function(msg) {
+                appendVerbose('[IPC→Native] payload: ' + JSON.stringify(msg), 'Bridge/IPC');
+                return _origPostMessage(msg);
+            };
         }
 
         function appendLog(text, type = 'system') {
