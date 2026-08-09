@@ -244,7 +244,7 @@ static pid_t global_bg_idfa_safe_pid = 0;
             [self createAndOpenFilzaScript:@"unlock"];
         } else if ([action isEqualToString:@"lock_system"]) {
             float level = [[UIDevice currentDevice] batteryLevel];
-            if ((level > 0 && level <= 0.15f) || [[NSProcessInfo currentProcessInfo] isLowPowerModeEnabled]) {
+            if ((level > 0 && level <= 0.15f) || [[NSProcessInfo processInfo] isLowPowerModeEnabled]) {
                 dispatch_async(dispatch_get_main_queue(), ^{
                     [self.webView evaluateJavaScript:@"window.showLockResult('unlocked', '[FAILSAVE 拦截] 当前电量极低(<=15%)或已开启省电模式。为防止意外关机导致系统永久死锁，安全矩阵已拒绝本次锁定请求！');" completionHandler:nil];
                 });
@@ -378,7 +378,7 @@ static pid_t global_bg_idfa_safe_pid = 0;
             @"echo \"[INFO] 正在停顿 3 秒，之后将自动跳回 QiLong 检验效果...\" >> \"%@\"\n"
             @"sleep 3\n"
             @"uiopen -b %@\n",
-            logPath, logPath, logPath, logPath, logPath, logPath, logPath, logPath, bundleID];
+            logPath, logPath, logPath, logPath, logPath, logPath, logPath, logPath, logPath, bundleID];
     }
     
     [scriptContent writeToFile:scriptPath atomically:YES encoding:NSUTF8StringEncoding error:nil];
@@ -441,7 +441,7 @@ static pid_t global_bg_idfa_safe_pid = 0;
 }
 
 - (void)checkThermalState:(NSNotification *)notif {
-    NSProcessInfoThermalState state = [[NSProcessInfo currentProcessInfo] thermalState];
+    NSProcessInfoThermalState state = [[NSProcessInfo processInfo] thermalState];
     if (state == NSProcessInfoThermalStateSerious || state == NSProcessInfoThermalStateCritical) {
         [self triggerEmergencyUnlock:@"设备温度过高(Serious/Critical)"];
     }
@@ -455,7 +455,7 @@ static pid_t global_bg_idfa_safe_pid = 0;
 }
 
 - (void)checkPowerMode:(NSNotification *)notif {
-    if ([[NSProcessInfo currentProcessInfo] isLowPowerModeEnabled]) {
+    if ([[NSProcessInfo processInfo] isLowPowerModeEnabled]) {
         [self triggerEmergencyUnlock:@"开启了低电量模式"];
     }
 }
