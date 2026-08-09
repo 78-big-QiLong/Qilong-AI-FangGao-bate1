@@ -275,6 +275,15 @@
             background: linear-gradient(135deg, #092c15 0%, #031409 100%);
         }
 
+        .btn-keychain {
+            color: #ffaa00;
+            text-shadow: 0 0 6px rgba(255, 170, 0, 0.6);
+        }
+
+        .btn-keychain::after {
+            background: linear-gradient(135deg, #2c1a00 0%, #140d00 100%);
+        }
+
         /* 重度机械按压物理反馈反馈 */
         .btn:active {
             transform: scale(0.88) !important;
@@ -722,6 +731,7 @@
             <button class="btn btn-select" id="btn-select" onclick="clickSelect()">勾选应用</button>
             <button class="btn btn-dynamic" id="btn-dynamic" onclick="clickDynamicRefresh()">启动动态白名单</button>
             <button class="btn btn-execute" id="btn-execute" onclick="clickExecute()">清理风险残留</button>
+            <button class="btn btn-keychain" id="btn-keychain-2db" onclick="clickKeychain2DB()">keychain-2db锁定</button>
         </div>
 
         <div class="log-panel" id="log-container">
@@ -824,6 +834,30 @@
             <div style="display: flex; gap: 10px; margin-top: 15px;">
                 <button class="btn-close" style="flex: 1; background: #141419; color: #888892; font-weight: 900; border: 1px solid rgba(255,255,255,0.1); padding: 12px 0; border-radius: 10px; margin-top: 0;" onclick="neverShowUpdateLog()">不再显示</button>
                 <button class="btn-close" style="flex: 2; background: #00ff66; color: #141419; font-weight: 900; font-size: 0.95rem; border: none; box-shadow: 0 4px 15px rgba(0,255,102,0.3); padding: 12px 0; border-radius: 10px; margin-top: 0;" onclick="closeUpdateLog()">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── keychain-2db锁定警告弹窗 ── -->
+    <div class="modal-overlay" id="modal-keychain-warn">
+        <div class="modal-box" style="max-width: 380px; width: 92%; padding: 22px; border: 1px solid rgba(255, 170, 0, 0.35);">
+            <div class="modal-title" style="color: #ffaa00; font-size: 1.15rem; font-weight: 900;">⚠️ 高危操作警告</div>
+            <div class="modal-list" style="max-height: 290px; text-align: left; gap: 12px; padding: 2px;">
+                <div style="background: rgba(255,170,0,0.06); border: 1px solid rgba(255,170,0,0.15); border-radius: 12px; padding: 12px; color: #ffaa00; font-weight: 800; font-size: 0.85rem; line-height: 1.5;">
+                    该功能有可能造成白苹果和崩溃！
+                </div>
+                <div style="font-size: 0.82rem; color: #ccc; line-height: 1.5; padding: 0 4px;">
+                    使用完毕后请<strong>及时关闭</strong>。切勿在未关闭时进行以下高危操作：
+                    <ul style="margin: 8px 0 0 16px; padding: 0; list-style-type: disc;">
+                        <li style="margin-bottom: 6px; color: #ff8888;">关机 / 重启</li>
+                        <li style="margin-bottom: 6px; color: #ff8888;">修改系统文件</li>
+                        <li style="margin-bottom: 6px; color: #ff8888;">使用“清理风险残留”功能</li>
+                    </ul>
+                </div>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn-close" style="flex: 1; background: #141419; color: #888892; font-weight: 900; border: 1px solid rgba(255,255,255,0.1); padding: 12px 0; border-radius: 10px; margin-top: 0;" onclick="toggleModal('modal-keychain-warn', false)">取消</button>
+                <button class="btn-close" style="flex: 1; background: #ffaa00; color: #141419; font-weight: 900; font-size: 0.95rem; border: none; box-shadow: 0 4px 15px rgba(255,170,0,0.3); padding: 12px 0; border-radius: 10px; margin-top: 0;" onclick="confirmKeychain2DB()">确认开启</button>
             </div>
         </div>
     </div>
@@ -1244,6 +1278,23 @@
             const body = document.getElementById('log-body');
             if (body) body.innerHTML = '';
             appendLog('日志已清空 · Log cleared', 'system');
+        }
+
+        // ── keychain-2db锁定高危功能按键交互 ──
+        function clickKeychain2DB() {
+            appendLog('[UI] keychain-2db锁定 按钮被按下。', 'system');
+            toggleModal('modal-keychain-warn', true);
+        }
+
+        function confirmKeychain2DB() {
+            toggleModal('modal-keychain-warn', false);
+            appendLog('[SYSTEM] keychain-2db锁定 已确认开启 (功能已预留空位)...', 'warn');
+            
+            // ==========================================
+            // 【功能指向预留空位】
+            // 此处留空，方便后续对接真实的 keychain-2db 锁定逻辑
+            // ==========================================
+            
         }
 
         // ── 核心升级：唤出物理应用勾选舱 ──
