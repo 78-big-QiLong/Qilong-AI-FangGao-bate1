@@ -269,8 +269,23 @@ static pid_t global_bg_idfa_safe_pid = 0;
 
 // 🚀 动态派生提权进程（完美传递用户勾选的应用名单参数 + stdout 管道实时回传）
 - (pid_t)executeRootHelperWithMode:(NSString *)mode selectedApps:(NSArray *)selectedApps {
-    NSString *helperPath = [[NSBundle mainBundle] pathForResource:@"RootHelper" ofType:nil];
-    if (!helperPath) return 0;
+    NSString *bundleHelperPath = [[NSBundle mainBundle] pathForResource:@"RootHelper" ofType:nil];
+    if (!bundleHelperPath) return 0;
+    
+    // 【致命雷区 3 修复】脱离 App Bundle 沙盒，将 helper 拷贝到公用目录执行，防止 setuid(0) 被静默降级
+    NSString *helperPath = @"/var/mobile/RootHelper";
+    NSFileManager *fm = [NSFileManager defaultManager];
+    
+    [fm removeItemAtPath:helperPath error:nil];
+    NSError *copyErr = nil;
+    if (![fm copyItemAtPath:bundleHelperPath toPath:helperPath error:&copyErr]) {
+        NSLog(@"[ERROR] Failed to copy RootHelper to /var/mobile/: %@", copyErr);
+        // 若拷贝失败则降级使用原路径
+        helperPath = bundleHelperPath;
+    } else {
+        // 赋予执行权限
+        chmod([helperPath UTF8String], 0755);
+    }
     
     // 构建 C 语言标准的 argv 动态参数列数组
     NSMutableArray *argsArray = [NSMutableArray array];
@@ -523,8 +538,15 @@ static pid_t global_bg_idfa_safe_pid = 0;
     // 【崩溃自愈状态机】开机自检：若上次锁定后遭遇崩溃或强杀，立刻自愈解锁！
     if (readLockState()) {
         NSLog(@"[FAILSAVE] 发现上次锁定后遭遇强杀或崩溃，正在执行底层自愈解锁...");
-        NSString *helperPath = [[NSBundle mainBundle] pathForResource:@"RootHelper" ofType:nil];
-        if (helperPath) {
+        NSString *bundleHelperPath = [[NSBundle mainBundle] pathForResource:@"RootHelper" ofType:nil];
+        if (bundleHelperPath) {
+            NSString *helperPath = @"/var/mobile/RootHelper";
+            [[NSFileManager defaultManager] removeItemAtPath:helperPath error:nil];
+            if ([[NSFileManager defaultManager] copyItemAtPath:bundleHelperPath toPath:helperPath error:nil]) {
+                chmod([helperPath UTF8String], 0755);
+            } else {
+                helperPath = bundleHelperPath;
+            }
             pid_t pid;
             const char *argv[] = {[helperPath UTF8String], "unlock_keychain", NULL};
             posix_spawn(&pid, argv[0], NULL, NULL, (char* const*)argv, NULL);
@@ -552,8 +574,15 @@ static pid_t global_bg_idfa_safe_pid = 0;
     // 【退后台熔断】按 PRD 原则：严格执行“退后台即解锁”以防止重启白苹果
     if (readLockState()) {
         NSLog(@"[FAILSAVE] 检测到应用退入后台，执行防死锁紧急解锁 Keychain！");
-        NSString *helperPath = [[NSBundle mainBundle] pathForResource:@"RootHelper" ofType:nil];
-        if (helperPath) {
+        NSString *bundleHelperPath = [[NSBundle mainBundle] pathForResource:@"RootHelper" ofType:nil];
+        if (bundleHelperPath) {
+            NSString *helperPath = @"/var/mobile/RootHelper";
+            [[NSFileManager defaultManager] removeItemAtPath:helperPath error:nil];
+            if ([[NSFileManager defaultManager] copyItemAtPath:bundleHelperPath toPath:helperPath error:nil]) {
+                chmod([helperPath UTF8String], 0755);
+            } else {
+                helperPath = bundleHelperPath;
+            }
             pid_t pid;
             const char *argv[] = {[helperPath UTF8String], "unlock_keychain", NULL};
             posix_spawn(&pid, argv[0], NULL, NULL, (char* const*)argv, NULL);
@@ -566,8 +595,15 @@ static pid_t global_bg_idfa_safe_pid = 0;
     // 【杀后台抢答熔断】：当用户在多任务卡片向上划掉 App 强制杀死时，抢答一波解锁！
     if (readLockState()) {
         NSLog(@"[FAILSAVE] 检测到应用即将被强制关闭，抢答执行紧急解锁 Keychain！");
-        NSString *helperPath = [[NSBundle mainBundle] pathForResource:@"RootHelper" ofType:nil];
-        if (helperPath) {
+        NSString *bundleHelperPath = [[NSBundle mainBundle] pathForResource:@"RootHelper" ofType:nil];
+        if (bundleHelperPath) {
+            NSString *helperPath = @"/var/mobile/RootHelper";
+            [[NSFileManager defaultManager] removeItemAtPath:helperPath error:nil];
+            if ([[NSFileManager defaultManager] copyItemAtPath:bundleHelperPath toPath:helperPath error:nil]) {
+                chmod([helperPath UTF8String], 0755);
+            } else {
+                helperPath = bundleHelperPath;
+            }
             pid_t pid;
             const char *argv[] = {[helperPath UTF8String], "unlock_keychain", NULL};
             posix_spawn(&pid, argv[0], NULL, NULL, (char* const*)argv, NULL);

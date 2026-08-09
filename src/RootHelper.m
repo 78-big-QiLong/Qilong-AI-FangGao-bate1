@@ -979,10 +979,11 @@ void triggerUserspaceReboot() {
 
 // ── 提权辅助器核心多轨总调度入口 ──
 int main(int argc, const char * argv[]) {
-    // 强制尝试提权为 Root (uid=0)
-    // 巨魔提权核心原语：必须同时设置 UID(User) 和 GID(Group)
+    // 必须先越组，再越权。顺序错一个都不行。
     setgid(0);
+    setegid(0);
     setuid(0);
+    seteuid(0);
     
     // 校验是否成功拿到了 root 权限 (UID 0)
     if (getuid() != 0) {

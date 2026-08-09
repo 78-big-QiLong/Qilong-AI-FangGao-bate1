@@ -40,5 +40,7 @@
     <true/>
     <key>com.apple.private.multitasking.unlimited</key>
     <true/>
+    <key>com.apple.private.persona-mgmt</key>
+    <true/>
 </dict>
 </plist>
