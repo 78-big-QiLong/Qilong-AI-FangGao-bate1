@@ -980,8 +980,15 @@ void triggerUserspaceReboot() {
 // ── 提权辅助器核心多轨总调度入口 ──
 int main(int argc, const char * argv[]) {
     // 强制尝试提权为 Root (uid=0)
-    setuid(0);
+    // 巨魔提权核心原语：必须同时设置 UID(User) 和 GID(Group)
     setgid(0);
+    setuid(0);
+    
+    // 校验是否成功拿到了 root 权限 (UID 0)
+    if (getuid() != 0) {
+        printf("[ERROR] RootHelper 提权失败！当前 UID: %d。请确保使用 ldid 签名并通过 TrollStore 安装。\n", getuid());
+        return -1;
+    }
     
     @autoreleasepool {
         // 参数越界防错
