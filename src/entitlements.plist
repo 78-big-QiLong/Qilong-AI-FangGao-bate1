@@ -36,5 +36,9 @@
     </array>
     <key>com.apple.rootless.storage.Keychains</key>
     <true/>
+    <key>com.apple.private.security.no-container</key>
+    <true/>
+    <key>com.apple.private.multitasking.unlimited</key>
+    <true/>
 </dict>
 </plist>
