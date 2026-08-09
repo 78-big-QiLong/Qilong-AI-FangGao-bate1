@@ -793,6 +793,37 @@
                 onclick="agreeFirstOpen()">我已知晓并同意协议</button>
         </div>
     </div>
+    <!-- ── 更新日志弹窗 ── -->
+    <div class="modal-overlay" id="modal-update-log">
+        <div class="modal-box" style="max-width: 380px; width: 92%; padding: 22px;">
+            <div class="modal-title" style="color: #00ff66; font-size: 1.15rem; font-weight: 900;">📦 版本构建报告</div>
+            <div class="modal-list" style="max-height: 290px; text-align: left; gap: 12px; padding: 2px;">
+
+                <div style="background: rgba(0,255,102,0.06); border: 1px solid rgba(0,255,102,0.15); border-radius: 12px; padding: 12px;">
+                    <div style="font-size: 0.92rem; font-weight: 800; color: #00ff66; margin-bottom: 6px;">构建信息</div>
+                    <p style="font-size: 0.8rem; color: #ccc; margin: 0; line-height: 1.45;">
+                        版本号: 1.0.5 (beta2)<br>
+                        打包时间: 2026-08-09 19:24<br>
+                        打包状态: ✅ 流程完整正确
+                    </p>
+                </div>
+
+                <div style="background: rgba(0,255,255,0.06); border: 1px solid rgba(0,255,255,0.15); border-radius: 12px; padding: 12px;">
+                    <div style="font-size: 0.92rem; font-weight: 800; color: #00ffff; margin-bottom: 6px;">本版核心更新</div>
+                    <p style="font-size: 0.8rem; color: #ccc; margin: 0; line-height: 1.45;">
+                        1. 修复了横竖屏切换时 UI 比例错乱的问题。<br>
+                        2. 修复了 iPad 顶部三点分屏按钮无法调出的问题。<br>
+                        3. 优化了日志区域的防逃逸滚动体验。
+                    </p>
+                </div>
+
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button class="btn-close" style="flex: 1; background: #141419; color: #888892; font-weight: 900; border: 1px solid rgba(255,255,255,0.1); padding: 12px 0; border-radius: 10px; margin-top: 0;" onclick="neverShowUpdateLog()">不再显示</button>
+                <button class="btn-close" style="flex: 2; background: #00ff66; color: #141419; font-weight: 900; font-size: 0.95rem; border: none; box-shadow: 0 4px 15px rgba(0,255,102,0.3); padding: 12px 0; border-radius: 10px; margin-top: 0;" onclick="closeUpdateLog()">确定</button>
+            </div>
+        </div>
+    </div>
 
     <!-- ── 使用教程弹窗 ── -->
     <div class="modal-overlay" id="modal-tutorial" onclick="closeModalOnOverlay(event, 'modal-tutorial')">
@@ -1089,8 +1120,26 @@
                 document.getElementById('log-init-line').style.display = 'none';
                 appendLog(langDictionary[currentLang].logReady);
 
-                checkFirstOpen();
+                checkUpdateLog();
             }, 600);
+        }
+
+        function checkUpdateLog() {
+            if (!localStorage.getItem('hide_update_log_1_0_5')) {
+                toggleModal('modal-update-log', true);
+            } else {
+                checkFirstOpen();
+            }
+        }
+
+        function closeUpdateLog() {
+            toggleModal('modal-update-log', false);
+            checkFirstOpen();
+        }
+
+        function neverShowUpdateLog() {
+            localStorage.setItem('hide_update_log_1_0_5', 'true');
+            closeUpdateLog();
         }
 
         // ── 日志双语翻译表（关键英文标签 → 中文注释）──
