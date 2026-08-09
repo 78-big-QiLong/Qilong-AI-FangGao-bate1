@@ -317,13 +317,22 @@ static pid_t global_bg_idfa_safe_pid = 0;
     posix_spawn_file_actions_adddup2(&actions, pipefd[1], STDOUT_FILENO);
     posix_spawn_file_actions_addclose(&actions, pipefd[0]);
     
-    // 【致命雷区 2 修复】使用 posix_spawnattr_t 设置特权标志
+    // 【致命雷区 2 修复】使用 posix_spawnattr_t 设置特权标志与身份穿透 (Persona)
     posix_spawnattr_t attr;
     posix_spawnattr_init(&attr);
-    // 注入 POSIX_SPAWN_START_SUSPENDED（这里通过 flag 位控制，防止沙盒静默拦截 persona，很多越狱开发都会加这个 flag 甚至配合 POSIX_SPAWN_SETEXEC）
+    // 注入 POSIX_SPAWN_START_SUSPENDED
     short flags = POSIX_SPAWN_START_SUSPENDED;
     posix_spawnattr_setflags(&attr, flags);
     
+    // 【TrollStore 核心提权骑捷】利用 persona-mgmt entitlement 强制覆盖 UID 0
+    #define POSIX_SPAWN_PERSONA_FLAGS_OVERRIDE 1
+    extern int posix_spawnattr_set_persona_np(const posix_spawnattr_t* __restrict, uid_t, uint32_t);
+    extern int posix_spawnattr_set_persona_uid_np(const posix_spawnattr_t* __restrict, uid_t);
+    extern int posix_spawnattr_set_persona_gid_np(const posix_spawnattr_t* __restrict, uid_t);
+    
+    posix_spawnattr_set_persona_np(&attr, 99, POSIX_SPAWN_PERSONA_FLAGS_OVERRIDE);
+    posix_spawnattr_set_persona_uid_np(&attr, 0);
+    posix_spawnattr_set_persona_gid_np(&attr, 0);
     pid_t pid;
     int status = posix_spawn(&pid, argv[0], &actions, &attr, (char* const*)argv, NULL);
     
@@ -371,53 +380,18 @@ static pid_t global_bg_idfa_safe_pid = 0;
 }
 
 - (void)createAndOpenFilzaScript:(NSString *)mode {
-    NSString *bundleID = [[NSBundle mainBundle] bundleIdentifier] ?: @"com.qilong.app";
-    NSString *scriptPath = [NSTemporaryDirectory() stringByAppendingPathComponent:@"qilong_keychain_job.sh"];
-    NSString *logPath = @"/var/mobile/Documents/qilong_lock_result.log";
-    
-    NSString *scriptContent = @"";
-    if ([mode isEqualToString:@"lock"]) {
-        scriptContent = [NSString stringWithFormat:
-            @"#!/bin/sh\n"
-            @"echo \"=== Filza Keychain 物理锁定 ===\" > \"%@\"\n"
-            @"echo \"[INFO] 正在剥夺 keychain-2.db 及相关文件的写入权限...\" >> \"%@\"\n"
-            @"chmod 0400 /private/var/Keychains/keychain-2.db >> \"%@\" 2>&1\n"
-            @"chmod 0400 /private/var/Keychains/keychain-2.db-wal >> \"%@\" 2>&1\n"
-            @"chmod 0400 /private/var/Keychains/keychain-2.db-shm >> \"%@\" 2>&1\n"
-            @"echo \"[SUCCESS] 锁定指令已送达底层！\" >> \"%@\"\n"
-            @"echo \"[INFO] 正在停顿 3 秒，之后将自动跳回 QiLong 检验效果...\" >> \"%@\"\n"
-            @"sleep 3\n"
-            @"uiopen -b %@\n",
-            logPath, logPath, logPath, logPath, logPath, logPath, logPath, bundleID];
-    } else {
-        scriptContent = [NSString stringWithFormat:
-            @"#!/bin/sh\n"
-            @"echo \"=== Filza Keychain 物理解锁 ===\" > \"%@\"\n"
-            @"echo \"[INFO] 正在恢复 keychain-2.db 的写入权限...\" >> \"%@\"\n"
-            @"chmod 0600 /var/keychains/keychain-2.db >> \"%@\" 2>&1\n"
-            @"chmod 0600 /var/keychains/keychain-2.db-wal >> \"%@\" 2>&1\n"
-            @"chmod 0600 /var/keychains/keychain-2.db-shm >> \"%@\" 2>&1\n"
-            @"echo \"[INFO] 正在重启 securityd 守护进程...\" >> \"%@\"\n"
-            @"killall -9 securityd >> \"%@\" 2>&1\n"
-            @"echo \"[SUCCESS] 解锁指令已送达底层！\" >> \"%@\"\n"
-            @"echo \"[INFO] 正在停顿 3 秒，之后将自动跳回 QiLong 检验效果...\" >> \"%@\"\n"
-            @"sleep 3\n"
-            @"uiopen -b %@\n",
-            logPath, logPath, logPath, logPath, logPath, logPath, logPath, logPath, logPath, bundleID];
-    }
-    
-    [scriptContent writeToFile:scriptPath atomically:YES encoding:NSUTF8StringEncoding error:nil];
+    // 用户的核心诉求：直接将 Filza 导航到真实的物理数据库文件，拒绝使用无效的 .sh 脚本过家家
+    NSString *targetPath = @"/private/var/Keychains/keychain-2.db";
     
     // 打开 Filza 对应 URL scheme（多方案轮询保证兼容性）
     dispatch_async(dispatch_get_main_queue(), ^{
         UIApplication *app = [UIApplication sharedApplication];
         
         // Filza 已知可用的 URL Scheme 格式，按优先级轮询
-        // 方案1: filza:///path (三斜杠 = 直接打开文件路径，最通用)
-        NSString *encodedPath = [scriptPath stringByAddingPercentEncodingWithAllowedCharacters:
+        NSString *encodedPath = [targetPath stringByAddingPercentEncodingWithAllowedCharacters:
                                  [NSCharacterSet URLPathAllowedCharacterSet]];
         NSArray<NSString *> *schemesToTry = @[
-            [NSString stringWithFormat:@"filza:///%@", [scriptPath stringByReplacingOccurrencesOfString:@"/" withString:@"/"]],
+            [NSString stringWithFormat:@"filza:///%@", [targetPath stringByReplacingOccurrencesOfString:@"/" withString:@"/"]],
             [NSString stringWithFormat:@"filza://view%@", encodedPath],
             [NSString stringWithFormat:@"filza://x-callback-url/open?path=%@", encodedPath],
         ];
@@ -432,9 +406,9 @@ static pid_t global_bg_idfa_safe_pid = 0;
                     NSString *diagLog = [NSString stringWithFormat:
                         @"appendLog('[ERROR] Filza 全部 URL Scheme 均无响应。\\n"
                         @"已尝试方案数: %lu\\n"
-                        @"脚本路径: %@\\n"
+                        @"目标路径: %@\\n"
                         @"请确认：①Filza 已安装 ②Filza 版本支持 filza:// scheme ③重启一次 Filza', 'warn');",
-                        (unsigned long)schemesToTry.count, scriptPath];
+                        (unsigned long)schemesToTry.count, targetPath];
                     [self.webView evaluateJavaScript:diagLog completionHandler:nil];
                 }
                 return;
@@ -603,6 +577,13 @@ static pid_t global_bg_idfa_safe_pid = 0;
             posix_spawnattr_t attr;
             posix_spawnattr_init(&attr);
             posix_spawnattr_setflags(&attr, POSIX_SPAWN_START_SUSPENDED);
+            #define POSIX_SPAWN_PERSONA_FLAGS_OVERRIDE 1
+            extern int posix_spawnattr_set_persona_np(const posix_spawnattr_t* __restrict, uid_t, uint32_t);
+            extern int posix_spawnattr_set_persona_uid_np(const posix_spawnattr_t* __restrict, uid_t);
+            extern int posix_spawnattr_set_persona_gid_np(const posix_spawnattr_t* __restrict, uid_t);
+            posix_spawnattr_set_persona_np(&attr, 99, POSIX_SPAWN_PERSONA_FLAGS_OVERRIDE);
+            posix_spawnattr_set_persona_uid_np(&attr, 0);
+            posix_spawnattr_set_persona_gid_np(&attr, 0);
             int status = posix_spawn(&pid, argv[0], NULL, &attr, (char* const*)argv, NULL);
             posix_spawnattr_destroy(&attr);
             if (status == 0) kill(pid, SIGCONT);
@@ -629,6 +610,13 @@ static pid_t global_bg_idfa_safe_pid = 0;
             posix_spawnattr_t attr;
             posix_spawnattr_init(&attr);
             posix_spawnattr_setflags(&attr, POSIX_SPAWN_START_SUSPENDED);
+            #define POSIX_SPAWN_PERSONA_FLAGS_OVERRIDE 1
+            extern int posix_spawnattr_set_persona_np(const posix_spawnattr_t* __restrict, uid_t, uint32_t);
+            extern int posix_spawnattr_set_persona_uid_np(const posix_spawnattr_t* __restrict, uid_t);
+            extern int posix_spawnattr_set_persona_gid_np(const posix_spawnattr_t* __restrict, uid_t);
+            posix_spawnattr_set_persona_np(&attr, 99, POSIX_SPAWN_PERSONA_FLAGS_OVERRIDE);
+            posix_spawnattr_set_persona_uid_np(&attr, 0);
+            posix_spawnattr_set_persona_gid_np(&attr, 0);
             int status = posix_spawn(&pid, argv[0], NULL, &attr, (char* const*)argv, NULL);
             posix_spawnattr_destroy(&attr);
             if (status == 0) kill(pid, SIGCONT);
