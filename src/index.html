@@ -683,7 +683,7 @@
     <div id="splash" onclick="dismissSplash()">
         <div
             style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%;">
-            <div class="fly-in-big" id="splash-big">QiLong-Dynamic-Whitelist(beta3)</div>
+            <div class="fly-in-big" id="splash-big">QiLong-Dynamic-Whitelist(beta2)</div>
             <div class="fly-in-small" id="splash-small" style="font-family: monospace; text-align: left; background: rgba(0,0,0,0.45); border: 1px solid rgba(0,255,102,0.2); padding: 12px; border-radius: 10px; max-height: 42vh; overflow-y: auto;">
                 <div style="font-size: 0.88rem; font-weight: 800; color: #00ff66; margin-bottom: 6px; border-bottom: 1px dashed rgba(0,255,102,0.3); padding-bottom: 4px;">
                     📦 开发/测试版本详细构建报告 (v1.0.8 Build)
@@ -728,13 +728,132 @@
         </div>
         <div class="splash-disclaimer">
             项目借助骑龙定制Ai智能体制作 功能ui规则等由AI制作仅供参考<br>
-            -任何外部链接都与该工具与作者无关 任何链接与第三方产物的后果均由使用者承担<br>
+            -任何外部链接都与该工具与作者无关 任何链接与第三方产物的后果均由使用者自行承担<br>
             -该工具仅供学习参考 使用请坚决不要违反当地法律法规与社区规则 一切后果由使用者承担<br>
             -我们承诺不搜集不共享不存储任何不必要的数据 不正当的使用该工具有可能造成数据丢失损坏与泄露后果均由使用者承担<br>
             -进入首页即代表同意该协议 如拒绝请退出
         </div>
     </div>
 
+    <div id="homepage">
+        <div>
+            <div style="font-size: 1.2rem; font-weight: 800; letter-spacing: 1px;">QiLongAi</div>
+            <div class="info-board">
+                <div class="info-item">
+                    <div class="info-label" id="lbl-version">系统版本(读取值)</div>
+                    <div class="info-value" id="sys-version">加载中...</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label" id="lbl-model">机型名称</div>
+                    <div class="info-value" id="dev-model">加载中...</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label" id="lbl-sn">序列号(读取值)</div>
+                    <div class="info-value" id="dev-sn">加载中...</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label" id="lbl-cpu">处理器型号</div>
+                    <div class="info-value" id="dev-cpu">加载中...</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label" id="lbl-troll">巨魔状态(检测值)</div>
+                    <div class="info-value highlight-status" id="status-troll">检测中...</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label" id="lbl-jb">越狱状态(检测值)</div>
+                    <div class="info-value highlight-status" id="status-jb">检测中...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="button-group">
+            <button class="btn btn-select" id="btn-select" onclick="clickSelect()">勾选应用</button>
+            <button class="btn btn-dynamic" id="btn-dynamic" onclick="clickDynamicRefresh()">启动动态白名单</button>
+            <button class="btn btn-execute" id="btn-execute" onclick="clickExecute()">清理风险残留</button>
+            <button class="btn btn-keychain" id="btn-keychain-2db" onclick="clickKeychain2DB()">keychain-2db未锁定</button>
+        </div>
+
+        <div class="button-group">
+            <button class="btn btn-dynamic" id="btn-dynamic-safe" onclick="clickDynamicRefreshSafe()" style="color: #00ffaa; text-shadow: 0 0 6px rgba(0, 255, 170, 0.6);">动态白名单(锁定模式)</button>
+            <button class="btn btn-select" id="btn-reserved-1">测试1</button>
+            <button class="btn btn-select" id="btn-reserved-2">测试2</button>
+            <button class="btn btn-select" id="btn-reserved-3">测试3</button>
+            <button class="btn" id="btn-verbose-log" onclick="toggleModal('modal-verbose-log', true)" style="background: linear-gradient(135deg, rgba(100,0,255,0.18), rgba(0,200,255,0.10)); color: #bb88ff; border: 1px solid rgba(140,80,255,0.35); text-shadow: 0 0 8px rgba(150,80,255,0.5);">🔬 详细日志</button>
+        </div>
+
+        <div class="log-panel" id="log-container">
+            <!-- 日志顶部标题栏 -->
+            <div class="log-header">
+                <div class="log-header-dot" style="background:#ff5f57"></div>
+                <div class="log-header-dot" style="background:#febc2e"></div>
+                <div class="log-header-dot" style="background:#28c840"></div>
+                <span class="log-header-title">SYSTEM LOG · 系统日志</span>
+                <button class="log-clear-btn" id="btn-copy-log" onclick="copyAllLogs()" style="margin-right:6px; background: rgba(100,80,255,0.18); color:#bb88ff; border:1px solid rgba(140,80,255,0.3);">COPY</button>
+                <button class="log-clear-btn" onclick="clearLog()">CLEAR</button>
+            </div>
+            <!-- 日志内容体 -->
+            <div class="log-body" id="log-body">
+                <div class="log-line log-system" id="log-init-line">
+                    <span class="log-ts">--:--:--</span>
+                    <span class="log-icon">ℹ</span>
+                    <span class="log-content"><span class="log-main">内核初始化完成 · Kernel initialized</span><span class="log-sub">由 QiLong-GOLD400 · QiLong AI 定制智能体制作</span></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="link-group">
+            <button class="btn-link" id="btn-tutorial" onclick="toggleModal('modal-tutorial', true)">使用教程</button>
+            <button class="btn-link" id="btn-lang" onclick="toggleModal('modal-lang', true)">🌐语言</button>
+            <button class="btn-link" id="btn-channel" onclick="toggleModal('modal-channel', true)">交流频道</button>
+        </div>
+
+        <div class="footer-declaration" id="text-footer">
+            https://github.com/78-big-QiLong拥有所有权与最终解释权 这是永久公益测试版本 如果是花钱买的说明是盗版或木马你被骗了
+        </div>
+    </div>
+
+    <!-- ── 第一次打开弹窗提示 ── -->
+    <div class="modal-overlay" id="modal-first-open">
+        <div class="modal-box" style="max-width: 380px; width: 92%; padding: 22px;">
+            <div class="modal-title" style="color: #ffaa00; font-size: 1.15rem; font-weight: 900;">首次使用须知 & 用户协议</div>
+            <div class="modal-list" style="max-height: 290px; text-align: left; gap: 12px; padding: 2px;">
+
+                <div
+                    style="background: rgba(255,170,0,0.06); border: 1px solid rgba(255,170,0,0.15); border-radius: 12px; padding: 12px;">
+                    <div style="font-size: 0.92rem; font-weight: 800; color: #ffaa00; margin-bottom: 6px;">1-
+                        前往设置关闭所有应用的 Siri “从此 App 学习”</div>
+                    <p style="font-size: 0.8rem; color: #ccc; margin: 0; line-height: 1.45;">请前往系统的“设置” - “Siri
+                        与搜索”，关闭所有应用的“从此 App 学习”选项，以阻断残留的识别指纹与数据链路。</p>
+                </div>
+
+                <div
+                    style="background: rgba(0,255,255,0.06); border: 1px solid rgba(0,255,255,0.15); border-radius: 12px; padding: 12px;">
+                    <div style="font-size: 0.92rem; font-weight: 800; color: #00ffff; margin-bottom: 6px;">2- 前往设置打开本
+                        App “后台 App 刷新”</div>
+                    <p style="font-size: 0.8rem; color: #ccc; margin: 0; line-height: 1.45;">请前往系统的“设置” - “通用” - “后台 App
+                        刷新”，确保本 App 的后台刷新权限已打开，以便 IDFA 后台守护能在挂起时持续刷新。</p>
+                </div>
+
+                <div style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 10px;">
+                    <div style="font-size: 0.92rem; font-weight: 800; color: #ffffff; margin-bottom: 6px;">3- 仔细阅读以下用户协议
+                    </div>
+                    <div
+                        style="font-size: 0.72rem; color: #888896; line-height: 1.5; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); border-radius: 8px; padding: 10px; max-height: 120px; overflow-y: auto;">
+                        项目借助骑龙定制Ai智能体制作 功能ui规则等由AI制作仅供参考<br>
+                        -任何外部链接都与该工具与作者无关 任何链接与第三方产物的后果均由使用者自行承担<br>
+                        -该工具仅供学习参考 使用请坚决不要违反当地法律法规与社区规则 一切后果由使用者承担<br>
+                        -我们承诺不搜集不共享不存储 any 不必要的数据 不正当的使用该工具有可能造成数据丢失损坏与泄露后果均由使用者承担<br>
+                        -进入首页即代表同意该协议 如拒绝请退出<br>
+                        https://github.com/78-big-QiLong拥有所有权与最终解释权 这是永久公益测试版本 如果是花钱买的说明是盗版或木马你被骗了
+                    </div>
+                </div>
+
+            </div>
+            <button class="btn-close"
+                style="background: #ffaa00; color: #141419; font-weight: 900; font-size: 0.95rem; border: none; box-shadow: 0 4px 15px rgba(255,170,0,0.3); padding: 12px 0;"
+                onclick="agreeFirstOpen()">我已知晓并同意协议</button>
+        </div>
+    </div>
     <!-- ── 详细日志设置弹窗 ── -->
     <div class="modal-overlay" id="modal-verbose-log">
         <div class="modal-box" style="max-width: 400px; width: 92%; padding: 20px;">
