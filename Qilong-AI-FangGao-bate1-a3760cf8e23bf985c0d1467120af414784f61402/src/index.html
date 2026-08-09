@@ -309,30 +309,39 @@
             align-items: center;
             gap: 6px;
             padding: 7px 12px;
-            background: rgba(255,255,255,0.04);
-            border-bottom: 1px solid rgba(255,255,255,0.06);
+            background: rgba(255, 255, 255, 0.04);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
             border-radius: 14px 14px 0 0;
             flex-shrink: 0;
         }
+
         .log-header-dot {
-            width: 8px; height: 8px; border-radius: 50%;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
         }
+
         .log-header-title {
             font-size: 0.7rem;
             color: #666680;
             letter-spacing: 0.5px;
             flex: 1;
         }
+
         .log-clear-btn {
             font-size: 0.65rem;
             color: #555568;
             background: none;
-            border: 1px solid rgba(255,255,255,0.08);
+            border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 6px;
             padding: 2px 7px;
             cursor: pointer;
         }
-        .log-clear-btn:active { color: #ff5555; border-color: #ff5555; }
+
+        .log-clear-btn:active {
+            color: #ff5555;
+            border-color: #ff5555;
+        }
 
         /* 日志条目容器 */
         .log-body {
@@ -373,22 +382,52 @@
             flex-direction: column;
             gap: 1px;
         }
-        .log-main { line-height: 1.45; }
-        .log-sub  { font-size: 0.68rem; opacity: 0.55; line-height: 1.35; }
 
-        .log-success .log-main { color: #00ff88; }
-        .log-success .log-ts   { color: #003322; }
+        .log-main {
+            line-height: 1.45;
+        }
 
-        .log-warn .log-main    { color: #ffbb44; }
-        .log-warn .log-ts      { color: #332200; }
+        .log-sub {
+            font-size: 0.68rem;
+            opacity: 0.55;
+            line-height: 1.35;
+        }
 
-        .log-system .log-main  { color: #44ddff; }
-        .log-system .log-ts    { color: #002233; }
+        .log-success .log-main {
+            color: #00ff88;
+        }
 
-        .log-info .log-main    { color: #a0a0c0; }
+        .log-success .log-ts {
+            color: #003322;
+        }
 
-        .log-error .log-main   { color: #ff5566; }
-        .log-error .log-ts     { color: #330011; }
+        .log-warn .log-main {
+            color: #ffbb44;
+        }
+
+        .log-warn .log-ts {
+            color: #332200;
+        }
+
+        .log-system .log-main {
+            color: #44ddff;
+        }
+
+        .log-system .log-ts {
+            color: #002233;
+        }
+
+        .log-info .log-main {
+            color: #a0a0c0;
+        }
+
+        .log-error .log-main {
+            color: #ff5566;
+        }
+
+        .log-error .log-ts {
+            color: #330011;
+        }
 
         /* 三连并发次级功能按钮组 */
         .link-group {
@@ -728,7 +767,8 @@
                 <div class="log-line log-system" id="log-init-line">
                     <span class="log-ts">--:--:--</span>
                     <span class="log-icon">ℹ</span>
-                    <span class="log-content"><span class="log-main">内核初始化完成 · Kernel initialized</span><span class="log-sub">由 QiLong-GOLD400 · QiLong AI 定制智能体制作</span></span>
+                    <span class="log-content"><span class="log-main">内核初始化完成 · Kernel initialized</span><span
+                            class="log-sub">由 QiLong-GOLD400 · QiLong AI 定制智能体制作</span></span>
                 </div>
             </div>
         </div>
@@ -1088,32 +1128,32 @@
 
         // ── 日志双语翻译表（关键英文标签 → 中文注释）──
         const LOG_TRANSLATIONS = {
-            '[IDFA]':       '[标识符]',
-            '[NVRAM]':      '[NVRAM]',
-            '[KERNEL]':     '[内核]',
-            '[REALTIME]':   '[实时]',
-            '[DAEMON]':     '[守护]',
-            '[BRIDGE]':     '[通信]',
-            '[LANG]':       '[语言]',
-            '[UI]':         '[界面]',
-            '[ERROR]':      '[错误]',
-            '[VARCLEAN]':   '[残留清理]',
-            '[KEYCHAIN]':   '[钥匙链]',
-            '[HOTSPOT]':    '[热点]',
-            '[SIMULATOR]':  '[模拟]',
-            'Phase A':      'A阶段(缓存)',
-            'Phase B':      'B阶段(钥匙链/标识)',
-            'Phase C':      'C阶段(NVRAM/越狱残留)',
-            'complete':     '完成',
-            'Done':         '完成',
-            'Starting':     '启动',
+            '[IDFA]': '[标识符]',
+            '[NVRAM]': '[NVRAM]',
+            '[KERNEL]': '[内核]',
+            '[REALTIME]': '[实时]',
+            '[DAEMON]': '[守护]',
+            '[BRIDGE]': '[通信]',
+            '[LANG]': '[语言]',
+            '[UI]': '[界面]',
+            '[ERROR]': '[错误]',
+            '[VARCLEAN]': '[残留清理]',
+            '[KEYCHAIN]': '[钥匙链]',
+            '[HOTSPOT]': '[热点]',
+            '[SIMULATOR]': '[模拟]',
+            'Phase A': 'A阶段(缓存)',
+            'Phase B': 'B阶段(钥匙链/标识)',
+            'Phase C': 'C阶段(NVRAM/越狱残留)',
+            'complete': '完成',
+            'Done': '完成',
+            'Starting': '启动',
             'Initializing': '初始化',
-            'Waiting':      '等待下轮',
-            'Exiting':      '退出',
-            'Removed':      '已移除',
-            'Cleaned':      '已清理',
-            'refreshed':    '已刷新',
-            'blocked':      '已禁用',
+            'Waiting': '等待下轮',
+            'Exiting': '退出',
+            'Removed': '已移除',
+            'Cleaned': '已清理',
+            'refreshed': '已刷新',
+            'blocked': '已禁用',
         };
 
         function getLogSub(text) {
@@ -1131,7 +1171,7 @@
 
         function getNow() {
             const d = new Date();
-            return [d.getHours(), d.getMinutes(), d.getSeconds()].map(n => String(n).padStart(2,'0')).join(':');
+            return [d.getHours(), d.getMinutes(), d.getSeconds()].map(n => String(n).padStart(2, '0')).join(':');
         }
 
         function appendLog(text, type = 'system') {
@@ -1146,8 +1186,8 @@
                 <span class="log-ts">${getNow()}</span>
                 <span class="log-icon">${getLogIcon(type)}</span>
                 <span class="log-content">
-                    <span class="log-main">${text.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</span>
-                    ${sub && sub !== text ? `<span class="log-sub">${sub.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</span>` : ''}
+                    <span class="log-main">${text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>
+                    ${sub && sub !== text ? `<span class="log-sub">${sub.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>` : ''}
                 </span>`;
             body.appendChild(line);
 

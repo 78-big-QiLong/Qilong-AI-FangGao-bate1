@@ -4,6 +4,7 @@
 #import <sys/wait.h>
 #import <signal.h>
 #import <unistd.h>
+#import <malloc/malloc.h>
 #import "DeviceInfo.h"
 
 // ── 核心：免声明动态绑定 iOS 底层私有应用管理服务 ──
@@ -58,6 +59,19 @@ static pid_t global_bg_idfa_pid = 0;
     if (url) {
         [self.webView loadRequest:[NSURLRequest requestWithURL:url]];
     }
+
+    // 💡 性能与功耗优化：使用低功耗 GCD 定时器（带 10s 容差）每 10 分钟静默释放主进程 RAM 缓存
+    dispatch_queue_t bgQueue = dispatch_get_global_queue(QOS_CLASS_BACKGROUND, 0);
+    dispatch_source_t ramTimer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, bgQueue);
+    dispatch_source_set_timer(ramTimer, dispatch_time(DISPATCH_TIME_NOW, 600 * NSEC_PER_SEC), 600 * NSEC_PER_SEC, 10 * NSEC_PER_SEC);
+    dispatch_source_set_event_handler(ramTimer, ^{
+        @autoreleasepool {
+            [[NSURLCache sharedURLCache] removeAllCachedResponses];
+            malloc_zone_pressure_relief(malloc_default_zone(), 0);
+            NSLog(@"[RAM] Periodic 10-min memory cache purge executed.");
+        }
+    });
+    dispatch_resume(ramTimer);
 }
 
 // 📄 当网页加载完毕时，精准执行双重反向注入（硬件数据 + 真实App名单）
@@ -239,9 +253,9 @@ static pid_t global_bg_idfa_pid = 0;
     if (status == 0) {
         NSLog(@"[SPAWN] RootHelper launched with %d targets (PID: %d)", (argCount - 2), pid);
         
-        // 异步读取管道，将 RootHelper 的 stdout 实时转发至前端 WebView 日志面板
+        // 异步读取管道，将 RootHelper 的 stdout 实时转发至前端 WebView 日志面板（低功耗 QOS_CLASS_UTILITY 轨，避开大核）
         int readFd = pipefd[0];
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{
             FILE *stream = fdopen(readFd, "r");
             if (!stream) { close(readFd); return; }
             

@@ -59,21 +59,22 @@
             bottom: 0;
             border: 4px solid transparent;
             border-image: linear-gradient(90deg, #00ff66, #00ffff, #ff007f, #7f00ff, #00ff66) 1;
-            animation: borderMove 2s linear infinite;
-            filter: drop-shadow(0 0 8px rgba(0, 255, 102, 0.8));
+            will-change: opacity;
+            transform: translateZ(0);
+            animation: borderGlow 3s ease-in-out infinite alternate;
         }
 
-        @keyframes borderMove {
+        @keyframes borderGlow {
             0% {
-                filter: hue-rotate(0deg) drop-shadow(0 0 5px rgba(0, 255, 102, 0.5));
+                opacity: 0.4;
             }
 
             50% {
-                filter: hue-rotate(180deg) drop-shadow(0 0 12px rgba(255, 0, 127, 0.8));
+                opacity: 1.0;
             }
 
             100% {
-                filter: hue-rotate(360deg) drop-shadow(0 0 5px rgba(0, 255, 102, 0.5));
+                opacity: 0.4;
             }
         }
 
@@ -238,7 +239,9 @@
             width: 200%;
             height: 200%;
             background: conic-gradient(#00ff66, #00ffff, #ff007f, #7f00ff, #00ff66);
-            animation: rotateBtnBorder 2.5s linear infinite;
+            will-change: transform;
+            transform: translateZ(0);
+            animation: rotateBtnBorder 3s linear infinite;
             z-index: -2;
         }
 
@@ -1205,7 +1208,6 @@
                     <span class="log-main">${text.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</span>
                     ${sub && sub !== text ? `<span class="log-sub">${sub.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</span>` : ''}
                 </span>`;
-            body.appendChild(line);
 
             // ⚠️ 每个1分钟清理周期完成时追加醒目的防白苹果警告
             if (text) {
@@ -1227,6 +1229,12 @@
                         </span>`;
                     body.appendChild(warnLine);
                 }
+            }
+            body.appendChild(line);
+
+            // 内存与性能保护：日志行数超上限（120条）自动移除最早记录，防止DOM堆积卡顿与内存掉帧
+            while (body.children.length > 120) {
+                body.removeChild(body.firstElementChild);
             }
 
             body.scrollTop = body.scrollHeight;

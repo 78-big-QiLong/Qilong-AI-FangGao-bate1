@@ -9,6 +9,24 @@
 #import <unistd.h>
 #import <dlfcn.h>
 #import <mach/mach.h>
+#import <malloc/malloc.h>
+#import <sys/resource.h>
+#import <pthread/qos.h>
+
+// 💡 优化项 1 & 4：低频合并休眠试探，以 5 秒步进替代 1 秒高频唤醒，大幅减少 CPU 唤醒次数与发热
+static BOOL staggeredSleepWithParentCheck(int totalSeconds, pid_t parentPid) {
+    int interval = 5;
+    int elapsed = 0;
+    while (elapsed < totalSeconds) {
+        int sleepTime = (totalSeconds - elapsed < interval) ? (totalSeconds - elapsed) : interval;
+        sleep(sleepTime);
+        elapsed += sleepTime;
+        if (getppid() == 1 || kill(parentPid, 0) != 0) {
+            return YES; // 被父进程关闭中断
+        }
+    }
+    return NO;
+}
 
 // IOKit types defined manually to avoid iOS SDK availability restrictions
 typedef mach_port_t io_object_t;
@@ -955,6 +973,10 @@ int main(int argc, const char * argv[]) {
 
         // 解析从 main.m 路由过来的运行轨模式暗号
         NSString *runMode = [NSString stringWithUTF8String:argv[1]];
+
+        // 💡 优化项 2：强制降低后台 Helper 进程与线程 QoS 至小核（QOS_CLASS_BACKGROUND），绝不抢占 CPU/GPU 大核
+        setpriority(PRIO_PROCESS, 0, PRIO_DARWIN_BG);
+        pthread_set_qos_class_self_np(QOS_CLASS_BACKGROUND, 0);
         
         // 动态咬合：提取并组装用户真正勾选的全部目标应用 Bundle ID 名单
         NSMutableArray *selectedAppBundleIDs = [NSMutableArray array];
@@ -986,13 +1008,15 @@ int main(int argc, const char * argv[]) {
                 
                 round++;
                 
-                // 60秒切碎为60次1秒试探
-                for (int i = 0; i < 60; i++) {
-                    sleep(1);
-                    if (getppid() == 1 || kill(parentPid, 0) != 0) {
-                        printRealLog(@"[DAEMON] Interrupted by parent. Exiting.");
-                        exit(0);
-                    }
+                // 💡 优化项 3：每 10 轮静默清理自身 RAM 堆内存
+                if (round % 10 == 0) {
+                    malloc_zone_pressure_relief(malloc_default_zone(), 0);
+                }
+
+                // 低频 5s 间隔休眠检测，减少 CPU 唤醒
+                if (staggeredSleepWithParentCheck(60, parentPid)) {
+                    printRealLog(@"[DAEMON] Interrupted by parent. Exiting.");
+                    exit(0);
                 }
             }
             return 0;
@@ -1100,14 +1124,10 @@ int main(int argc, const char * argv[]) {
                     printRealLog(@"[REALTIME] [Phase A] Done. Cleaned: %d items. Waiting 60s for Phase B...", cleanedA);
                 }
 
-                // Phase A 后 60 秒低功耗可中断等待
-                {
-                    BOOL interrupted = NO;
-                    for (int s = 0; s < 60; s++) {
-                        sleep(1);
-                        if (getppid() == 1 || kill(parentPid, 0) != 0) { interrupted = YES; break; }
-                    }
-                    if (interrupted) { printRealLog(@"[REALTIME] Interrupted during Phase A sleep."); break; }
+                // Phase A 后低功耗合并休眠（5s 步进，减少 CPU 唤醒）
+                if (staggeredSleepWithParentCheck(60, parentPid)) {
+                    printRealLog(@"[REALTIME] Interrupted during Phase A sleep.");
+                    break;
                 }
 
                 // ─────────────────────────────────────────────────────
@@ -1140,14 +1160,10 @@ int main(int argc, const char * argv[]) {
                     printRealLog(@"[REALTIME] [Phase B] Done. IDFA/Keychain fully refreshed. Waiting 60s for Phase C...");
                 }
 
-                // Phase B 后 60 秒低功耗可中断等待
-                {
-                    BOOL interrupted = NO;
-                    for (int s = 0; s < 60; s++) {
-                        sleep(1);
-                        if (getppid() == 1 || kill(parentPid, 0) != 0) { interrupted = YES; break; }
-                    }
-                    if (interrupted) { printRealLog(@"[REALTIME] Interrupted during Phase B sleep."); break; }
+                // Phase B 后低功耗合并休眠（5s 步进，减少 CPU 唤醒）
+                if (staggeredSleepWithParentCheck(60, parentPid)) {
+                    printRealLog(@"[REALTIME] Interrupted during Phase B sleep.");
+                    break;
                 }
 
                 // ─────────────────────────────────────────────────────
@@ -1208,14 +1224,16 @@ int main(int argc, const char * argv[]) {
                     printRealLog(@"[REALTIME] ===== Cycle #%d complete (3-min full cycle). Restarting Phase A... =====", cycleCount);
                 }
 
-                // Phase C 后 60 秒低功耗可中断等待（下一大周期开始前的冷却期）
-                {
-                    BOOL interrupted = NO;
-                    for (int s = 0; s < 60; s++) {
-                        sleep(1);
-                        if (getppid() == 1 || kill(parentPid, 0) != 0) { interrupted = YES; break; }
-                    }
-                    if (interrupted) { printRealLog(@"[REALTIME] Interrupted during Phase C sleep."); break; }
+                // 💡 优化项 3：每 10 分钟（每 3 个大周期）错峰自动释放 RootHelper 进程 RAM 内存
+                if (cycleCount % 3 == 0) {
+                    malloc_zone_pressure_relief(malloc_default_zone(), 0);
+                    printRealLog(@"[RAM] Staggered 10-min memory cache purge executed.");
+                }
+
+                // Phase C 后低功耗合并休眠（5s 步进，减少 CPU 唤醒）
+                if (staggeredSleepWithParentCheck(60, parentPid)) {
+                    printRealLog(@"[REALTIME] Interrupted during Phase C sleep.");
+                    break;
                 }
             }
             return 0;
