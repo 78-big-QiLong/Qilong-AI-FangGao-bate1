@@ -402,15 +402,25 @@ static NSString* escapeForJS(NSString *input) {
         
         if ([mode isEqualToString:@"lock"]) {
             [script appendString:@"sqlite3 /private/var/Keychains/keychain-2.db \"PRAGMA wal_checkpoint(TRUNCATE);\"\n"];
-            [script appendString:@"chown 0:0 /private/var/Keychains/keychain-2.db\n"];
+            [script appendString:@"chflags nouchg /private/var/Keychains/keychain-2.db /private/var/Keychains/keychain-2.db-wal /private/var/Keychains/keychain-2.db-shm\n"];
+            [script appendString:@"chflags noschg /private/var/Keychains/keychain-2.db /private/var/Keychains/keychain-2.db-wal /private/var/Keychains/keychain-2.db-shm\n"];
+            [script appendString:@"chown 0:0 /private/var/Keychains/keychain-2.db /private/var/Keychains/keychain-2.db-wal /private/var/Keychains/keychain-2.db-shm\n"];
             [script appendString:@"chmod 0400 /private/var/Keychains/keychain-2.db\n"];
-            [script appendString:@"chflags uchg /private/var/Keychains/keychain-2.db\n"];
-            [script appendString:@"chflags schg /private/var/Keychains/keychain-2.db\n"];
+            [script appendString:@"chmod 0400 /private/var/Keychains/keychain-2.db-wal\n"];
+            [script appendString:@"chmod 0400 /private/var/Keychains/keychain-2.db-shm\n"];
+            [script appendString:@"chflags uchg /private/var/Keychains/keychain-2.db /private/var/Keychains/keychain-2.db-wal /private/var/Keychains/keychain-2.db-shm\n"];
+            [script appendString:@"chflags schg /private/var/Keychains/keychain-2.db /private/var/Keychains/keychain-2.db-wal /private/var/Keychains/keychain-2.db-shm\n"];
+            [script appendString:@"echo \"[LOCK] stat keychain-2.db:\"\n"];
+            [script appendString:@"ls -laO /private/var/Keychains/keychain-2.db\n"];
         } else {
-            [script appendString:@"chflags nouchg /private/var/Keychains/keychain-2.db\n"];
-            [script appendString:@"chflags noschg /private/var/Keychains/keychain-2.db\n"];
-            [script appendString:@"chown 64:64 /private/var/Keychains/keychain-2.db\n"];
+            [script appendString:@"chflags nouchg /private/var/Keychains/keychain-2.db /private/var/Keychains/keychain-2.db-wal /private/var/Keychains/keychain-2.db-shm\n"];
+            [script appendString:@"chflags noschg /private/var/Keychains/keychain-2.db /private/var/Keychains/keychain-2.db-wal /private/var/Keychains/keychain-2.db-shm\n"];
+            [script appendString:@"chown 64:64 /private/var/Keychains/keychain-2.db /private/var/Keychains/keychain-2.db-wal /private/var/Keychains/keychain-2.db-shm\n"];
             [script appendString:@"chmod 0600 /private/var/Keychains/keychain-2.db\n"];
+            [script appendString:@"chmod 0666 /private/var/Keychains/keychain-2.db-wal\n"];
+            [script appendString:@"chmod 0666 /private/var/Keychains/keychain-2.db-shm\n"];
+            [script appendString:@"echo \"[UNLOCK] stat keychain-2.db:\"\n"];
+            [script appendString:@"ls -laO /private/var/Keychains/keychain-2.db\n"];
         }
         [script appendString:@"killall -9 securityd\n"];
         [script appendString:@"echo \"Operation completed.\"\n"];
@@ -427,59 +437,64 @@ static NSString* escapeForJS(NSString *input) {
         // 赋予可执行权限
         chmod([scriptPath UTF8String], 0755);
         
-        NSString *okLog = [NSString stringWithFormat:@"appendLog('[FILZA] ✅ 自动化脚本已生成至: %@', 'success');", scriptPath];
+        NSString *okLog = [NSString stringWithFormat:@"appendLog('[FILZA] ✅ 自动化脚本已生成: %@ 正在唤起 Filza...', 'success');", scriptPath];
         [self.webView evaluateJavaScript:okLog completionHandler:nil];
         
-        UIApplication *app = [UIApplication sharedApplication];
+        // ── Filza URL Scheme 正确格式：filza://view/absolute/path ──
+        // filza://view 是官方支持的深链格式，path 必须以 / 开头
         NSString *encodedPath = [scriptPath stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLPathAllowedCharacterSet]];
         
+        // 按优先级排列：第一个是官方标准格式
         NSArray<NSString *> *schemesToTry = @[
-            [NSString stringWithFormat:@"filza://%@", scriptPath],
             [NSString stringWithFormat:@"filza://view%@", encodedPath],
-            [NSString stringWithFormat:@"filza://x-callback-url/open?path=%@", encodedPath]
+            [NSString stringWithFormat:@"filza://view%@", scriptPath],
+            [NSString stringWithFormat:@"filza://%@", scriptPath]
         ];
         
-        BOOL opened = NO;
-        Class lsaw = NSClassFromString(@"LSApplicationWorkspace");
-        id workspace = nil;
-        if (lsaw) {
-            workspace = [lsaw performSelector:@selector(defaultWorkspace)];
-        }
+        UIApplication *app = [UIApplication sharedApplication];
         
+        // 优先尝试 LSApplicationWorkspace（绕过 canOpenURL 白名单限制）
+        Class lsaw = NSClassFromString(@"LSApplicationWorkspace");
+        id workspace = lsaw ? [lsaw performSelector:@selector(defaultWorkspace)] : nil;
+        
+        BOOL opened = NO;
         for (NSString *schemeStr in schemesToTry) {
             NSURL *url = [NSURL URLWithString:schemeStr];
             if (!url) continue;
             
-            // 优先使用私有 API LSApplicationWorkspace，绕过部分 UIApplication 限制
             if (workspace && [workspace respondsToSelector:@selector(openURL:)]) {
                 if ([workspace openURL:url]) {
                     opened = YES;
-                    NSString *invokeLog = [NSString stringWithFormat:@"appendLog('[FILZA] ✅ 成功唤起 Filza 导航至脚本', 'success');"];
-                    [self.webView evaluateJavaScript:invokeLog completionHandler:nil];
+                    NSString *log = @"appendLog('[FILZA] ✅ Filza 已通过 LSApplicationWorkspace 成功唤起', 'success');";
+                    [self.webView evaluateJavaScript:log completionHandler:nil];
                     break;
                 }
-            }
-            
-            // 降级使用 UIApplication
-            if ([app canOpenURL:url]) {
-                [app openURL:url options:@{} completionHandler:nil];
-                opened = YES;
-                NSString *invokeLog = [NSString stringWithFormat:@"appendLog('[FILZA] ✅ 成功唤起 Filza (通过 UIApplication)', 'success');"];
-                [self.webView evaluateJavaScript:invokeLog completionHandler:nil];
-                break;
             }
         }
         
         if (!opened) {
-            // 兜底强制执行
-            NSURL *fallbackUrl = [NSURL URLWithString:schemesToTry.firstObject];
-            if (fallbackUrl) {
-                [app openURL:fallbackUrl options:@{} completionHandler:nil];
-                NSString *tryLog = [NSString stringWithFormat:@"appendLog('[FILZA] 尝试强制唤起 Filza 兜底 URL: %@', 'system');", escapeForJS(schemesToTry.firstObject)];
-                [self.webView evaluateJavaScript:tryLog completionHandler:nil];
-            } else {
-                NSString *diagLog = [NSString stringWithFormat:@"appendLog('[ERROR] Filza 唤起失败，请确认已安装巨魔版 Filza。', 'warn');"];
-                [self.webView evaluateJavaScript:diagLog completionHandler:nil];
+            // 不检查 canOpenURL，直接强制 openURL（TrollStore 环境下 canOpenURL 受限）
+            NSURL *primaryUrl = [NSURL URLWithString:schemesToTry.firstObject];
+            if (primaryUrl) {
+                [app openURL:primaryUrl options:@{UIApplicationOpenURLOptionUniversalLinksOnly: @NO} completionHandler:^(BOOL success) {
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        if (success) {
+                            NSString *log = @"appendLog('[FILZA] ✅ Filza 已通过 UIApplication 成功唤起', 'success');";
+                            [self.webView evaluateJavaScript:log completionHandler:nil];
+                        } else {
+                            // 最终兜底：尝试第二个 URL 格式
+                            NSURL *fallbackUrl = [NSURL URLWithString:schemesToTry[1]];
+                            [app openURL:fallbackUrl options:@{UIApplicationOpenURLOptionUniversalLinksOnly: @NO} completionHandler:^(BOOL s2) {
+                                dispatch_async(dispatch_get_main_queue(), ^{
+                                    NSString *log = s2
+                                        ? @"appendLog('[FILZA] ✅ Filza 兜底格式唤起成功', 'success');"
+                                        : @"appendLog('[ERROR] Filza 无法唤起。请确认：1)已安装巨魔版Filza；2)Filza版本支持URL Scheme；3)手动打开Filza导航至 /var/mobile/Documents/ 执行脚本。', 'warn');";
+                                    [self.webView evaluateJavaScript:log completionHandler:nil];
+                                });
+                            }];
+                        }
+                    });
+                }];
             }
         }
     });
@@ -488,21 +503,35 @@ static NSString* escapeForJS(NSString *input) {
 #include <sys/stat.h>
 - (void)checkLockStatusAndNotifyFrontend {
     dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
-        NSString *logPath = @"/var/mobile/Documents/qilong_lock_result.log";
-        NSString *logContent = [NSString stringWithContentsOfFile:logPath encoding:NSUTF8StringEncoding error:nil];
-        if (!logContent) {
-            logContent = @"[NOT_FOUND] 无法读取底层日志（qilong_lock_result.log 不存在）。\n如果是系统级锁定，并未生成独立日志；如果是Filza锁定，说明脚本未执行成功。";
-        }
-        
         struct stat st;
         NSString *statusStr = @"unknown";
+        NSMutableString *logContent = [NSMutableString string];
+        
         if (stat("/private/var/Keychains/keychain-2.db", &st) == 0) {
-            // Check if owner write bit is stripped or APFS immutable flag is set
-            if ((st.st_mode & S_IWUSR) == 0 || (st.st_flags & (UF_IMMUTABLE | SF_IMMUTABLE)) != 0) {
+            int mode = st.st_mode & 0777;
+            int uid = (int)st.st_uid;
+            uint32_t flags = st.st_flags;
+            BOOL writeStripped = (st.st_mode & S_IWUSR) == 0;
+            BOOL immutable = (flags & (UF_IMMUTABLE | SF_IMMUTABLE)) != 0;
+            
+            if (writeStripped || immutable) {
                 statusStr = @"locked";
+                [logContent appendFormat:@"[KEYCHAIN] ✅ 物理锁定验证通过\n"];
+                [logContent appendFormat:@"  权限位: %o (owner write=%@)\n", mode, writeStripped ? @"✅已剥夺" : @"⚠️仍存在"];
+                [logContent appendFormat:@"  所有者 uid: %d (期望 0=root)\n", uid];
+                [logContent appendFormat:@"  不可变标志 flags: 0x%x (UF_IMMUTABLE=%@, SF_IMMUTABLE=%@)\n",
+                    flags,
+                    (flags & UF_IMMUTABLE) ? @"✅" : @"❌",
+                    (flags & SF_IMMUTABLE) ? @"✅" : @"❌"];
+                [logContent appendString:@"\n⚠️ 关于Filza显示「读写」: Filza以root身份运行，root可忽略权限位，这是正常现象。\n"];
+                [logContent appendString:@"真正的验证方法：普通App或securityd无法写入此文件，锁定已生效。"];
             } else {
                 statusStr = @"unlocked";
+                [logContent appendFormat:@"[KEYCHAIN] 🔓 当前状态：未锁定\n"];
+                [logContent appendFormat:@"  权限位: %o\n  所有者 uid: %d\n  flags: 0x%x\n", mode, uid, flags];
             }
+        } else {
+            [logContent appendString:@"[ERROR] 无法读取 keychain-2.db 文件状态（stat 失败）"];
         }
         
         dispatch_async(dispatch_get_main_queue(), ^{
@@ -512,6 +541,7 @@ static NSString* escapeForJS(NSString *input) {
         });
     });
 }
+
 
 // ── 熔断防御矩阵逻辑 ──
 - (void)triggerEmergencyUnlock:(NSString *)reason {
