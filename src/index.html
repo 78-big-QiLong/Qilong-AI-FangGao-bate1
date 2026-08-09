@@ -684,8 +684,13 @@
         <div
             style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%;">
             <div class="fly-in-big" id="splash-big">QiLong-Dynamic-Whitelist(beta2)</div>
-            <div class="fly-in-small" id="splash-small">由QiLong-GOLD400借助骑龙AI定制智能体制作 在非hook与伪装下解决高风险残留问题与环境纯净度问题
-                公益测试第二版积极反馈</div>
+            <div class="fly-in-small" id="splash-small" style="font-family: monospace; text-align: left; background: rgba(0,0,0,0.4); padding: 10px; border-radius: 8px;">
+                [BUILD 4] 修复版打包日志:<br>
+                1. 升级 RootHelper 权限：新增 com.apple.private.security.storage.keychains<br>
+                2. 物理锁定底层重构：加入 open+fchmod 描述符操作及 SQLite EXCLUSIVE 持久锁降级<br>
+                3. Filza URL Scheme 修复：新增多格式轮询 (filza://, x-callback) 并加入 Info.plist 白名单<br>
+                4. 日志系统：实装 🔬详细源码日志 与 COPY 剪贴板功能
+            </div>
         </div>
         <div class="splash-disclaimer">
             项目借助骑龙定制Ai智能体制作 功能ui规则等由AI制作仅供参考<br>
