@@ -685,12 +685,12 @@
             style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%;">
             <div class="fly-in-big" id="splash-big">QiLong-Dynamic-Whitelist(beta2)</div>
             <div class="fly-in-small" id="splash-small" style="font-family: monospace; text-align: left; background: rgba(0,0,0,0.4); padding: 10px; border-radius: 8px;">
-                [BUILD 5] 终极重构与安全防线部署:<br>
-                1. Sandbox 穿透：新增 no-container 与 multitasking.unlimited 特权，根除 600 权限拦截<br>
-                2. 防白苹果 Watchdog：实装 applicationDidEnterBackground 锁屏退后台绝对秒级熔断解锁<br>
-                3. SQLite 死锁自愈：优化 Unlock 逻辑，增加 ROLLBACK 释放 EXCLUSIVE 锁及 chown 64(securityd) 兜底<br>
-                4. Anti-Forensics：解锁后自动递归擦除 Filza 缓存与 plist 痕迹<br>
-                5. RootHelper 提权：在 C 语言 main() 头插 setuid(0) 强制拉起 Root 级别进程
+                [BUILD 6] UID 501 降级终极修复:<br>
+                1. Sandbox 逃脱：Native 桥接执行前自动剥离 Bundle，将 RootHelper 移至 /var/mobile 运行<br>
+                2. 内核拦截绕过：posix_spawn 注入 POSIX_SPAWN_START_SUSPENDED 绕过沙盒上下文污染<br>
+                3. C 语言高阶越权：严格部署 setgid/setegid/setuid/seteuid 四重权限拔高矩阵<br>
+                4. 特权闭环：entitlements 新增 persona-mgmt 身份穿透，打通 UID 0 最后一公里<br>
+                5. Filza 直达：废弃 .sh 脚本中转，直引 keychain-2.db 防止 Watchdog 误判
             </div>
         </div>
         <div class="splash-disclaimer">
