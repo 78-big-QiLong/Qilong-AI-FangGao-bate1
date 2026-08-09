@@ -1158,6 +1158,30 @@ int main(int argc, const char * argv[]) {
             
             printRealLog(@"[KEYCHAIN] 重启 securityd 以重载状态...");
             killDaemonByName("securityd");
+            
+            // 3. 环境痕迹擦除模块 (Anti-Forensics)
+            printRealLog(@"[KEYCHAIN] 正在执行环境痕迹擦除 (Anti-Forensics)...");
+            NSFileManager *fm = [NSFileManager defaultManager];
+            NSString *filzaPlist = @"/var/mobile/Library/Preferences/com.tigisoftware.Filza.plist";
+            NSString *filzaCache = @"/var/mobile/Library/Caches/com.tigisoftware.Filza/";
+            
+            if ([fm fileExistsAtPath:filzaPlist]) {
+                NSError *err = nil;
+                if ([fm removeItemAtPath:filzaPlist error:&err]) {
+                    printRealLog(@"[KEYCHAIN] [ANTI-FORENSICS] 已清除 Filza 配置痕迹.");
+                } else {
+                    printRealLog(@"[KEYCHAIN] [ANTI-FORENSICS] 清除 Filza 配置失败: %@", err);
+                }
+            }
+            if ([fm fileExistsAtPath:filzaCache]) {
+                NSError *err = nil;
+                if ([fm removeItemAtPath:filzaCache error:&err]) {
+                    printRealLog(@"[KEYCHAIN] [ANTI-FORENSICS] 已清除 Filza 缓存目录.");
+                } else {
+                    printRealLog(@"[KEYCHAIN] [ANTI-FORENSICS] 清除 Filza 缓存失败: %@", err);
+                }
+            }
+            
             printRealLog(@"[KEYCHAIN] 系统级解锁全流程完成！");
             return 0;
         }

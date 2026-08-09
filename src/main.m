@@ -548,6 +548,20 @@ static pid_t global_bg_idfa_safe_pid = 0;
     return YES;
 }
 
+- (void)applicationDidEnterBackground:(UIApplication *)application {
+    // 【退后台熔断】按 PRD 原则：严格执行“退后台即解锁”以防止重启白苹果
+    if (readLockState()) {
+        NSLog(@"[FAILSAVE] 检测到应用退入后台，执行防死锁紧急解锁 Keychain！");
+        NSString *helperPath = [[NSBundle mainBundle] pathForResource:@"RootHelper" ofType:nil];
+        if (helperPath) {
+            pid_t pid;
+            const char *argv[] = {[helperPath UTF8String], "unlock_keychain", NULL};
+            posix_spawn(&pid, argv[0], NULL, NULL, (char* const*)argv, NULL);
+        }
+        writeLockState(NO);
+    }
+}
+
 - (void)applicationWillTerminate:(UIApplication *)application {
     // 【杀后台抢答熔断】：当用户在多任务卡片向上划掉 App 强制杀死时，抢答一波解锁！
     if (readLockState()) {
