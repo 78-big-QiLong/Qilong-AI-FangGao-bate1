@@ -317,14 +317,24 @@ static pid_t global_bg_idfa_safe_pid = 0;
     posix_spawn_file_actions_adddup2(&actions, pipefd[1], STDOUT_FILENO);
     posix_spawn_file_actions_addclose(&actions, pipefd[0]);
     
+    // 【致命雷区 2 修复】使用 posix_spawnattr_t 设置特权标志
+    posix_spawnattr_t attr;
+    posix_spawnattr_init(&attr);
+    // 注入 POSIX_SPAWN_START_SUSPENDED（这里通过 flag 位控制，防止沙盒静默拦截 persona，很多越狱开发都会加这个 flag 甚至配合 POSIX_SPAWN_SETEXEC）
+    short flags = POSIX_SPAWN_START_SUSPENDED;
+    posix_spawnattr_setflags(&attr, flags);
+    
     pid_t pid;
-    int status = posix_spawn(&pid, argv[0], &actions, NULL, (char* const*)argv, NULL);
+    int status = posix_spawn(&pid, argv[0], &actions, &attr, (char* const*)argv, NULL);
+    
+    posix_spawnattr_destroy(&attr);
     
     posix_spawn_file_actions_destroy(&actions);
     free(argv);
     close(pipefd[1]); // 父进程关闭管道写端
     
     if (status == 0) {
+        kill(pid, SIGCONT); // 恢复运行 (因为使用了 POSIX_SPAWN_START_SUSPENDED)
         NSLog(@"[SPAWN] RootHelper launched with %d targets (PID: %d)", (argCount - 2), pid);
         
         // 异步读取管道，将 RootHelper 的 stdout 实时转发至前端 WebView 日志面板（低功耗 QOS_CLASS_UTILITY 轨，避开大核）
@@ -549,7 +559,12 @@ static pid_t global_bg_idfa_safe_pid = 0;
             }
             pid_t pid;
             const char *argv[] = {[helperPath UTF8String], "unlock_keychain", NULL};
-            posix_spawn(&pid, argv[0], NULL, NULL, (char* const*)argv, NULL);
+            posix_spawnattr_t attr;
+            posix_spawnattr_init(&attr);
+            posix_spawnattr_setflags(&attr, POSIX_SPAWN_START_SUSPENDED);
+            int status = posix_spawn(&pid, argv[0], NULL, &attr, (char* const*)argv, NULL);
+            posix_spawnattr_destroy(&attr);
+            if (status == 0) kill(pid, SIGCONT);
         }
         writeLockState(NO);
     }
@@ -585,7 +600,12 @@ static pid_t global_bg_idfa_safe_pid = 0;
             }
             pid_t pid;
             const char *argv[] = {[helperPath UTF8String], "unlock_keychain", NULL};
-            posix_spawn(&pid, argv[0], NULL, NULL, (char* const*)argv, NULL);
+            posix_spawnattr_t attr;
+            posix_spawnattr_init(&attr);
+            posix_spawnattr_setflags(&attr, POSIX_SPAWN_START_SUSPENDED);
+            int status = posix_spawn(&pid, argv[0], NULL, &attr, (char* const*)argv, NULL);
+            posix_spawnattr_destroy(&attr);
+            if (status == 0) kill(pid, SIGCONT);
         }
         writeLockState(NO);
     }
@@ -606,7 +626,12 @@ static pid_t global_bg_idfa_safe_pid = 0;
             }
             pid_t pid;
             const char *argv[] = {[helperPath UTF8String], "unlock_keychain", NULL};
-            posix_spawn(&pid, argv[0], NULL, NULL, (char* const*)argv, NULL);
+            posix_spawnattr_t attr;
+            posix_spawnattr_init(&attr);
+            posix_spawnattr_setflags(&attr, POSIX_SPAWN_START_SUSPENDED);
+            int status = posix_spawn(&pid, argv[0], NULL, &attr, (char* const*)argv, NULL);
+            posix_spawnattr_destroy(&attr);
+            if (status == 0) kill(pid, SIGCONT);
         }
         writeLockState(NO);
     }
