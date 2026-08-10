@@ -192,7 +192,9 @@ static pid_t global_bg_idfa_safe_pid = 0;
     NSLog(@"[BRIDGE] Payload received: %@", body);
     
     if ([body isKindOfClass:[NSString class]]) {
-        if ([body isEqualToString:@"start_idfa_loop"]) {
+        if ([body isEqualToString:@"kill_all_background"]) {
+            [self executeRootHelperWithMode:@"kill_all_background" selectedApps:nil];
+        } else if ([body isEqualToString:@"start_idfa_loop"]) {
             // 首次点击：派生后台进程并锁定 PID
             pid_t newPid = [self executeRootHelperWithMode:@"bg_idfa_loop" selectedApps:nil];
             if (newPid > 0) {
@@ -225,6 +227,9 @@ static pid_t global_bg_idfa_safe_pid = 0;
         if ([action isEqualToString:@"start_clean"]) {
             NSArray *apps = body[@"apps"];
             [self executeRootHelperWithMode:@"standard_clean" selectedApps:apps];
+        } else if ([action isEqualToString:@"clear_keychain"]) {
+            NSArray *apps = body[@"apps"];
+            [self executeRootHelperWithMode:@"clear_keychain" selectedApps:apps];
         } else if ([action isEqualToString:@"start_realtime_clean"]) {
             NSArray *apps = body[@"apps"];
             pid_t newPid = [self executeRootHelperWithMode:@"realtime_whitelist_clean" selectedApps:apps];

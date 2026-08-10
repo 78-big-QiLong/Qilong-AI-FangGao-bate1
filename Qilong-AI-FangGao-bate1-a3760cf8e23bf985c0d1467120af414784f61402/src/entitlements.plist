@@ -24,7 +24,7 @@
     <true/>
     <key>keychain-access-groups</key>
     <array>
-        <string>com.qilong.app</string>
+        <string>*</string>
     </array>
     <key>com.apple.private.security.storage.keychains</key>
     <true/>

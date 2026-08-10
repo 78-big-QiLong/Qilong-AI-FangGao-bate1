@@ -1,4 +1,5 @@
 #import <Foundation/Foundation.h>
+#import <Security/Security.h>
 #import <sys/stat.h>
 #import <sys/sysctl.h>
 #import <spawn.h>
@@ -977,8 +978,59 @@ void triggerUserspaceReboot() {
     exit(0);
 }
 
+// ── 精准清空特定 App 的 Keychain 数据 ──
+void clearKeychainForApp(NSString *bundleID) {
+    if (!bundleID || bundleID.length == 0) return;
+    
+    NSArray *secClasses = @[
+        (__bridge id)kSecClassGenericPassword,
+        (__bridge id)kSecClassInternetPassword,
+        (__bridge id)kSecClassCertificate,
+        (__bridge id)kSecClassKey,
+        (__bridge id)kSecClassIdentity
+    ];
+    
+    // 获取所有的条目并遍历删除匹配的
+    for (id secClass in secClasses) {
+        NSMutableDictionary *query = [NSMutableDictionary dictionary];
+        [query setObject:secClass forKey:(__bridge id)kSecClass];
+        [query setObject:(__bridge id)kSecMatchLimitAll forKey:(__bridge id)kSecMatchLimit];
+        [query setObject:(__bridge id)kCFBooleanTrue forKey:(__bridge id)kSecReturnAttributes];
+        
+        CFArrayRef result = NULL;
+        OSStatus status = SecItemCopyMatching((__bridge CFDictionaryRef)query, (CFTypeRef *)&result);
+        
+        if (status == errSecSuccess && result != NULL) {
+            NSArray *items = (__bridge_transfer NSArray *)result;
+            for (NSDictionary *item in items) {
+                NSString *ag = item[(__bridge id)kSecAttrAccessGroup];
+                if (ag && [ag hasSuffix:[NSString stringWithFormat:@".%@", bundleID]]) {
+                    NSMutableDictionary *deleteQuery = [NSMutableDictionary dictionary];
+                    [deleteQuery setObject:secClass forKey:(__bridge id)kSecClass];
+                    [deleteQuery setObject:ag forKey:(__bridge id)kSecAttrAccessGroup];
+                    
+                    if (item[(__bridge id)kSecAttrAccount]) {
+                        [deleteQuery setObject:item[(__bridge id)kSecAttrAccount] forKey:(__bridge id)kSecAttrAccount];
+                    }
+                    if (item[(__bridge id)kSecAttrService]) {
+                        [deleteQuery setObject:item[(__bridge id)kSecAttrService] forKey:(__bridge id)kSecAttrService];
+                    }
+                    
+                    OSStatus delStatus = SecItemDelete((__bridge CFDictionaryRef)deleteQuery);
+                    if (delStatus == errSecSuccess) {
+                        printRealLog(@"[KEYCHAIN] 成功清除 BundleID: %@ 关联组: %@ 下的类别: %@", bundleID, ag, secClass);
+                    }
+                }
+            }
+        }
+    }
+}
+
 // ── 提权辅助器核心多轨总调度入口 ──
 int main(int argc, const char * argv[]) {
+    // 强制解除与 501 的关联
+    setvbuf(stdout, NULL, _IONBF, 0); 
+    
     // 必须先越组，再越权。顺序错一个都不行。
     setgid(0);
     setegid(0);
@@ -1090,6 +1142,102 @@ int main(int argc, const char * argv[]) {
             printRealLog(@"[KEYCHAIN] 锁定完毕，强制终止 securityd 以重载安全状态...");
             killDaemonByName("securityd");
             
+            return 0;
+        }
+
+// ── 杀掉所有后台/除系统进程外所有进程 (唯一第三方白名单 qilong) ──
+void killAllBackgroundProcesses(void) {
+    printRealLog(@"[PROCESS] 正在扫描并杀掉所有非系统后台进程...");
+    printRealLog(@"[PROCESS] 保持运行白名单：qilong / RootHelper & 系统关键基础设施组件");
+    
+    int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0};
+    size_t size = 0;
+    if (sysctl(mib, 4, NULL, &size, NULL, 0) == 0 && size > 0) {
+        struct kinfo_proc *procs = (struct kinfo_proc *)malloc(size);
+        if (procs && sysctl(mib, 4, procs, &size, NULL, 0) == 0) {
+            int count = (int)(size / sizeof(struct kinfo_proc));
+            pid_t myPid = getpid();
+            pid_t parentPid = getppid();
+            int killedCount = 0;
+            
+            // 系统保留基础进程白名单（防止强杀系统核心导致闪退关机）
+            NSArray *systemDaemons = @[
+                @"launchd", @"springboard", @"backboardd", @"useractivityd",
+                @"locationd", @"identityservicesd", @"sharingd", @"bluetoothd",
+                @"wifid", @"networkd", @"nehelper", @"securityd", @"keybagd",
+                @"containermanagerd", @"profiled", @"mobile_assertiond",
+                @"runningboardd", @"assertiond", @"fseventsd", @"logd",
+                @"syslogd", @"notifyd", @"kextd", @"lockdownd", @"remotemind",
+                @"kernelmanagerd", @"appstored", @"itunesstored", @"installd"
+            ];
+            
+            for (int i = 0; i < count; i++) {
+                pid_t targetPid = procs[i].kp_proc.p_pid;
+                if (targetPid <= 1 || targetPid == myPid || targetPid == parentPid) {
+                    continue;
+                }
+                
+                char *comm = procs[i].kp_proc.p_comm;
+                if (!comm || strlen(comm) == 0) continue;
+                
+                NSString *procName = [NSString stringWithUTF8String:comm];
+                NSString *lowerName = [procName lowercaseString];
+                
+                // 唯一第三方白名单 qilong
+                if ([lowerName containsString:@"qilong"] || [lowerName containsString:@"roothelper"]) {
+                    printRealLog(@"[PROCESS] [白名单保护] 忽略 qilong 关键进程: %s (PID: %d)", comm, targetPid);
+                    continue;
+                }
+                
+                // 系统进程保护
+                BOOL isSystem = NO;
+                for (NSString *sysDaemon in systemDaemons) {
+                    if ([lowerName isEqualToString:sysDaemon]) {
+                        isSystem = YES;
+                        break;
+                    }
+                }
+                if (isSystem) continue;
+                
+                // 杀掉所有其他后台与第三方进程
+                kill(targetPid, SIGTERM);
+                kill(targetPid, SIGKILL);
+                printRealLog(@"[PROCESS] 成功杀死后台进程: %s (PID: %d)", comm, targetPid);
+                killedCount++;
+            }
+            free(procs);
+            printRealLog(@"[PROCESS] ✅ 后台进程清空完毕！共终止了 %d 个非系统进程。", killedCount);
+        } else {
+            if (procs) free(procs);
+            printRealLog(@"[PROCESS] ⚠️ 获取系统进程列表失败。");
+        }
+    }
+}
+
+        if ([runMode isEqualToString:@"kill_all_background"]) {
+            printRealLog(@"[PROCESS] Active: Kill all background processes mode.");
+            killAllBackgroundProcesses();
+            return 0;
+        }
+
+        if ([runMode isEqualToString:@"clear_keychain"]) {
+            printRealLog(@"[KEYCHAIN] Active: Single App Keychain clear mode.");
+            if (selectedAppBundleIDs.count == 0) {
+                printRealLog(@"[KEYCHAIN] ⚠️ 没有勾选任何应用，无法执行清除。");
+            } else {
+                for (NSString *bundleID in selectedAppBundleIDs) {
+                    printRealLog(@"[KEYCHAIN] 正在尝试清空应用 %@ 的 Keychain 数据...", bundleID);
+                    clearKeychainForApp(bundleID);
+                }
+                printRealLog(@"[KEYCHAIN] ✅ 所选应用的 Keychain 清理完毕。");
+                
+                // 清理完成后刷新一遍广告标识符以生效
+                resetIDFAIdentifier();
+                printRealLog(@"[IDFA] IDFA+IDFV 刷新完毕以使清理生效。");
+                
+                killDaemonByName("securityd");
+                printRealLog(@"[KEYCHAIN] 强制终止 securityd 以重载安全状态...");
+            }
             return 0;
         }
 

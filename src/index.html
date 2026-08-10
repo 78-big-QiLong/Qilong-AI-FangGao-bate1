@@ -324,30 +324,39 @@
             align-items: center;
             gap: 6px;
             padding: 7px 12px;
-            background: rgba(255,255,255,0.04);
-            border-bottom: 1px solid rgba(255,255,255,0.06);
+            background: rgba(255, 255, 255, 0.04);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
             border-radius: 14px 14px 0 0;
             flex-shrink: 0;
         }
+
         .log-header-dot {
-            width: 8px; height: 8px; border-radius: 50%;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
         }
+
         .log-header-title {
             font-size: 0.7rem;
             color: #666680;
             letter-spacing: 0.5px;
             flex: 1;
         }
+
         .log-clear-btn {
             font-size: 0.65rem;
             color: #555568;
             background: none;
-            border: 1px solid rgba(255,255,255,0.08);
+            border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 6px;
             padding: 2px 7px;
             cursor: pointer;
         }
-        .log-clear-btn:active { color: #ff5555; border-color: #ff5555; }
+
+        .log-clear-btn:active {
+            color: #ff5555;
+            border-color: #ff5555;
+        }
 
         /* 日志条目容器 */
         .log-body {
@@ -391,22 +400,52 @@
             flex-direction: column;
             gap: 1px;
         }
-        .log-main { line-height: 1.45; }
-        .log-sub  { font-size: 0.68rem; opacity: 0.55; line-height: 1.35; }
 
-        .log-success .log-main { color: #00ff88; }
-        .log-success .log-ts   { color: #003322; }
+        .log-main {
+            line-height: 1.45;
+        }
 
-        .log-warn .log-main    { color: #ffbb44; }
-        .log-warn .log-ts      { color: #332200; }
+        .log-sub {
+            font-size: 0.68rem;
+            opacity: 0.55;
+            line-height: 1.35;
+        }
 
-        .log-system .log-main  { color: #44ddff; }
-        .log-system .log-ts    { color: #002233; }
+        .log-success .log-main {
+            color: #00ff88;
+        }
 
-        .log-info .log-main    { color: #a0a0c0; }
+        .log-success .log-ts {
+            color: #003322;
+        }
 
-        .log-error .log-main   { color: #ff5566; }
-        .log-error .log-ts     { color: #330011; }
+        .log-warn .log-main {
+            color: #ffbb44;
+        }
+
+        .log-warn .log-ts {
+            color: #332200;
+        }
+
+        .log-system .log-main {
+            color: #44ddff;
+        }
+
+        .log-system .log-ts {
+            color: #002233;
+        }
+
+        .log-info .log-main {
+            color: #a0a0c0;
+        }
+
+        .log-error .log-main {
+            color: #ff5566;
+        }
+
+        .log-error .log-ts {
+            color: #330011;
+        }
 
         /* 三连并发次级功能按钮组 */
         .link-group {
@@ -684,42 +723,49 @@
         <div
             style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%;">
             <div class="fly-in-big" id="splash-big">QiLong-Dynamic-Whitelist(beta2)</div>
-            <div class="fly-in-small" id="splash-small" style="font-family: monospace; text-align: left; background: rgba(0,0,0,0.45); border: 1px solid rgba(0,255,102,0.2); padding: 12px; border-radius: 10px; max-height: 42vh; overflow-y: auto;">
-                <div style="font-size: 0.88rem; font-weight: 800; color: #00ff66; margin-bottom: 6px; border-bottom: 1px dashed rgba(0,255,102,0.3); padding-bottom: 4px;">
+            <div class="fly-in-small" id="splash-small"
+                style="font-family: monospace; text-align: left; background: rgba(0,0,0,0.45); border: 1px solid rgba(0,255,102,0.2); padding: 12px; border-radius: 10px; max-height: 42vh; overflow-y: auto;">
+                <div
+                    style="font-size: 0.88rem; font-weight: 800; color: #00ff66; margin-bottom: 6px; border-bottom: 1px dashed rgba(0,255,102,0.3); padding-bottom: 4px;">
                     📦 开发/测试版本详细构建报告 (v1.0.8 Build)
                 </div>
-                
+
                 <div style="color: #bbb; font-size: 0.75rem; line-height: 1.45; margin-bottom: 6px;">
                     🛠 <strong>构建元数据</strong>: 2026-08-10 05:00 | iOS 15.0 - 16.7 | APFS物理防写 + 闪退防爆全面重构
                 </div>
 
-                <div style="color: #ffd700; font-size: 0.78rem; font-weight: 800; margin-top: 6px;">👑 1. TrollStore Persona 99 零级提权</div>
+                <div style="color: #ffd700; font-size: 0.78rem; font-weight: 800; margin-top: 6px;">👑 1. TrollStore
+                    Persona 99 零级提权</div>
                 <div style="color: #ccc; font-size: 0.73rem; line-height: 1.4; padding-left: 6px;">
                     • TSRootBinaries 显式绑定，Info.plist 注入 TSRootBinaries 声明<br>
                     • posix_spawnattr_set_persona_np (UID=0, GID=0, Persona=99) 突破 501 限制<br>
                     • Filza canOpenURL 安全探测唤起，彻底解决 ARC Block 栈野指针闪退
                 </div>
 
-                <div style="color: #00ffff; font-size: 0.78rem; font-weight: 800; margin-top: 6px;">🔒 2. APFS 真实物理锁定机制</div>
+                <div style="color: #00ffff; font-size: 0.78rem; font-weight: 800; margin-top: 6px;">🔒 2. APFS 真实物理锁定机制
+                </div>
                 <div style="color: #ccc; font-size: 0.73rem; line-height: 1.4; padding-left: 6px;">
                     • sqlite3 PRAGMA wal_checkpoint(TRUNCATE) 强制刷新落盘<br>
                     • APFS UF_IMMUTABLE / SF_IMMUTABLE 不可变物理锁 + chown 0:0 + chmod 0400 真正剥夺写权<br>
                     • sys/stat.h 实测物理权限与标志位，Filza 查看真实只读锁定
                 </div>
 
-                <div style="color: #ff00ff; font-size: 0.78rem; font-weight: 800; margin-top: 6px;">🛸 3. 后台永生保活 (Background Keep-Alive)</div>
+                <div style="color: #ff00ff; font-size: 0.78rem; font-weight: 800; margin-top: 6px;">🛸 3. 后台永生保活
+                    (Background Keep-Alive)</div>
                 <div style="color: #ccc; font-size: 0.73rem; line-height: 1.4; padding-left: 6px;">
                     • CLLocationManager 最低功耗定位保活，锁屏与退后台不冻结<br>
                     • Info.plist UIBackgroundModes (location/fetch) 完整声明
                 </div>
 
-                <div style="color: #ffaa00; font-size: 0.78rem; font-weight: 800; margin-top: 6px;">🛡️ 4. 零损耗防御矩阵 & JS 防破裂</div>
+                <div style="color: #ffaa00; font-size: 0.78rem; font-weight: 800; margin-top: 6px;">🛡️ 4. 零损耗防御矩阵 & JS
+                    防破裂</div>
                 <div style="color: #ccc; font-size: 0.73rem; line-height: 1.4; padding-left: 6px;">
                     • escapeForJS 全安全转义，杜绝换行符与反斜杠导致的 WebKit 崩溃<br>
                     • 热熔断 (Serious/Critical) + 电量 (≤15%) / 省电模式自动熔断解锁
                 </div>
 
-                <div style="color: #ff3232; font-size: 0.78rem; font-weight: 800; margin-top: 6px;">🏥 5. 崩溃自愈状态机 (State Journaling)</div>
+                <div style="color: #ff3232; font-size: 0.78rem; font-weight: 800; margin-top: 6px;">🏥 5. 崩溃自愈状态机 (State
+                    Journaling)</div>
                 <div style="color: #ccc; font-size: 0.73rem; line-height: 1.4; padding-left: 6px;">
                     • lock_state.json 实时持久化记账<br>
                     • 开机 0.1 秒无条件自动自愈解锁
@@ -768,14 +814,16 @@
 
         <div class="button-group">
             <button class="btn btn-select" id="btn-select" onclick="clickSelect()">勾选应用</button>
-            <button class="btn btn-dynamic" id="btn-dynamic-menu" onclick="toggleModal('modal-dynamic-menu', true)">启动动态白名单</button>
+            <button class="btn btn-dynamic" id="btn-dynamic-menu"
+                onclick="toggleModal('modal-dynamic-menu', true)">启动动态白名单</button>
             <button class="btn btn-execute" id="btn-execute" onclick="clickExecute()">清理风险残留</button>
-            <button class="btn btn-keychain" id="btn-keychain-2.db" onclick="clickKeychain2DB()">keychain-2.db未锁定</button>
+            <button class="btn btn-keychain" id="btn-keychain-2.db"
+                onclick="clickKeychain2DB()">keychain-2.db未锁定</button>
         </div>
 
         <div class="button-group">
-            <button class="btn btn-select" id="btn-reserved-4">测试4</button>
-            <button class="btn btn-select" id="btn-reserved-1">测试1</button>
+            <button class="btn btn-select" id="btn-reserved-4" onclick="clickClearKeychain()" style="color: #ff5555; text-shadow: 0 0 6px rgba(255, 85, 85, 0.6);">清理所选keychain</button>
+            <button class="btn btn-select" id="btn-reserved-1" onclick="clickKillAllBackground()" style="color: #ffaa00; text-shadow: 0 0 6px rgba(255, 170, 0, 0.6);">清空后台</button>
             <button class="btn btn-select" id="btn-reserved-2">测试2</button>
             <button class="btn btn-select" id="btn-reserved-3">测试3</button>
         </div>
@@ -787,7 +835,8 @@
                 <div class="log-header-dot" style="background:#febc2e"></div>
                 <div class="log-header-dot" style="background:#28c840"></div>
                 <span class="log-header-title">SYSTEM LOG · 系统日志</span>
-                <button class="log-clear-btn" id="btn-copy-log" onclick="copyAllLogs()" style="margin-right:6px; background: rgba(100,80,255,0.18); color:#bb88ff; border:1px solid rgba(140,80,255,0.3);">COPY</button>
+                <button class="log-clear-btn" id="btn-copy-log" onclick="copyAllLogs()"
+                    style="margin-right:6px; background: rgba(100,80,255,0.18); color:#bb88ff; border:1px solid rgba(140,80,255,0.3);">COPY</button>
                 <button class="log-clear-btn" onclick="clearLog()">CLEAR</button>
             </div>
             <!-- 日志内容体 -->
@@ -795,13 +844,15 @@
                 <div class="log-line log-system" id="log-init-line">
                     <span class="log-ts">--:--:--</span>
                     <span class="log-icon">ℹ</span>
-                    <span class="log-content"><span class="log-main">内核初始化完成 · Kernel initialized</span><span class="log-sub">由 QiLong-GOLD400 · QiLong AI 定制智能体制作</span></span>
+                    <span class="log-content"><span class="log-main">内核初始化完成 · Kernel initialized</span><span
+                            class="log-sub">由 QiLong-GOLD400 · QiLong AI 定制智能体制作</span></span>
                 </div>
             </div>
         </div>
 
         <div class="link-group">
-            <button class="btn-link" id="btn-verbose-log" onclick="toggleModal('modal-verbose-log', true)" style="color: #bb88ff;">🔬 详细日志</button>
+            <button class="btn-link" id="btn-verbose-log" onclick="toggleModal('modal-verbose-log', true)"
+                style="color: #bb88ff;">🔬 详细日志</button>
             <button class="btn-link" id="btn-tutorial" onclick="toggleModal('modal-tutorial', true)">使用教程</button>
             <button class="btn-link" id="btn-lang" onclick="toggleModal('modal-lang', true)">🌐语言</button>
             <button class="btn-link" id="btn-channel" onclick="toggleModal('modal-channel', true)">交流频道</button>
@@ -815,13 +866,22 @@
     <!-- ── 动态白名单二级菜单弹窗 ── -->
     <div class="modal-overlay" id="modal-dynamic-menu">
         <div class="modal-box" style="max-width: 320px; width: 85%; padding: 22px;">
-            <div class="modal-title" style="color: #ff5555; font-size: 1.15rem; font-weight: 900; margin-bottom: 20px;">选择白名单模式</div>
-            <div class="modal-list" style="text-align: center; display: flex; flex-direction: column; gap: 15px; padding: 10px;">
-                <button class="btn btn-dynamic" id="btn-dynamic" onclick="toggleModal('modal-dynamic-menu', false); clickDynamicRefresh();" style="width: 100%;">动态白名单(普通模式)</button>
-                <button class="btn btn-dynamic" id="btn-dynamic-safe" onclick="toggleModal('modal-dynamic-menu', false); clickDynamicRefreshSafe();" style="width: 100%; color: #00ffaa; text-shadow: 0 0 6px rgba(0, 255, 170, 0.6);">动态白名单(锁定模式)</button>
-                <button class="btn btn-dynamic" id="btn-dynamic-light" onclick="toggleModal('modal-dynamic-menu', false); alert('轻量模式功能开发中...');" style="width: 100%; color: #00ccff; text-shadow: 0 0 6px rgba(0, 204, 255, 0.6);">动态白名单(轻量模式)</button>
+            <div class="modal-title" style="color: #ff5555; font-size: 1.15rem; font-weight: 900; margin-bottom: 20px;">
+                选择白名单模式</div>
+            <div class="modal-list"
+                style="text-align: center; display: flex; flex-direction: column; gap: 15px; padding: 10px;">
+                <button class="btn btn-dynamic" id="btn-dynamic"
+                    onclick="toggleModal('modal-dynamic-menu', false); clickDynamicRefresh();"
+                    style="width: 100%;">动态白名单(普通模式)默认</button>
+                <button class="btn btn-dynamic" id="btn-dynamic-safe"
+                    onclick="toggleModal('modal-dynamic-menu', false); clickDynamicRefreshSafe();"
+                    style="width: 100%; color: #00ffaa; text-shadow: 0 0 6px rgba(0, 255, 170, 0.6);">动态白名单(锁定模式)keychain锁定后用这个</button>
+                <button class="btn btn-dynamic" id="btn-dynamic-light"
+                    onclick="toggleModal('modal-dynamic-menu', false); alert('轻量模式功能开发中...');"
+                    style="width: 100%; color: #00ccff; text-shadow: 0 0 6px rgba(0, 204, 255, 0.6);">动态白名单(轻量模式)为老机型减负优化</button>
             </div>
-            <button class="btn-close" style="margin-top: 20px;" onclick="toggleModal('modal-dynamic-menu', false)">取消</button>
+            <button class="btn-close" style="margin-top: 20px;"
+                onclick="toggleModal('modal-dynamic-menu', false)">取消</button>
         </div>
     </div>
 
@@ -870,38 +930,50 @@
     <!-- ── 详细日志设置弹窗 ── -->
     <div class="modal-overlay" id="modal-verbose-log">
         <div class="modal-box" style="max-width: 400px; width: 92%; padding: 20px;">
-            <div class="modal-title" style="color: #bb88ff; font-size: 1.1rem; font-weight: 900;">🔬 详细日志 (Verbose Log)</div>
-            <div class="modal-list" style="max-height: 340px; text-align: left; gap: 10px; padding: 2px; overflow-y: auto;">
+            <div class="modal-title" style="color: #bb88ff; font-size: 1.1rem; font-weight: 900;"> 详细日志 (Verbose Log)
+            </div>
+            <div class="modal-list"
+                style="max-height: 340px; text-align: left; gap: 10px; padding: 2px; overflow-y: auto;">
 
                 <!-- 开关 -->
-                <div style="background: rgba(140,80,255,0.08); border: 1px solid rgba(140,80,255,0.25); border-radius: 10px; padding: 12px; display: flex; align-items: center; justify-content: space-between;">
+                <div
+                    style="background: rgba(140,80,255,0.08); border: 1px solid rgba(140,80,255,0.25); border-radius: 10px; padding: 12px; display: flex; align-items: center; justify-content: space-between;">
                     <div>
-                        <div style="font-size: 0.9rem; font-weight: 800; color: #cc99ff;">记录源码级详细日志</div>
+                        <div style="font-size: 0.9rem; font-weight: 800; color: #cc99ff;">记录详细日志供测试</div>
                         <div style="font-size: 0.72rem; color: #888; margin-top: 3px;">含文件、函数、行号、系统响应码</div>
                     </div>
-                    <label style="position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0;">
-                        <input type="checkbox" id="toggle-verbose" onchange="onVerboseToggle(this)" style="opacity:0; width:0; height:0;">
-                        <span style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background:#333; border-radius:24px; transition:.3s;" id="verbose-slider"></span>
-                        <span style="position:absolute; content:''; height:18px; width:18px; left:3px; bottom:3px; background:#fff; border-radius:50%; transition:.3s; pointer-events:none;" id="verbose-knob"></span>
+                    <label
+                        style="position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0;">
+                        <input type="checkbox" id="toggle-verbose" onchange="onVerboseToggle(this)"
+                            style="opacity:0; width:0; height:0;">
+                        <span
+                            style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background:#333; border-radius:24px; transition:.3s;"
+                            id="verbose-slider"></span>
+                        <span
+                            style="position:absolute; content:''; height:18px; width:18px; left:3px; bottom:3px; background:#fff; border-radius:50%; transition:.3s; pointer-events:none;"
+                            id="verbose-knob"></span>
                     </label>
                 </div>
 
-                <div style="background: rgba(255,170,0,0.06); border: 1px solid rgba(255,170,0,0.2); border-radius: 8px; padding: 8px 10px;">
+                <div
+                    style="background: rgba(255,170,0,0.06); border: 1px solid rgba(255,170,0,0.2); border-radius: 8px; padding: 8px 10px;">
                     <div style="font-size: 0.72rem; color: #ffaa00; line-height: 1.5;">
                         ⚠️ <strong>非开发者/测试者不建议开启</strong><br>
-                        详细日志会记录每条底层系统调用与响应（含 chmod 结果、stat 返回码、securityd 状态等），占用日志缓存较多，影响日志面板滚动性能。<br>
-                        <span style="color: #888;">日志不会上传至任何服务器，仅在本次 App 运行期间保存在内存中。</span>
+                        详细日志会记录每条调用响应（含chmod 结果、stat返回码、securityd状态等）占用大量后台缓存影响性能。<br>
+                        <span style="color: #888;">如需上传日志与奔溃记录请复制至QQ群或邮箱</span>
                     </div>
                 </div>
 
                 <!-- 日志过滤选项 -->
-                <div style="background: rgba(0,200,255,0.05); border: 1px solid rgba(0,200,255,0.15); border-radius: 8px; padding: 10px;">
-                    <div style="font-size: 0.8rem; font-weight: 800; color: #00ccff; margin-bottom: 6px;">📋 详细日志包含内容：</div>
+                <div
+                    style="background: rgba(0,200,255,0.05); border: 1px solid rgba(0,200,255,0.15); border-radius: 8px; padding: 10px;">
+                    <div style="font-size: 0.8rem; font-weight: 800; color: #00ccff; margin-bottom: 6px;">📋 详细日志包含内容：
+                    </div>
                     <div style="font-size: 0.72rem; color: #bbb; line-height: 1.7;">
                         ✓ &nbsp;源文件 / 函数名 / 行号 (如 <code style="color:#00ffaa">RootHelper.m:1020 chmod()</code>)<br>
                         ✓ &nbsp;系统调用返回值 (如 <code style="color:#00ffaa">result: 0 = 成功, -1 = 拒绝</code>)<br>
-                        ✓ &nbsp;stat() 物理权限位 (如 <code style="color:#00ffaa">st_mode: 0o444</code>)<br>
-                        ✓ &nbsp;securityd / Keychain 守护进程状态响应<br>
+                        ✓ &nbsp;stat() 调用权限位 (如 <code style="color:#00ffaa">st_mode: 0o444</code>)<br>
+                        ✓ &nbsp;securityd / Keychain 相关进程状态响应<br>
                         ✓ &nbsp;Bridge 通信 IPC 完整包体<br>
                         ✓ &nbsp;时间戳精确到毫秒
                     </div>
@@ -914,56 +986,74 @@
 
             </div>
             <div style="display: flex; gap: 8px; margin-top: 12px;">
-                <button class="btn-close" style="flex: 1; background: #1a0040; color: #888; border: 1px solid rgba(140,80,255,0.2); padding: 10px 0; border-radius: 8px; margin-top:0;" onclick="copyAllLogs()">📋 复制所有日志</button>
-                <button class="btn-close" style="flex: 1; background: linear-gradient(135deg,#6600cc,#220066); color: #fff; border: none; padding: 10px 0; border-radius: 8px; margin-top:0; font-weight:900;" onclick="toggleModal('modal-verbose-log', false)">完成</button>
+                <button class="btn-close"
+                    style="flex: 1; background: #1a0040; color: #888; border: 1px solid rgba(140,80,255,0.2); padding: 10px 0; border-radius: 8px; margin-top:0;"
+                    onclick="copyAllLogs()">📋 复制所有日志</button>
+                <button class="btn-close"
+                    style="flex: 1; background: linear-gradient(135deg,#6600cc,#220066); color: #fff; border: none; padding: 10px 0; border-radius: 8px; margin-top:0; font-weight:900;"
+                    onclick="toggleModal('modal-verbose-log', false)">完成</button>
             </div>
         </div>
     </div>
 
     <!-- ── keychain-2.db锁定结果弹窗 ── -->
     <div class="modal-overlay" id="modal-lock-result">
-        <div class="modal-box" style="max-width: 380px; width: 92%; padding: 22px; border: 1px solid rgba(0, 255, 255, 0.35);">
-            <div class="modal-title" style="color: #00ffff; font-size: 1.15rem; font-weight: 900;">🔒 物理锁定校验报告</div>
+        <div class="modal-box"
+            style="max-width: 380px; width: 92%; padding: 22px; border: 1px solid rgba(0, 255, 255, 0.35);">
+            <div class="modal-title" style="color: #00ffff; font-size: 1.15rem; font-weight: 900;">🔒
+                keychain-2.db锁定读取检测</div>
             <div class="modal-list" style="text-align: left; gap: 12px; padding: 2px;">
-                <div id="lock-result-status" style="background: rgba(0,255,255,0.06); border: 1px solid rgba(0,255,255,0.15); border-radius: 12px; padding: 12px; color: #00ffff; font-weight: 800; font-size: 0.9rem; line-height: 1.5;">
+                <div id="lock-result-status"
+                    style="background: rgba(0,255,255,0.06); border: 1px solid rgba(0,255,255,0.15); border-radius: 12px; padding: 12px; color: #00ffff; font-weight: 800; font-size: 0.9rem; line-height: 1.5;">
                     校验中...
                 </div>
                 <div style="font-size: 0.8rem; color: #ccc; line-height: 1.5; padding: 0 4px; margin-top: 10px;">
                     <strong>底层执行日志：</strong>
-                    <div id="lock-result-log" style="background: rgba(0,0,0,0.5); padding: 8px; border-radius: 6px; font-family: monospace; font-size: 0.75rem; color: #00ff66; margin-top: 6px; white-space: pre-wrap; word-wrap: break-word; max-height: 150px; overflow-y: auto;">
+                    <div id="lock-result-log"
+                        style="background: rgba(0,0,0,0.5); padding: 8px; border-radius: 6px; font-family: monospace; font-size: 0.75rem; color: #00ff66; margin-top: 6px; white-space: pre-wrap; word-wrap: break-word; max-height: 150px; overflow-y: auto;">
                         读取中...
                     </div>
                 </div>
             </div>
             <div style="display: flex; gap: 10px; margin-top: 20px; flex-direction: column;">
-                <button class="btn-close" style="width: 100%; background: #00ffff; color: #141419; font-weight: 900; font-size: 0.95rem; border: none; box-shadow: 0 4px 15px rgba(0,255,255,0.3); padding: 12px 0; border-radius: 10px; margin-top: 0;" onclick="toggleModal('modal-lock-result', false)">我知道了</button>
+                <button class="btn-close"
+                    style="width: 100%; background: #00ffff; color: #141419; font-weight: 900; font-size: 0.95rem; border: none; box-shadow: 0 4px 15px rgba(0,255,255,0.3); padding: 12px 0; border-radius: 10px; margin-top: 0;"
+                    onclick="toggleModal('modal-lock-result', false)">我知道了</button>
             </div>
         </div>
     </div>
 
     <!-- ── keychain-2.db锁定警告弹窗 ── -->
     <div class="modal-overlay" id="modal-keychain-warn">
-        <div class="modal-box" style="max-width: 380px; width: 92%; padding: 22px; border: 1px solid rgba(255, 170, 0, 0.35);">
+        <div class="modal-box"
+            style="max-width: 380px; width: 92%; padding: 22px; border: 1px solid rgba(255, 170, 0, 0.35);">
             <div class="modal-title" style="color: #ffaa00; font-size: 1.15rem; font-weight: 900;">⚠️ 高危操作警告</div>
             <div class="modal-list" style="max-height: 290px; text-align: left; gap: 12px; padding: 2px;">
-                <div style="background: rgba(255,170,0,0.06); border: 1px solid rgba(255,170,0,0.15); border-radius: 12px; padding: 12px; color: #ffaa00; font-weight: 800; font-size: 0.85rem; line-height: 1.5;">
-                    该功能有可能造成白苹果和崩溃！
+                <div
+                    style="background: rgba(255,170,0,0.06); border: 1px solid rgba(255,170,0,0.15); border-radius: 12px; padding: 12px; color: #ffaa00; font-weight: 800; font-size: 0.85rem; line-height: 1.5;">
+                    使用完立即取消锁定否则可能造成白苹果和崩溃 建议使用系统级锁定
                 </div>
                 <div style="font-size: 0.82rem; color: #ccc; line-height: 1.5; padding: 0 4px;">
-                    使用完毕后请<strong>及时关闭</strong>。切勿在未关闭时进行以下高危操作：
+                    先清理风险残留和keychain再开启<strong>环境依托巨魔filza</strong>。切勿在未关闭时进行以下高危操作：
                     <ul style="margin: 8px 0 0 16px; padding: 0; list-style-type: disc;">
-                        <li style="margin-bottom: 6px; color: #ff8888;">关机 / 重启</li>
-                        <li style="margin-bottom: 6px; color: #ff8888;">修改系统文件</li>
+                        <li style="margin-bottom: 6px; color: #ff8888;">关机/重启/注销/卸载</li>
+                        <li style="margin-bottom: 6px; color: #ff8888;">修改系统文件/安装deb/注入插件</li>
                         <li style="margin-bottom: 6px; color: #ff8888;">使用“清理风险残留”功能</li>
                     </ul>
                 </div>
             </div>
             <div style="display: flex; gap: 10px; margin-top: 20px; flex-direction: column;">
                 <div style="display: flex; gap: 10px;">
-                    <button class="btn-close" style="flex: 1; background: #00ffff; color: #141419; font-weight: 900; font-size: 0.95rem; border: none; box-shadow: 0 4px 15px rgba(0,255,255,0.3); padding: 12px 0; border-radius: 10px; margin-top: 0;" onclick="lockKeychainFilza()">借助filza锁定</button>
-                    <button class="btn-close" style="flex: 1; background: #ffaa00; color: #141419; font-weight: 900; font-size: 0.95rem; border: none; box-shadow: 0 4px 15px rgba(255,170,0,0.3); padding: 12px 0; border-radius: 10px; margin-top: 0;" onclick="lockKeychainSystem()">系统级锁定</button>
+                    <button class="btn-close"
+                        style="flex: 1; background: #00ffff; color: #141419; font-weight: 900; font-size: 0.95rem; border: none; box-shadow: 0 4px 15px rgba(0,255,255,0.3); padding: 12px 0; border-radius: 10px; margin-top: 0;"
+                        onclick="lockKeychainFilza()">借助filza锁定</button>
+                    <button class="btn-close"
+                        style="flex: 1; background: #ffaa00; color: #141419; font-weight: 900; font-size: 0.95rem; border: none; box-shadow: 0 4px 15px rgba(255,170,0,0.3); padding: 12px 0; border-radius: 10px; margin-top: 0;"
+                        onclick="lockKeychainSystem()">系统级锁定(推荐)</button>
                 </div>
-                <button class="btn-close" style="width: 100%; background: #141419; color: #888892; font-weight: 900; border: 1px solid rgba(255,255,255,0.1); padding: 12px 0; border-radius: 10px; margin-top: 0;" onclick="toggleModal('modal-keychain-warn', false)">取消</button>
+                <button class="btn-close"
+                    style="width: 100%; background: #141419; color: #888892; font-weight: 900; border: 1px solid rgba(255,255,255,0.1); padding: 12px 0; border-radius: 10px; margin-top: 0;"
+                    onclick="toggleModal('modal-keychain-warn', false)">取消</button>
             </div>
         </div>
     </div>
@@ -1293,32 +1383,32 @@
 
         // ── 日志双语翻译表（关键英文标签 → 中文注释）──
         const LOG_TRANSLATIONS = {
-            '[IDFA]':       '[标识符]',
-            '[NVRAM]':      '[NVRAM]',
-            '[KERNEL]':     '[内核]',
-            '[REALTIME]':   '[实时]',
-            '[DAEMON]':     '[守护]',
-            '[BRIDGE]':     '[通信]',
-            '[LANG]':       '[语言]',
-            '[UI]':         '[界面]',
-            '[ERROR]':      '[错误]',
-            '[VARCLEAN]':   '[残留清理]',
-            '[KEYCHAIN]':   '[钥匙链]',
-            '[HOTSPOT]':    '[热点]',
-            '[SIMULATOR]':  '[模拟]',
-            'Phase A':      'A阶段(缓存)',
-            'Phase B':      'B阶段(钥匙链/标识)',
-            'Phase C':      'C阶段(NVRAM/越狱残留)',
-            'complete':     '完成',
-            'Done':         '完成',
-            'Starting':     '启动',
+            '[IDFA]': '[标识符]',
+            '[NVRAM]': '[NVRAM]',
+            '[KERNEL]': '[内核]',
+            '[REALTIME]': '[实时]',
+            '[DAEMON]': '[守护]',
+            '[BRIDGE]': '[通信]',
+            '[LANG]': '[语言]',
+            '[UI]': '[界面]',
+            '[ERROR]': '[无效]',
+            '[VARCLEAN]': '[残留清理]',
+            '[KEYCHAIN]': '[钥匙链]',
+            '[HOTSPOT]': '[热点]',
+            '[SIMULATOR]': '[模拟]',
+            'Phase A': '动态A(缓存)',
+            'Phase B': '动态B(钥匙链/标识)',
+            'Phase C': '动态C(NVRAM/越狱残留)',
+            'complete': '完成',
+            'Done': '完成',
+            'Starting': '启动',
             'Initializing': '初始化',
-            'Waiting':      '等待下轮',
-            'Exiting':      '退出',
-            'Removed':      '已移除',
-            'Cleaned':      '已清理',
-            'refreshed':    '已刷新',
-            'blocked':      '已禁用',
+            'Waiting': '静默挂起',
+            'Exiting': '退出',
+            'Removed': '已移除',
+            'Cleaned': '已清理',
+            'refreshed': '已刷新',
+            'blocked': '已禁用',
         };
 
         function getLogSub(text) {
@@ -1336,7 +1426,7 @@
 
         function getNow() {
             const d = new Date();
-            return [d.getHours(), d.getMinutes(), d.getSeconds()].map(n => String(n).padStart(2,'0')).join(':');
+            return [d.getHours(), d.getMinutes(), d.getSeconds()].map(n => String(n).padStart(2, '0')).join(':');
         }
 
         // ─────────────────────────────────────────────────────────────
@@ -1349,19 +1439,19 @@
         function onVerboseToggle(checkbox) {
             verboseEnabled = checkbox.checked;
             const slider = document.getElementById('verbose-slider');
-            const knob   = document.getElementById('verbose-knob');
-            const txt    = document.getElementById('verbose-status-text');
+            const knob = document.getElementById('verbose-knob');
+            const txt = document.getElementById('verbose-status-text');
             if (verboseEnabled) {
                 slider.style.background = '#7700ee';
-                knob.style.transform    = 'translateX(20px)';
-                txt.style.color         = '#00ffaa';
-                txt.textContent         = '🟢 已开启（记录中）';
-                appendVerbose('[VerboseLog] ✅ 源码级详细日志已启动。以下所有系统调用、IPC 包体、stat/chmod 响应均将被完整记录。', 'verbose_meta');
+                knob.style.transform = 'translateX(20px)';
+                txt.style.color = '#00ffaa';
+                txt.textContent = '🟢 已开启记录中';
+                appendVerbose('[VerboseLog] ✅ 详细日志记录已启动。所有系统调用、IPC 包体、stat/chmod 响应均将被完整记录。', 'verbose_meta');
             } else {
                 slider.style.background = '#333';
-                knob.style.transform    = 'translateX(0)';
-                txt.style.color         = '#555';
-                txt.textContent         = '🔴 已关闭（不记录）';
+                knob.style.transform = 'translateX(0)';
+                txt.style.color = '#555';
+                txt.textContent = '🔴 已关闭ok';
                 appendVerbose('[VerboseLog] 🔴 详细日志已关闭。', 'verbose_meta');
             }
         }
@@ -1369,8 +1459,8 @@
         // 源码级详细日志追加（只有 verboseEnabled 时才实际写入 DOM + buffer）
         function appendVerbose(text, src) {
             const nowMs = new Date();
-            const ts = [nowMs.getHours(), nowMs.getMinutes(), nowMs.getSeconds()].map(n => String(n).padStart(2,'0')).join(':')
-                     + '.' + String(nowMs.getMilliseconds()).padStart(3,'0');
+            const ts = [nowMs.getHours(), nowMs.getMinutes(), nowMs.getSeconds()].map(n => String(n).padStart(2, '0')).join(':')
+                + '.' + String(nowMs.getMilliseconds()).padStart(3, '0');
             const entry = `[${ts}] [${src || 'VERBOSE'}] ${text}`;
             verboseBuffer.push(entry);
 
@@ -1383,7 +1473,7 @@
             line.style.cssText = 'border-left: 2px solid rgba(150,80,255,0.5); background: rgba(100,0,200,0.07); padding-left: 8px; font-family: monospace; font-size: 0.72rem;';
             line.innerHTML = `<span class="log-ts" style="color:#aa66ff">${ts}</span>`
                 + `<span class="log-icon" style="color:#8844dd">❯</span>`
-                + `<span class="log-content"><span class="log-main" style="color:#cc99ff; font-family:monospace;">${text.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</span>`
+                + `<span class="log-content"><span class="log-main" style="color:#cc99ff; font-family:monospace;">${text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>`
                 + `<span class="log-sub" style="color:#6633aa;">${src || 'VERBOSE'}</span></span>`;
             body.appendChild(line);
             while (body.children.length > 150) body.removeChild(body.firstElementChild);
@@ -1396,14 +1486,14 @@
             let text = '';
             if (body) {
                 Array.from(body.children).forEach(el => {
-                    const ts   = el.querySelector('.log-ts')?.textContent  || '';
+                    const ts = el.querySelector('.log-ts')?.textContent || '';
                     const main = el.querySelector('.log-main')?.textContent || '';
-                    const sub  = el.querySelector('.log-sub')?.textContent  || '';
+                    const sub = el.querySelector('.log-sub')?.textContent || '';
                     text += `[${ts}] ${main}${sub ? ' | ' + sub : ''}\n`;
                 });
             }
             if (verboseBuffer.length > 0) {
-                text += '\n───── VERBOSE BUFFER (源码级日志) ─────\n' + verboseBuffer.join('\n');
+                text += '\n───── VERBOSE BUFFER (详细日志) ─────\n' + verboseBuffer.join('\n');
             }
             if (navigator.clipboard) {
                 navigator.clipboard.writeText(text).then(() => {
@@ -1428,7 +1518,7 @@
             ? window.webkit.messageHandlers.TrollHandler.postMessage.bind(window.webkit.messageHandlers.TrollHandler)
             : null;
         if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
-            window.webkit.messageHandlers.TrollHandler.postMessage = function(msg) {
+            window.webkit.messageHandlers.TrollHandler.postMessage = function (msg) {
                 appendVerbose('[IPC→Native] payload: ' + JSON.stringify(msg), 'Bridge/IPC');
                 return _origPostMessage(msg);
             };
@@ -1446,16 +1536,16 @@
                 <span class="log-ts">${getNow()}</span>
                 <span class="log-icon">${getLogIcon(type)}</span>
                 <span class="log-content">
-                    <span class="log-main">${text.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</span>
-                    ${sub && sub !== text ? `<span class="log-sub">${sub.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</span>` : ''}
+                    <span class="log-main">${text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>
+                    ${sub && sub !== text ? `<span class="log-sub">${sub.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>` : ''}
                 </span>`;
 
             // ⚠️ 每个1分钟清理周期完成时追加醒目的防白苹果警告
             if (text) {
                 const t = text.toLowerCase();
-                const isPhaseEnd = t.includes('waiting 60s') 
+                const isPhaseEnd = t.includes('waiting 60s')
                     || (t.includes('phase') && (t.includes('done') || t.includes('complete')))
-                    || t.includes('cycle #') 
+                    || t.includes('cycle #')
                     || t.includes('pass #');
                 if (isPhaseEnd) {
                     const warnLine = document.createElement('div');
@@ -1491,33 +1581,33 @@
         let keychain2DBLocked = false;
         let keychainLockMethod = ''; // 'filza' or 'system'
         let needCheckLockStatus = false;
-        
-        document.addEventListener('visibilitychange', function() {
+
+        document.addEventListener('visibilitychange', function () {
             if (document.visibilityState === 'visible' && needCheckLockStatus) {
                 needCheckLockStatus = false;
-                appendLog('[SYSTEM] 检测到应用切回前台，正在物理校验锁定状态...', 'system');
+                appendLog('[SYSTEM] 检测到app切回前台，正在校验读取状态...', 'system');
                 if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
-                    window.webkit.messageHandlers.TrollHandler.postMessage({action: "check_lock_status"});
+                    window.webkit.messageHandlers.TrollHandler.postMessage({ action: "check_lock_status" });
                 }
             }
         });
 
-        window.showLockResult = function(status, log) {
+        window.showLockResult = function (status, log) {
             toggleModal('modal-lock-result', true);
             const statusEl = document.getElementById('lock-result-status');
             const logEl = document.getElementById('lock-result-log');
             if (status === 'locked') {
-                statusEl.innerHTML = '✅ 物理校验：已锁定 (只读)';
+                statusEl.innerHTML = '✅ 读取值校验：已锁定 (只读)';
                 statusEl.style.color = '#00ffaa';
                 statusEl.style.background = 'rgba(0,255,170,0.06)';
                 statusEl.style.border = '1px solid rgba(0,255,170,0.15)';
             } else if (status === 'unlocked') {
-                statusEl.innerHTML = '🔓 物理校验：已解锁 (读写)';
+                statusEl.innerHTML = '🔓 读取值校验：已解锁 (读写)';
                 statusEl.style.color = '#ffaa00';
                 statusEl.style.background = 'rgba(255,170,0,0.06)';
                 statusEl.style.border = '1px solid rgba(255,170,0,0.15)';
             } else {
-                statusEl.innerHTML = '⚠️ 物理校验：未知状态，可能失败';
+                statusEl.innerHTML = '⚠️ 读取值校验：未知状态，可能失败';
                 statusEl.style.color = '#ff3c3c';
                 statusEl.style.background = 'rgba(255,60,60,0.06)';
                 statusEl.style.border = '1px solid rgba(255,60,60,0.15)';
@@ -1540,10 +1630,10 @@
             keychainLockMethod = 'filza';
             const dict = langDictionary[currentLang];
             document.getElementById('btn-keychain-2.db').innerText = dict.btnKeychainLocked + "(Filza)";
-            appendLog('[SYSTEM] 正在生成 Filza 自动化脚本，请稍后自动跳转...', 'warn');
+            appendLog('[SYSTEM] 正在生成 Filza sh 自动化脚本，请稍后正在自动跳转...', 'warn');
             needCheckLockStatus = true;
             if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
-                window.webkit.messageHandlers.TrollHandler.postMessage({action: "lock_filza"});
+                window.webkit.messageHandlers.TrollHandler.postMessage({ action: "lock_filza" });
             }
         }
 
@@ -1553,17 +1643,17 @@
             keychainLockMethod = 'system';
             const dict = langDictionary[currentLang];
             document.getElementById('btn-keychain-2.db').innerText = dict.btnKeychainLocked + "(系统)";
-            appendLog('[SYSTEM] 正在执行系统级底层权限剥夺...', 'warn');
+            appendLog('[SYSTEM] 正在检测环境并试图获取roothelper权限...', 'warn');
             needCheckLockStatus = true;
             if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
-                window.webkit.messageHandlers.TrollHandler.postMessage({action: "lock_system"});
+                window.webkit.messageHandlers.TrollHandler.postMessage({ action: "lock_system" });
             }
             // 稍等片刻自动检查（因为系统锁定不会切后台）
             setTimeout(() => {
                 if (needCheckLockStatus) {
                     needCheckLockStatus = false;
                     if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
-                        window.webkit.messageHandlers.TrollHandler.postMessage({action: "check_lock_status"});
+                        window.webkit.messageHandlers.TrollHandler.postMessage({ action: "check_lock_status" });
                     }
                 }
             }, 2000);
@@ -1573,24 +1663,24 @@
             keychain2DBLocked = false;
             const dict = langDictionary[currentLang];
             document.getElementById('btn-keychain-2.db').innerText = dict.btnKeychainUnlocked;
-            
+
             if (keychainLockMethod === 'filza') {
                 appendLog('[SYSTEM] 借助Filza解除锁定，正在唤起自动化脚本...', 'system');
                 needCheckLockStatus = true;
                 if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
-                    window.webkit.messageHandlers.TrollHandler.postMessage({action: "unlock_filza"});
+                    window.webkit.messageHandlers.TrollHandler.postMessage({ action: "unlock_filza" });
                 }
             } else if (keychainLockMethod === 'system') {
                 appendLog('[SYSTEM] 系统级解除锁定，正在恢复写权限并重启守护进程...', 'system');
                 needCheckLockStatus = true;
                 if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
-                    window.webkit.messageHandlers.TrollHandler.postMessage({action: "unlock_system"});
+                    window.webkit.messageHandlers.TrollHandler.postMessage({ action: "unlock_system" });
                 }
                 setTimeout(() => {
                     if (needCheckLockStatus) {
                         needCheckLockStatus = false;
                         if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
-                            window.webkit.messageHandlers.TrollHandler.postMessage({action: "check_lock_status"});
+                            window.webkit.messageHandlers.TrollHandler.postMessage({ action: "check_lock_status" });
                         }
                     }
                 }, 2000);
@@ -1688,7 +1778,7 @@
                 btn.innerText = dict.btnDynamicOn;
                 btn.style.boxShadow = '0 0 15px rgba(255,0,0,0.5)';
                 if (menuBtn) {
-                    menuBtn.innerText = "白名单(普通)运行中";
+                    menuBtn.innerText = "白名单(普通模式)运行中";
                     menuBtn.style.boxShadow = '0 0 15px rgba(255,0,0,0.5)';
                 }
                 // ⚠️ 开启时立即向日志面板打印中英文醒目警告！
@@ -1736,7 +1826,7 @@
                 btn.innerText = dict.btnDynamicSafeOn || "关闭白名单(锁定模式)";
                 btn.style.boxShadow = '0 0 15px rgba(0,255,170,0.5)';
                 if (menuBtn) {
-                    menuBtn.innerText = "白名单(锁定)运行中";
+                    menuBtn.innerText = "白名单(锁定模式)运行中";
                     menuBtn.style.boxShadow = '0 0 15px rgba(0,255,170,0.5)';
                 }
                 appendLog("【安全提示】动态白名单(锁定模式)守护进程已启动。此模式针对Keychain锁定态定制，彻底切断了数据库损坏风险。", "success");
@@ -1754,6 +1844,32 @@
         // ── 核心升级：唤起自定义安全警告弹窗 ──
         function clickExecute() {
             toggleModal('modal-warning', true);
+        }
+
+        function clickClearKeychain() {
+            const selectedApps = getSelectedBundleIDs();
+            if (selectedApps.length === 0) {
+                alert("请先勾选目标应用！");
+                return;
+            }
+            appendLog(`[KEYCHAIN] 正在下发指令清理 ${selectedApps.length} 个应用的Keychain数据...`, "warn");
+            if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
+                window.webkit.messageHandlers.TrollHandler.postMessage({
+                    action: "clear_keychain",
+                    apps: selectedApps
+                });
+            } else {
+                appendLog("[SIMULATOR] Keychain clearing sent.", "success");
+            }
+        }
+
+        function clickKillAllBackground() {
+            appendLog("[PROCESS] 正在请求根辅助器清空除 qilong 外所有第三方后台...", "warn");
+            if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
+                window.webkit.messageHandlers.TrollHandler.postMessage("kill_all_background");
+            } else {
+                appendLog("[SIMULATOR] Kill all background signal sent.", "success");
+            }
         }
 
         function confirmCleanExecution() {

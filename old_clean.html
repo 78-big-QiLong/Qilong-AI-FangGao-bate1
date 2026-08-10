@@ -768,16 +768,17 @@
 
         <div class="button-group">
             <button class="btn btn-select" id="btn-select" onclick="clickSelect()">勾选应用</button>
-            <button class="btn btn-dynamic" id="btn-dynamic-menu" onclick="toggleModal('modal-dynamic-menu', true)">启动动态白名单</button>
+            <button class="btn btn-dynamic" id="btn-dynamic" onclick="clickDynamicRefresh()">启动动态白名单</button>
             <button class="btn btn-execute" id="btn-execute" onclick="clickExecute()">清理风险残留</button>
-            <button class="btn btn-keychain" id="btn-keychain-2.db" onclick="clickKeychain2DB()">keychain-2.db未锁定</button>
+            <button class="btn btn-keychain" id="btn-keychain-2db" onclick="clickKeychain2DB()">keychain-2db未锁定</button>
         </div>
 
         <div class="button-group">
-            <button class="btn btn-select" id="btn-reserved-4" onclick="clickClearKeychain()" style="color: #ff5555; text-shadow: 0 0 6px rgba(255, 85, 85, 0.6);">清理所选keychain</button>
-            <button class="btn btn-select" id="btn-reserved-1" onclick="clickKillAllBackground()" style="color: #ffaa00; text-shadow: 0 0 6px rgba(255, 170, 0, 0.6);">清空后台</button>
+            <button class="btn btn-dynamic" id="btn-dynamic-safe" onclick="clickDynamicRefreshSafe()" style="color: #00ffaa; text-shadow: 0 0 6px rgba(0, 255, 170, 0.6);">动态白名单(锁定模式)</button>
+            <button class="btn btn-select" id="btn-reserved-1">测试1</button>
             <button class="btn btn-select" id="btn-reserved-2">测试2</button>
             <button class="btn btn-select" id="btn-reserved-3">测试3</button>
+            <button class="btn" id="btn-verbose-log" onclick="toggleModal('modal-verbose-log', true)" style="background: linear-gradient(135deg, rgba(100,0,255,0.18), rgba(0,200,255,0.10)); color: #bb88ff; border: 1px solid rgba(140,80,255,0.35); text-shadow: 0 0 8px rgba(150,80,255,0.5);">🔬 详细日志</button>
         </div>
 
         <div class="log-panel" id="log-container">
@@ -801,7 +802,6 @@
         </div>
 
         <div class="link-group">
-            <button class="btn-link" id="btn-verbose-log" onclick="toggleModal('modal-verbose-log', true)" style="color: #bb88ff;">🔬 详细日志</button>
             <button class="btn-link" id="btn-tutorial" onclick="toggleModal('modal-tutorial', true)">使用教程</button>
             <button class="btn-link" id="btn-lang" onclick="toggleModal('modal-lang', true)">🌐语言</button>
             <button class="btn-link" id="btn-channel" onclick="toggleModal('modal-channel', true)">交流频道</button>
@@ -809,19 +809,6 @@
 
         <div class="footer-declaration" id="text-footer">
             https://github.com/78-big-QiLong拥有所有权与最终解释权 这是永久公益测试版本 如果是花钱买的说明是盗版或木马你被骗了
-        </div>
-    </div>
-
-    <!-- ── 动态白名单二级菜单弹窗 ── -->
-    <div class="modal-overlay" id="modal-dynamic-menu">
-        <div class="modal-box" style="max-width: 320px; width: 85%; padding: 22px;">
-            <div class="modal-title" style="color: #ff5555; font-size: 1.15rem; font-weight: 900; margin-bottom: 20px;">选择白名单模式</div>
-            <div class="modal-list" style="text-align: center; display: flex; flex-direction: column; gap: 15px; padding: 10px;">
-                <button class="btn btn-dynamic" id="btn-dynamic" onclick="toggleModal('modal-dynamic-menu', false); clickDynamicRefresh();" style="width: 100%;">动态白名单(普通模式)</button>
-                <button class="btn btn-dynamic" id="btn-dynamic-safe" onclick="toggleModal('modal-dynamic-menu', false); clickDynamicRefreshSafe();" style="width: 100%; color: #00ffaa; text-shadow: 0 0 6px rgba(0, 255, 170, 0.6);">动态白名单(锁定模式)</button>
-                <button class="btn btn-dynamic" id="btn-dynamic-light" onclick="toggleModal('modal-dynamic-menu', false); alert('轻量模式功能开发中...');" style="width: 100%; color: #00ccff; text-shadow: 0 0 6px rgba(0, 204, 255, 0.6);">动态白名单(轻量模式)</button>
-            </div>
-            <button class="btn-close" style="margin-top: 20px;" onclick="toggleModal('modal-dynamic-menu', false)">取消</button>
         </div>
     </div>
 
@@ -920,7 +907,7 @@
         </div>
     </div>
 
-    <!-- ── keychain-2.db锁定结果弹窗 ── -->
+    <!-- ── keychain-2db锁定结果弹窗 ── -->
     <div class="modal-overlay" id="modal-lock-result">
         <div class="modal-box" style="max-width: 380px; width: 92%; padding: 22px; border: 1px solid rgba(0, 255, 255, 0.35);">
             <div class="modal-title" style="color: #00ffff; font-size: 1.15rem; font-weight: 900;">🔒 物理锁定校验报告</div>
@@ -941,7 +928,7 @@
         </div>
     </div>
 
-    <!-- ── keychain-2.db锁定警告弹窗 ── -->
+    <!-- ── keychain-2db锁定警告弹窗 ── -->
     <div class="modal-overlay" id="modal-keychain-warn">
         <div class="modal-box" style="max-width: 380px; width: 92%; padding: 22px; border: 1px solid rgba(255, 170, 0, 0.35);">
             <div class="modal-title" style="color: #ffaa00; font-size: 1.15rem; font-weight: 900;">⚠️ 高危操作警告</div>
@@ -1147,7 +1134,7 @@
                 lblVersion: "系统版本(读取值)", lblModel: "机型名称", lblSn: "序列号(读取值)", lblCpu: "处理器型号", lblTroll: "巨魔状态(检测值)", lblJb: "越狱状态(检测值)",
                 btnSelect: "勾选应用", btnDynamicOff: "开启动态白名单", btnDynamicOn: "关闭动态白名单", btnExecute: "清理风险残留", btnTutorial: "使用教程", btnChannel: "交流频道", btnClose: "我已经全部关注了 点这里关闭",
                 btnDynamicSafeOff: "动态白名单(锁定模式)", btnDynamicSafeOn: "关闭白名单(锁定模式)",
-                btnKeychainUnlocked: "keychain-2.db未锁定", btnKeychainLocked: "keychain-2.db已锁定",
+                btnKeychainUnlocked: "keychain-2db未锁定", btnKeychainLocked: "keychain-2db已锁定",
                 mdlTitle: "加入我们的社区", mdlAppsTitle: "勾选要清理的应用钥匙链", btnSave: "确定", textLoading: "扫描app列表中",
                 logInit: "内核初始化完成 作者：QiLong-GOLD400借助骑龙定制Ai多模态智能体制作", logReady: "系统初始化完毕，设备检测已就绪。",
                 footer: "https://github.com/78-big-QiLong拥有所有权与最终解释权 这是永久公益测试版本 如果是花钱买的说明是盗版或木马你被骗了",
@@ -1157,7 +1144,7 @@
                 lblVersion: "系統版本(讀取值)", lblModel: "機型名稱", lblSn: "序列號(讀取值)", lblCpu: "處理器型號", lblTroll: "巨魔狀態(檢測值)", lblJb: "越獄狀態(檢測值)",
                 btnSelect: "勾選應用", btnDynamicOff: "啟動動態白名單", btnDynamicOn: "關閉動態白名單", btnExecute: "清理風險殘留", btnTutorial: "使用教程", btnChannel: "交流頻道", btnClose: "我已經全部關注了 點這裡關閉",
                 btnDynamicSafeOff: "動態白名單(鎖定模式)", btnDynamicSafeOn: "關閉白名單(鎖定模式)",
-                btnKeychainUnlocked: "keychain-2.db未鎖定", btnKeychainLocked: "keychain-2.db已鎖定",
+                btnKeychainUnlocked: "keychain-2db未鎖定", btnKeychainLocked: "keychain-2db已鎖定",
                 mdlTitle: "加入我們的社區", mdlAppsTitle: "勾選要清理的應用鑰匙鏈", btnSave: "確定", textLoading: "掃描app列表中",
                 logInit: "內核編譯完畢 作者：QiLong-GOLD400借助騎龍定制Ai多模態智能體製作", logReady: "系統初始化完畢，設備檢測已就緒。",
                 footer: "https://github.com/78-big-QiLong擁有所有權與最終解釋權 這是永久公益測試版本 如果是花錢買的說明是盜版或木馬你被騙了",
@@ -1166,7 +1153,7 @@
             en: {
                 lblVersion: "iOS Version (Read)", lblModel: "Device Model", lblSn: "Serial Number", lblCpu: "Processor Model", lblTroll: "TrollStore Status", lblJb: "Jailbreak Status",
                 btnSelect: "Select Apps", btnDynamicOff: "Enable Dynamic Whitelist", btnDynamicOn: "Disable Dynamic Whitelist", btnExecute: "Clean Risk Residues", btnTutorial: "Usage Guide", btnChannel: "Community Channel", btnClose: "I have followed all, close here",
-                btnKeychainUnlocked: "keychain-2.db Unlocked", btnKeychainLocked: "keychain-2.db Locked",
+                btnKeychainUnlocked: "keychain-2db Unlocked", btnKeychainLocked: "keychain-2db Locked",
                 mdlTitle: "Join Our Community", mdlAppsTitle: "Select Apps Keychain to Clean", btnSave: "Confirm", textLoading: "Scanning application list...",
                 logInit: "Kernel initialization complete. Powered by QiLong-GOLD400 & QiLong AI agent.", logReady: "System initialization completed. Device detection ready.",
                 footer: "https://github.com/78-big-QiLong holds all rights and final interpretation. This is a permanent public beta.",
@@ -1175,7 +1162,7 @@
             ja: {
                 lblVersion: "OSバージョン(取得値)", lblModel: "機種名", lblSn: "シリアル番号", lblCpu: "プロセッサモデル", lblTroll: "TrollStore状態", lblJb: "脱獄状態",
                 btnSelect: "アプリ選択", btnDynamicOff: "動的ホワイトリスト起動", btnDynamicOn: "動的ホワイトリスト停止", btnExecute: "リスク残留クリア", btnTutorial: "チュートリアル", btnChannel: "交流チャンネル", btnClose: "すべてフォローしました。閉じる",
-                btnKeychainUnlocked: "keychain-2.db未ロック", btnKeychainLocked: "keychain-2.dbロック中",
+                btnKeychainUnlocked: "keychain-2db未ロック", btnKeychainLocked: "keychain-2dbロック中",
                 mdlTitle: "コミュニティに参加", mdlAppsTitle: "クリーンアップするアプリの選択", btnSave: "決定", textLoading: "アプリリストをスキャン中...",
                 logInit: "カーネルの初期化が完了しました。QiLong-GOLD400 & QiLong AIによって作成されました。", logReady: "システム初期化完了。デバイス検出の準備が整いました。",
                 footer: "https://github.com/78-big-QiLong がすべての権利と最終解釈権を有します。永久無料テスト版です。",
@@ -1184,7 +1171,7 @@
             ru: {
                 lblVersion: "这里填Версия ОС标签", lblModel: "这里填Модель标签", lblSn: "这里填Серийный номер标签", lblCpu: "这里填Процессор标签", lblTroll: "这里填Статус Troll标签", lblJb: "这里填Джейлбрейк标签",
                 btnSelect: "这里填Выбрать按钮", btnDynamicOff: "这里填Сброс IDFA按钮", btnDynamicOn: "这里填Стоп IDFA按钮", btnExecute: "这里填Очистить按钮", btnTutorial: "这里填Инструкция按钮", btnChannel: "这里填Каналы按钮", btnClose: "这里填Закрыть按钮",
-                btnKeychainUnlocked: "keychain-2.db разблокирован", btnKeychainLocked: "keychain-2.db заблокирован",
+                btnKeychainUnlocked: "keychain-2db разблокирован", btnKeychainLocked: "keychain-2db заблокирован",
                 mdlTitle: "这里填Каналы弹窗标题", mdlAppsTitle: "这里填Выбор приложений弹窗标题", btnSave: "这里填Подтвердить按钮", textLoading: "这里填Список пуст文字",
                 logInit: "这里填Система ожидание日志", logReady: "这里填Система готов日志",
                 footer: "这里填Предупреждение文字",
@@ -1193,7 +1180,7 @@
             za: {
                 lblVersion: "这里填Heitungh Banzbwnz标签", lblModel: "这里填Coengzhingz Mingz标签", lblSn: "这里填Gaengh Swhleizhao标签", lblCpu: "这里填Cuwleiqi标签", lblTroll: "这里填Gvjmoz Canghdaiz标签", lblJb: "这里填Vietngvax Canghdaiz标签",
                 btnSelect: "这里填Swjndiengz按钮", btnDynamicOff: "这里填Caiqgauh IDFA按钮", btnDynamicOn: "这里填Dinghcij IDFA按钮", btnExecute: "这里填Caegit按钮", btnTutorial: "这里填Saengqcoenz按钮", btnChannel: "这里填Bwndauz按钮", btnClose: "这里填Daengz按钮",
-                btnKeychainUnlocked: "keychain-2.db未锁定", btnKeychainLocked: "keychain-2.db已锁定",
+                btnKeychainUnlocked: "keychain-2db未锁定", btnKeychainLocked: "keychain-2db已锁定",
                 mdlTitle: "这里填Gvnghfangh Bwndauz弹窗标题", mdlAppsTitle: "这里填Swjndiengz Daenghdan弹窗标题", btnSave: "这里填Dingh按钮", textLoading: "这里填Mbuj gienqgauh文字",
                 logInit: "这里填Heitungh待机日志", logReady: "这里填Heitungh完了日志",
                 footer: "这里填Swhmingz声明文字",
@@ -1229,8 +1216,8 @@
             document.getElementById('btn-select').innerText = dict.btnSelect;
             document.getElementById('btn-dynamic').innerText = idfaLoopRunning ? dict.btnDynamicOn : dict.btnDynamicOff;
             document.getElementById('btn-execute').innerText = dict.btnExecute;
-            if (document.getElementById('btn-keychain-2.db')) {
-                document.getElementById('btn-keychain-2.db').innerText = keychain2DBLocked ? dict.btnKeychainLocked : dict.btnKeychainUnlocked;
+            if (document.getElementById('btn-keychain-2db')) {
+                document.getElementById('btn-keychain-2db').innerText = keychain2DBLocked ? dict.btnKeychainLocked : dict.btnKeychainUnlocked;
             }
             document.getElementById('btn-tutorial').innerText = dict.btnTutorial;
             document.getElementById('btn-lang').innerText = "🌐 " + (langCode === 'en' ? "Lang" : "语言");
@@ -1487,7 +1474,7 @@
             appendLog('日志已清空 · Log cleared', 'system');
         }
 
-        // ── keychain-2.db锁定高危功能按键交互 ──
+        // ── keychain-2db锁定高危功能按键交互 ──
         let keychain2DBLocked = false;
         let keychainLockMethod = ''; // 'filza' or 'system'
         let needCheckLockStatus = false;
@@ -1527,7 +1514,7 @@
 
         function clickKeychain2DB() {
             if (!keychain2DBLocked) {
-                appendLog('[UI] keychain-2.db锁定 按钮被按下。', 'system');
+                appendLog('[UI] keychain-2db锁定 按钮被按下。', 'system');
                 toggleModal('modal-keychain-warn', true);
             } else {
                 confirmUnlockKeychain2DB();
@@ -1539,7 +1526,7 @@
             keychain2DBLocked = true;
             keychainLockMethod = 'filza';
             const dict = langDictionary[currentLang];
-            document.getElementById('btn-keychain-2.db').innerText = dict.btnKeychainLocked + "(Filza)";
+            document.getElementById('btn-keychain-2db').innerText = dict.btnKeychainLocked + "(Filza)";
             appendLog('[SYSTEM] 正在生成 Filza 自动化脚本，请稍后自动跳转...', 'warn');
             needCheckLockStatus = true;
             if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
@@ -1552,7 +1539,7 @@
             keychain2DBLocked = true;
             keychainLockMethod = 'system';
             const dict = langDictionary[currentLang];
-            document.getElementById('btn-keychain-2.db').innerText = dict.btnKeychainLocked + "(系统)";
+            document.getElementById('btn-keychain-2db').innerText = dict.btnKeychainLocked + "(系统)";
             appendLog('[SYSTEM] 正在执行系统级底层权限剥夺...', 'warn');
             needCheckLockStatus = true;
             if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
@@ -1572,7 +1559,7 @@
         function confirmUnlockKeychain2DB() {
             keychain2DBLocked = false;
             const dict = langDictionary[currentLang];
-            document.getElementById('btn-keychain-2.db').innerText = dict.btnKeychainUnlocked;
+            document.getElementById('btn-keychain-2db').innerText = dict.btnKeychainUnlocked;
             
             if (keychainLockMethod === 'filza') {
                 appendLog('[SYSTEM] 借助Filza解除锁定，正在唤起自动化脚本...', 'system');
@@ -1682,25 +1669,16 @@
         window.onIdfaStateChanged = function (running) {
             idfaLoopRunning = running;
             const btn = document.getElementById('btn-dynamic');
-            const menuBtn = document.getElementById('btn-dynamic-menu');
             const dict = langDictionary[currentLang];
             if (running) {
                 btn.innerText = dict.btnDynamicOn;
                 btn.style.boxShadow = '0 0 15px rgba(255,0,0,0.5)';
-                if (menuBtn) {
-                    menuBtn.innerText = "白名单(普通)运行中";
-                    menuBtn.style.boxShadow = '0 0 15px rgba(255,0,0,0.5)';
-                }
                 // ⚠️ 开启时立即向日志面板打印中英文醒目警告！
                 appendLog("【重要警告】动态白名单后台守护进程已启动。在重启手机或重新越狱之前，请务必手动关闭此功能，否则可能造成白苹果或激活状态锁死！", "warn");
                 appendLog("[CRITICAL WARNING] Dynamic whitelist background active. You MUST disable this feature before rebooting or jailbreaking, otherwise it may trigger bootloops (White Apple) or setup activation loops!", "warn");
             } else {
                 btn.innerText = dict.btnDynamicOff;
                 btn.style.boxShadow = '';
-                if (menuBtn) {
-                    menuBtn.innerText = "启动动态白名单";
-                    menuBtn.style.boxShadow = '';
-                }
             }
         }
 
@@ -1730,23 +1708,14 @@
         window.onIdfaSafeStateChanged = function (running) {
             idfaLoopSafeRunning = running;
             const btn = document.getElementById('btn-dynamic-safe');
-            const menuBtn = document.getElementById('btn-dynamic-menu');
             const dict = langDictionary[currentLang];
             if (running) {
                 btn.innerText = dict.btnDynamicSafeOn || "关闭白名单(锁定模式)";
                 btn.style.boxShadow = '0 0 15px rgba(0,255,170,0.5)';
-                if (menuBtn) {
-                    menuBtn.innerText = "白名单(锁定)运行中";
-                    menuBtn.style.boxShadow = '0 0 15px rgba(0,255,170,0.5)';
-                }
                 appendLog("【安全提示】动态白名单(锁定模式)守护进程已启动。此模式针对Keychain锁定态定制，彻底切断了数据库损坏风险。", "success");
             } else {
                 btn.innerText = dict.btnDynamicSafeOff || "动态白名单(锁定模式)";
                 btn.style.boxShadow = '';
-                if (menuBtn) {
-                    menuBtn.innerText = "启动动态白名单";
-                    menuBtn.style.boxShadow = '';
-                }
             }
         }
 
@@ -1754,32 +1723,6 @@
         // ── 核心升级：唤起自定义安全警告弹窗 ──
         function clickExecute() {
             toggleModal('modal-warning', true);
-        }
-
-        function clickClearKeychain() {
-            const selectedApps = getSelectedBundleIDs();
-            if (selectedApps.length === 0) {
-                alert("请先勾选目标应用！");
-                return;
-            }
-            appendLog(`[KEYCHAIN] 正在下发指令清理 ${selectedApps.length} 个应用的Keychain数据...`, "warn");
-            if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
-                window.webkit.messageHandlers.TrollHandler.postMessage({
-                    action: "clear_keychain",
-                    apps: selectedApps
-                });
-            } else {
-                appendLog("[SIMULATOR] Keychain clearing sent.", "success");
-            }
-        }
-
-        function clickKillAllBackground() {
-            appendLog("[PROCESS] 正在请求根辅助器清空除 qilong 外所有第三方后台...", "warn");
-            if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
-                window.webkit.messageHandlers.TrollHandler.postMessage("kill_all_background");
-            } else {
-                appendLog("[SIMULATOR] Kill all background signal sent.", "success");
-            }
         }
 
         function confirmCleanExecution() {
