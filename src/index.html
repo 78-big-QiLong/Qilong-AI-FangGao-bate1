@@ -822,9 +822,12 @@
         </div>
 
         <div class="button-group">
-            <button class="btn btn-select" id="btn-reserved-4" onclick="clickClearKeychain()" style="color: #ff5555; text-shadow: 0 0 6px rgba(255, 85, 85, 0.6);">清理所选keychain</button>
-            <button class="btn btn-select" id="btn-reserved-1" onclick="clickKillAllBackground()" style="color: #ffaa00; text-shadow: 0 0 6px rgba(255, 170, 0, 0.6);">清空后台</button>
-            <button class="btn btn-select" id="btn-reserved-2" onclick="clickFetchDiagnosticApps()" style="color: #00ffcc; text-shadow: 0 0 6px rgba(0, 255, 204, 0.6);">应用诊断</button>
+            <button class="btn btn-select" id="btn-reserved-4" onclick="clickClearKeychain()"
+                style="color: #ff5555; text-shadow: 0 0 6px rgba(255, 85, 85, 0.6);">清理所选keychain</button>
+            <button class="btn btn-select" id="btn-reserved-1" onclick="clickKillAllBackground()"
+                style="color: #ffaa00; text-shadow: 0 0 6px rgba(255, 170, 0, 0.6);">清空后台</button>
+            <button class="btn btn-select" id="btn-reserved-2" onclick="clickFetchDiagnosticApps()"
+                style="color: #00ffcc; text-shadow: 0 0 6px rgba(0, 255, 204, 0.6);">应用诊断</button>
             <button class="btn btn-select" id="btn-reserved-3">测试3</button>
         </div>
 
@@ -1116,12 +1119,15 @@
 
     <!-- ── 诊断应用选择舱 ── -->
     <div class="modal-overlay" id="modal-diagnostic" onclick="closeModalOnOverlay(event, 'modal-diagnostic')">
-        <div class="modal-box" style="max-width: 360px; width: 90%; border: 1px solid #00ffcc; box-shadow: 0 0 20px rgba(0, 255, 204, 0.25);">
-            <div class="modal-title" id="mdl-diagnostic-title" style="color: #00ffcc; text-shadow: 0 0 8px rgba(0, 255, 204, 0.4);">选择应用进行诊断启动</div>
+        <div class="modal-box"
+            style="max-width: 360px; width: 90%; border: 1px solid #00ffcc; box-shadow: 0 0 20px rgba(0, 255, 204, 0.25);">
+            <div class="modal-title" id="mdl-diagnostic-title"
+                style="color: #00ffcc; text-shadow: 0 0 8px rgba(0, 255, 204, 0.4);">选择应用进行诊断启动</div>
             <div class="modal-list" id="diagnostic-apps-container">
                 <div style="color:#666; font-size:0.85rem; padding:20px 0;">正在获取应用列表中...</div>
             </div>
-            <button class="btn-close" onclick="toggleModal('modal-diagnostic', false)" style="background: rgba(255,255,255,0.08); color: #fff; border: 1px solid rgba(255,255,255,0.1); margin-top: 12px; padding: 10px 0;">关闭</button>
+            <button class="btn-close" onclick="toggleModal('modal-diagnostic', false)"
+                style="background: rgba(255,255,255,0.08); color: #fff; border: 1px solid rgba(255,255,255,0.1); margin-top: 12px; padding: 10px 0;">关闭</button>
         </div>
     </div>
 
@@ -1899,18 +1905,18 @@
             }
         }
 
-        window.updateDiagnosticApps = function(jsonString) {
+        window.updateDiagnosticApps = function (jsonString) {
             try {
                 const apps = JSON.parse(jsonString);
                 const container = document.getElementById('diagnostic-apps-container');
                 container.innerHTML = '';
-                
+
                 if (apps.length === 0) {
                     container.innerHTML = `<div style="color:#666;font-size:0.85rem;padding:20px 0;">未检测到可诊断的App</div>`;
                     toggleModal('modal-diagnostic', true);
                     return;
                 }
-                
+
                 apps.forEach(app => {
                     const item = document.createElement('div');
                     item.className = 'modal-item';
@@ -1921,12 +1927,12 @@
                         <div style="font-weight: 800; color: #fff; font-size: 0.88rem;">${app.name}</div>
                         <div style="font-size: 0.72rem; color: #888; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${app.bundleID}</div>
                     `;
-                    item.onclick = function() {
+                    item.onclick = function () {
                         executeDiagnosticLaunch(app.bundleID, app.name);
                     };
                     container.appendChild(item);
                 });
-                
+
                 toggleModal('modal-diagnostic', true);
             } catch (e) {
                 appendLog("[ERROR] Failed to parse diagnostic apps: " + e, "warn");

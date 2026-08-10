@@ -276,6 +276,82 @@ static pid_t global_bg_idfa_safe_pid = 0;
     return @"[]";
 }
 
+// 🔍 获取仅用户安装应用列表（applicationType == "User"）供诊断 Modal 使用
+- (NSString *)fetchUserDiagnosticAppsJSON {
+    NSMutableArray *appArray = [NSMutableArray array];
+    Class workspaceClass = NSClassFromString(@"LSApplicationWorkspace");
+    if (workspaceClass) {
+        @try {
+            id workspace = [workspaceClass performSelector:@selector(defaultWorkspace)];
+            NSArray *allApps = nil;
+            if ([workspace respondsToSelector:@selector(allInstalledApplications)]) {
+                allApps = [workspace performSelector:@selector(allInstalledApplications)];
+            } else if ([workspace respondsToSelector:@selector(allApplications)]) {
+                allApps = [workspace performSelector:@selector(allApplications)];
+            }
+
+            for (id appProxy in allApps) {
+                @try {
+                    NSString *appType = nil;
+                    if ([appProxy respondsToSelector:NSSelectorFromString(@"applicationType")]) {
+                        #pragma clang diagnostic push
+                        #pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+                        appType = [appProxy performSelector:NSSelectorFromString(@"applicationType")];
+                        #pragma clang diagnostic pop
+                    }
+
+                    if (appType && [appType isEqualToString:@"User"]) {
+                        NSString *bundleID = nil;
+                        if ([appProxy respondsToSelector:NSSelectorFromString(@"applicationIdentifier")]) {
+                            #pragma clang diagnostic push
+                            #pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+                            bundleID = [appProxy performSelector:NSSelectorFromString(@"applicationIdentifier")];
+                            #pragma clang diagnostic pop
+                        }
+
+                        NSString *appName = nil;
+                        if ([appProxy respondsToSelector:NSSelectorFromString(@"localizedName")]) {
+                            #pragma clang diagnostic push
+                            #pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+                            appName = [appProxy performSelector:NSSelectorFromString(@"localizedName")];
+                            #pragma clang diagnostic pop
+                        }
+
+                        if (!appName && bundleID) {
+                            appName = [bundleID lastPathComponent];
+                        }
+
+                        if (bundleID && appName) {
+                            [appArray addObject:@{@"bundleID": bundleID, @"name": appName}];
+                        }
+                    }
+                } @catch (NSException *e) {
+                    NSLog(@"[ERROR] Skip parsing proxy record: %@", e);
+                }
+            }
+        } @catch (NSException *e) {
+            NSLog(@"[ERROR] Failed to fetch application workspace: %@", e);
+        }
+    }
+
+    [appArray sortUsingComparator:^NSComparisonResult(NSDictionary *obj1, NSDictionary *obj2) {
+        return [obj1[@"name"] localizedCompare:obj2[@"name"]];
+    }];
+
+    NSError *error;
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:appArray options:0 error:&error];
+    if (!error && jsonData) {
+        return [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+    }
+    return @"[]";
+}
+
+// 🔬 诊断生命周期预留入口（ZeroTrustdScheduler 调用前触发）
+static void startDiagnosticLifecycle(NSString *bundleID) {
+    NSLog(@"[DIAG] startDiagnosticLifecycle triggered for: %@", bundleID);
+    // 预留：可在此处插入 substrate/debugserver 附加逻辑
+}
+
 // 📥 核心接收器：解析来自前端的多维度指令（支持字符串与复杂对象格式）
 - (void)userContentController:(WKUserContentController *)userContentController 
       didReceiveScriptMessage:(WKScriptMessage *)message {
