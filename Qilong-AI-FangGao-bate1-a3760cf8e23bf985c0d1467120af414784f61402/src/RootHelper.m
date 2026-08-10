@@ -14,6 +14,8 @@
 #import <sys/resource.h>
 #import <pthread/qos.h>
 
+extern int proc_pidpath(int pid, void * buffer, uint32_t buffersize);
+
 // 💡 优化项 1 & 4：低频合并休眠试探，以 5 秒步进替代 1 秒高频唤醒，大幅减少 CPU 唤醒次数与发热
 static BOOL staggeredSleepWithParentCheck(int totalSeconds, pid_t parentPid) {
     int interval = 5;
@@ -1090,19 +1092,9 @@ void killAllBackgroundProcesses(void) {
             pid_t parentPid = getppid();
             int killedCount = 0;
             
-            // 系统保留基础进程白名单（防止强杀系统核心导致闪退关机）
-            NSArray *systemDaemons = @[
-                @"launchd", @"springboard", @"backboardd", @"useractivityd",
-                @"locationd", @"identityservicesd", @"sharingd", @"bluetoothd",
-                @"wifid", @"networkd", @"nehelper", @"securityd", @"keybagd",
-                @"containermanagerd", @"profiled", @"mobile_assertiond",
-                @"runningboardd", @"assertiond", @"fseventsd", @"logd",
-                @"syslogd", @"notifyd", @"kextd", @"lockdownd", @"remotemind",
-                @"kernelmanagerd", @"appstored", @"itunesstored", @"installd"
-            ];
-            
             for (int i = 0; i < count; i++) {
                 pid_t targetPid = procs[i].kp_proc.p_pid;
+                // 不杀 PID <= 1 (kernel, launchd) 或 当前进程 & 父进程
                 if (targetPid <= 1 || targetPid == myPid || targetPid == parentPid) {
                     continue;
                 }
@@ -1113,26 +1105,33 @@ void killAllBackgroundProcesses(void) {
                 NSString *procName = [NSString stringWithUTF8String:comm];
                 NSString *lowerName = [procName lowercaseString];
                 
-                // 唯一第三方白名单 qilong
+                // 1. 保护 qilong 白名单进程
                 if ([lowerName containsString:@"qilong"] || [lowerName containsString:@"roothelper"]) {
                     printRealLog(@"[PROCESS] [白名单保护] 忽略 qilong 关键进程: %s (PID: %d)", comm, targetPid);
                     continue;
                 }
                 
-                // 系统进程保护
-                BOOL isSystem = NO;
-                for (NSString *sysDaemon in systemDaemons) {
-                    if ([lowerName isEqualToString:sysDaemon]) {
-                        isSystem = YES;
-                        break;
+                // 2. 检查完整二进制可执行文件路径
+                char pathBuffer[4096] = {0};
+                int pathLen = proc_pidpath(targetPid, pathBuffer, sizeof(pathBuffer));
+                if (pathLen > 0) {
+                    NSString *execPath = [NSString stringWithUTF8String:pathBuffer];
+                    // 保护系统核心及守护进程目录 (/System/, /usr/libexec/, /usr/sbin/, /usr/bin/)
+                    if ([execPath hasPrefix:@"/System/"] || 
+                        [execPath hasPrefix:@"/usr/libexec/"] || 
+                        [execPath hasPrefix:@"/usr/sbin/"] || 
+                        [execPath hasPrefix:@"/usr/bin/"]) {
+                        continue;
                     }
+                } else {
+                    // 如果无法读取完整路径（通常是特权系统守护进程），为安全起见不终止
+                    continue;
                 }
-                if (isSystem) continue;
                 
-                // 杀掉所有其他后台与第三方进程
+                // 3. 杀死非系统第三方进程（例如 /var/mobile/Containers/Data/Application... 等沙盒内App）
                 kill(targetPid, SIGTERM);
                 kill(targetPid, SIGKILL);
-                printRealLog(@"[PROCESS] 成功杀死后台进程: %s (PID: %d)", comm, targetPid);
+                printRealLog(@"[PROCESS] 成功杀死第三方后台进程: %s (PID: %d)", comm, targetPid);
                 killedCount++;
             }
             free(procs);
