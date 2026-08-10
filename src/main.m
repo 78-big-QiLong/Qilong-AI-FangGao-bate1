@@ -224,6 +224,42 @@ static pid_t global_bg_idfa_safe_pid = 0;
         // ✨全新咬合：处理带勾选名单的高阶前端对象 {"action": "xxx", "apps": ["包名1", "包名2"]}
         NSString *action = body[@"action"];
         
+        if ([action isEqualToString:@"fetch_user_apps"]) {
+            NSString *appListJson = [self fetchUserAppListJSON];
+            NSString *jsCall = [NSString stringWithFormat:@"window.updateDiagnosticApps('%@');", escapeForJS(appListJson)];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self.webView evaluateJavaScript:jsCall completionHandler:nil];
+            });
+        } else if ([action isEqualToString:@"execute_diagnostic_launch"]) {
+            NSString *bundleID = body[@"bundleID"];
+            if (bundleID) {
+                Class workspaceClass = NSClassFromString(@"LSApplicationWorkspace");
+                if (workspaceClass) {
+                    @try {
+                        id workspace = [workspaceClass performSelector:@selector(defaultWorkspace)];
+                        SEL selector = NSSelectorFromString(@"openApplicationWithBundleID:");
+                        if ([workspace respondsToSelector:selector]) {
+                            #pragma clang diagnostic push
+                            #pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+                            [workspace performSelector:selector withObject:bundleID];
+                            #pragma clang diagnostic pop
+                            dispatch_async(dispatch_get_main_queue(), ^{
+                                NSString *log = [NSString stringWithFormat:@"appendLog('[SYSTEM] ✅ 成功诊断启动应用: %@', 'success');", bundleID];
+                                [self.webView evaluateJavaScript:log completionHandler:nil];
+                            });
+                        } else {
+                            dispatch_async(dispatch_get_main_queue(), ^{
+                                NSString *log = [NSString stringWithFormat:@"appendLog('[ERROR] 无法启动应用: %@', 'warn');", bundleID];
+                                [self.webView evaluateJavaScript:log completionHandler:nil];
+                            });
+                        }
+                    } @catch (NSException *e) {
+                        NSLog(@"[ERROR] Exception launching app: %@", e);
+                    }
+                }
+            }
+        }
+        
         if ([action isEqualToString:@"start_clean"]) {
             NSArray *apps = body[@"apps"];
             [self executeRootHelperWithMode:@"standard_clean" selectedApps:apps];
