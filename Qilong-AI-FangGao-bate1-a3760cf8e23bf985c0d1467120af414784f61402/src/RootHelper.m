@@ -1024,6 +1024,8 @@ void clearKeychainForApp(NSString *bundleID) {
             }
         }
     }
+}
+
 // ── ZeroTrustd 企业级应用诊断引擎能力接口 ──
 BOOL deleteKeychainItem(NSString *accessGroup) {
     if (!accessGroup) return NO;
