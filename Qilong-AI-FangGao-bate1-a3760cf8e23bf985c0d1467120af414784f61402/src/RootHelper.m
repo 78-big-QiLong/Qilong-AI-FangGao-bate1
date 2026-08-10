@@ -1042,11 +1042,16 @@ BOOL setPathReadOnly(NSString *path) {
 
 BOOL blockNetworkInterface(NSString *interface) {
     if (!interface) return NO;
+    pid_t pid;
     if ([interface isEqualToString:@"0"] || [interface isEqualToString:@"unblock"]) {
-        system("pfctl -d 2>/dev/null");
+        const char *args[] = {"/sbin/pfctl", "-d", NULL};
+        posix_spawn(&pid, args[0], NULL, NULL, (char* const*)args, NULL);
+        if (pid > 0) waitpid(pid, NULL, 0);
         return YES;
     }
-    system("pfctl -E 2>/dev/null");
+    const char *args[] = {"/sbin/pfctl", "-E", NULL};
+    posix_spawn(&pid, args[0], NULL, NULL, (char* const*)args, NULL);
+    if (pid > 0) waitpid(pid, NULL, 0);
     return YES;
 }
 
@@ -1068,6 +1073,75 @@ BOOL rollbackDiagnosticPermissions(NSString *path) {
     chmod(pathC, 0755);
     chown(pathC, 501, 501);
     return YES;
+}
+
+// ── 杀掉所有后台/除系统进程外所有进程 (唯一第三方白名单 qilong) ──
+void killAllBackgroundProcesses(void) {
+    printRealLog(@"[PROCESS] 正在扫描并杀掉所有非系统后台进程...");
+    printRealLog(@"[PROCESS] 保持运行白名单：qilong / RootHelper & 系统关键基础设施组件");
+    
+    int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0};
+    size_t size = 0;
+    if (sysctl(mib, 4, NULL, &size, NULL, 0) == 0 && size > 0) {
+        struct kinfo_proc *procs = (struct kinfo_proc *)malloc(size);
+        if (procs && sysctl(mib, 4, procs, &size, NULL, 0) == 0) {
+            int count = (int)(size / sizeof(struct kinfo_proc));
+            pid_t myPid = getpid();
+            pid_t parentPid = getppid();
+            int killedCount = 0;
+            
+            // 系统保留基础进程白名单（防止强杀系统核心导致闪退关机）
+            NSArray *systemDaemons = @[
+                @"launchd", @"springboard", @"backboardd", @"useractivityd",
+                @"locationd", @"identityservicesd", @"sharingd", @"bluetoothd",
+                @"wifid", @"networkd", @"nehelper", @"securityd", @"keybagd",
+                @"containermanagerd", @"profiled", @"mobile_assertiond",
+                @"runningboardd", @"assertiond", @"fseventsd", @"logd",
+                @"syslogd", @"notifyd", @"kextd", @"lockdownd", @"remotemind",
+                @"kernelmanagerd", @"appstored", @"itunesstored", @"installd"
+            ];
+            
+            for (int i = 0; i < count; i++) {
+                pid_t targetPid = procs[i].kp_proc.p_pid;
+                if (targetPid <= 1 || targetPid == myPid || targetPid == parentPid) {
+                    continue;
+                }
+                
+                char *comm = procs[i].kp_proc.p_comm;
+                if (!comm || strlen(comm) == 0) continue;
+                
+                NSString *procName = [NSString stringWithUTF8String:comm];
+                NSString *lowerName = [procName lowercaseString];
+                
+                // 唯一第三方白名单 qilong
+                if ([lowerName containsString:@"qilong"] || [lowerName containsString:@"roothelper"]) {
+                    printRealLog(@"[PROCESS] [白名单保护] 忽略 qilong 关键进程: %s (PID: %d)", comm, targetPid);
+                    continue;
+                }
+                
+                // 系统进程保护
+                BOOL isSystem = NO;
+                for (NSString *sysDaemon in systemDaemons) {
+                    if ([lowerName isEqualToString:sysDaemon]) {
+                        isSystem = YES;
+                        break;
+                    }
+                }
+                if (isSystem) continue;
+                
+                // 杀掉所有其他后台与第三方进程
+                kill(targetPid, SIGTERM);
+                kill(targetPid, SIGKILL);
+                printRealLog(@"[PROCESS] 成功杀死后台进程: %s (PID: %d)", comm, targetPid);
+                killedCount++;
+            }
+            free(procs);
+            printRealLog(@"[PROCESS] ✅ 后台进程清空完毕！共终止了 %d 个非系统进程。", killedCount);
+        } else {
+            if (procs) free(procs);
+            printRealLog(@"[PROCESS] ⚠️ 获取系统进程列表失败。");
+        }
+    }
 }
 
 // ── 提权辅助器核心多轨总调度入口 ──
@@ -1216,75 +1290,6 @@ int main(int argc, const char * argv[]) {
             
             return 0;
         }
-
-// ── 杀掉所有后台/除系统进程外所有进程 (唯一第三方白名单 qilong) ──
-void killAllBackgroundProcesses(void) {
-    printRealLog(@"[PROCESS] 正在扫描并杀掉所有非系统后台进程...");
-    printRealLog(@"[PROCESS] 保持运行白名单：qilong / RootHelper & 系统关键基础设施组件");
-    
-    int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0};
-    size_t size = 0;
-    if (sysctl(mib, 4, NULL, &size, NULL, 0) == 0 && size > 0) {
-        struct kinfo_proc *procs = (struct kinfo_proc *)malloc(size);
-        if (procs && sysctl(mib, 4, procs, &size, NULL, 0) == 0) {
-            int count = (int)(size / sizeof(struct kinfo_proc));
-            pid_t myPid = getpid();
-            pid_t parentPid = getppid();
-            int killedCount = 0;
-            
-            // 系统保留基础进程白名单（防止强杀系统核心导致闪退关机）
-            NSArray *systemDaemons = @[
-                @"launchd", @"springboard", @"backboardd", @"useractivityd",
-                @"locationd", @"identityservicesd", @"sharingd", @"bluetoothd",
-                @"wifid", @"networkd", @"nehelper", @"securityd", @"keybagd",
-                @"containermanagerd", @"profiled", @"mobile_assertiond",
-                @"runningboardd", @"assertiond", @"fseventsd", @"logd",
-                @"syslogd", @"notifyd", @"kextd", @"lockdownd", @"remotemind",
-                @"kernelmanagerd", @"appstored", @"itunesstored", @"installd"
-            ];
-            
-            for (int i = 0; i < count; i++) {
-                pid_t targetPid = procs[i].kp_proc.p_pid;
-                if (targetPid <= 1 || targetPid == myPid || targetPid == parentPid) {
-                    continue;
-                }
-                
-                char *comm = procs[i].kp_proc.p_comm;
-                if (!comm || strlen(comm) == 0) continue;
-                
-                NSString *procName = [NSString stringWithUTF8String:comm];
-                NSString *lowerName = [procName lowercaseString];
-                
-                // 唯一第三方白名单 qilong
-                if ([lowerName containsString:@"qilong"] || [lowerName containsString:@"roothelper"]) {
-                    printRealLog(@"[PROCESS] [白名单保护] 忽略 qilong 关键进程: %s (PID: %d)", comm, targetPid);
-                    continue;
-                }
-                
-                // 系统进程保护
-                BOOL isSystem = NO;
-                for (NSString *sysDaemon in systemDaemons) {
-                    if ([lowerName isEqualToString:sysDaemon]) {
-                        isSystem = YES;
-                        break;
-                    }
-                }
-                if (isSystem) continue;
-                
-                // 杀掉所有其他后台与第三方进程
-                kill(targetPid, SIGTERM);
-                kill(targetPid, SIGKILL);
-                printRealLog(@"[PROCESS] 成功杀死后台进程: %s (PID: %d)", comm, targetPid);
-                killedCount++;
-            }
-            free(procs);
-            printRealLog(@"[PROCESS] ✅ 后台进程清空完毕！共终止了 %d 个非系统进程。", killedCount);
-        } else {
-            if (procs) free(procs);
-            printRealLog(@"[PROCESS] ⚠️ 获取系统进程列表失败。");
-        }
-    }
-}
 
         if ([runMode isEqualToString:@"kill_all_background"]) {
             printRealLog(@"[PROCESS] Active: Kill all background processes mode.");
