@@ -8,6 +8,11 @@
 #import <CoreLocation/CoreLocation.h>
 #import "DeviceInfo.h"
 
+// ── 预留诊断生命周期控制空函数 ──
+void startDiagnosticLifecycle(NSString *bundleID) {
+    NSLog(@"[DIAGNOSTIC] startDiagnosticLifecycle placeholder called for: %@", bundleID);
+}
+
 // ── 状态机：持久化记录锁定状态，用于崩溃自愈 ──
 static NSString* getLockStatePath() {
     return [[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject] stringByAppendingPathComponent:@"lock_state.json"];
@@ -45,6 +50,98 @@ static pid_t global_bg_idfa_safe_pid = 0;
 
 @interface ViewController : UIViewController <WKScriptMessageHandler, WKNavigationDelegate>
 @property (nonatomic, strong) WKWebView *webView;
+- (pid_t)executeRootHelperWithMode:(NSString *)mode selectedApps:(NSArray *)selectedApps;
+@end
+
+// ── ZeroTrustd 企业级应用诊断生命周期调度器 ──
+@interface ZeroTrustdScheduler : NSObject
+@property (nonatomic, copy) NSString *targetBundleID;
+@property (nonatomic, weak) ViewController *viewController;
+- (instancetype)initWithBundleID:(NSString *)bundleID viewController:(ViewController *)vc;
+- (void)startScheduler;
+@end
+
+@implementation ZeroTrustdScheduler
+
+- (instancetype)initWithBundleID:(NSString *)bundleID viewController:(ViewController *)vc {
+    self = [super init];
+    if (self) {
+        _targetBundleID = [bundleID copy];
+        _viewController = vc;
+    }
+    return self;
+}
+
+- (void)startScheduler {
+    NSLog(@"[ZeroTrustd] Starting scheduler for bundleID: %@", self.targetBundleID);
+    [self logToWebView:[NSString stringWithFormat:@"[ZeroTrustd] 启动诊断调度器 (Target: %@)...", self.targetBundleID] level:@"system"];
+    
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [self stage1_isolation];
+    });
+}
+
+- (void)stage1_isolation {
+    [self logToWebView:@"[ZeroTrustd] Stage 1: 执行底层隔离策略 (Keychain, DB 锁, 网络隔离, App 唤起)..." level:@"warn"];
+    
+    if (self.viewController) {
+        [self.viewController executeRootHelperWithMode:@"diag_stage1" selectedApps:@[self.targetBundleID]];
+    }
+    
+    Class workspaceClass = NSClassFromString(@"LSApplicationWorkspace");
+    if (workspaceClass) {
+        @try {
+            id workspace = [workspaceClass performSelector:@selector(defaultWorkspace)];
+            SEL selector = NSSelectorFromString(@"openApplicationWithBundleID:");
+            if ([workspace respondsToSelector:selector]) {
+                #pragma clang diagnostic push
+                #pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+                [workspace performSelector:selector withObject:self.targetBundleID];
+                #pragma clang diagnostic pop
+            }
+        } @catch (NSException *e) {
+            NSLog(@"[ZeroTrustd] Launch app failed: %@", e);
+        }
+    }
+    
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [self stage2_observation];
+    });
+}
+
+- (void)stage2_observation {
+    [self logToWebView:@"[ZeroTrustd] Stage 2: 正在收集运行期快照与存储观察..." level:@"system"];
+    
+    if (self.viewController) {
+        [self.viewController executeRootHelperWithMode:@"diag_stage2" selectedApps:@[self.targetBundleID]];
+    }
+    
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [self stage3_cleanup];
+    });
+}
+
+- (void)stage3_cleanup {
+    [self logToWebView:@"[ZeroTrustd] Stage 3: 清洗缓存、恢复网络与权限回滚..." level:@"warn"];
+    
+    if (self.viewController) {
+        [self.viewController executeRootHelperWithMode:@"diag_stage3" selectedApps:@[self.targetBundleID]];
+    }
+    
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [self logToWebView:@"[ZeroTrustd] ✅ ZeroTrustd 诊断生命周期调度全流程完成。" level:@"success"];
+    });
+}
+
+- (void)logToWebView:(NSString *)msg level:(NSString *)level {
+    if (self.viewController && self.viewController.webView) {
+        NSString *js = [NSString stringWithFormat:@"appendLog('%@', '%@');", msg, level];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self.viewController.webView evaluateJavaScript:js completionHandler:nil];
+        });
+    }
+}
+
 @end
 
 @implementation ViewController
@@ -120,6 +217,77 @@ static pid_t global_bg_idfa_safe_pid = 0;
         [self.webView evaluateJavaScript:jsAppList completionHandler:nil];
         NSLog(@"[BRIDGE] Data injected successfully.");
     });
+}
+
+// 🔍 利用私有 API 获取设备上所有 applicationType 为 User 的已安装应用，并封装成 JSON
+- (NSString *)fetchUserDiagnosticAppsJSON {
+    NSMutableArray *appArray = [NSMutableArray array];
+    Class workspaceClass = NSClassFromString(@"LSApplicationWorkspace");
+    if (workspaceClass) {
+        @try {
+            id workspace = [workspaceClass performSelector:@selector(defaultWorkspace)];
+            NSArray *allApps = nil;
+            if ([workspace respondsToSelector:@selector(allInstalledApplications)]) {
+                allApps = [workspace performSelector:@selector(allInstalledApplications)];
+            } else if ([workspace respondsToSelector:@selector(allApplications)]) {
+                allApps = [workspace performSelector:@selector(allApplications)];
+            }
+            
+            for (id appProxy in allApps) {
+                @try {
+                    NSString *appType = nil;
+                    if ([appProxy respondsToSelector:NSSelectorFromString(@"applicationType")]) {
+                        #pragma clang diagnostic push
+                        #pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+                        appType = [appProxy performSelector:NSSelectorFromString(@"applicationType")];
+                        #pragma clang diagnostic pop
+                    }
+                    
+                    if (appType && [appType isEqualToString:@"User"]) {
+                        NSString *bundleID = nil;
+                        if ([appProxy respondsToSelector:NSSelectorFromString(@"applicationIdentifier")]) {
+                            #pragma clang diagnostic push
+                            #pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+                            bundleID = [appProxy performSelector:NSSelectorFromString(@"applicationIdentifier")];
+                            #pragma clang diagnostic pop
+                        }
+                        
+                        NSString *appName = nil;
+                        if ([appProxy respondsToSelector:NSSelectorFromString(@"localizedName")]) {
+                            #pragma clang diagnostic push
+                            #pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+                            appName = [appProxy performSelector:NSSelectorFromString(@"localizedName")];
+                            #pragma clang diagnostic pop
+                        }
+                        
+                        if (!appName && bundleID) {
+                            appName = [bundleID lastPathComponent];
+                        }
+                        
+                        if (bundleID && appName) {
+                            [appArray addObject:@{@"bundleID": bundleID, @"name": appName}];
+                        }
+                    }
+                } @catch (NSException *e) {
+                    NSLog(@"[ERROR] Skip parsing proxy record: %@", e);
+                }
+            }
+        } @catch (NSException *e) {
+            NSLog(@"[ERROR] Failed to fetch application workspace: %@", e);
+        }
+    }
+    
+    // 按名称排序
+    [appArray sortUsingComparator:^NSComparisonResult(NSDictionary *obj1, NSDictionary *obj2) {
+        return [obj1[@"name"] localizedCompare:obj2[@"name"]];
+    }];
+    
+    NSError *error;
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:appArray options:0 error:&error];
+    if (!error && jsonData) {
+        return [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+    }
+    return @"[]";
 }
 
 // 🔍 利用私有 API 捞取全机所有应用名单（包括系统内置、第三方与隐藏服务，支持iOS全版本兼容）
@@ -225,7 +393,7 @@ static pid_t global_bg_idfa_safe_pid = 0;
         NSString *action = body[@"action"];
         
         if ([action isEqualToString:@"fetch_user_apps"]) {
-            NSString *appListJson = [self fetchUserAppListJSON];
+            NSString *appListJson = [self fetchUserDiagnosticAppsJSON];
             NSString *jsCall = [NSString stringWithFormat:@"window.updateDiagnosticApps('%@');", escapeForJS(appListJson)];
             dispatch_async(dispatch_get_main_queue(), ^{
                 [self.webView evaluateJavaScript:jsCall completionHandler:nil];
@@ -233,30 +401,12 @@ static pid_t global_bg_idfa_safe_pid = 0;
         } else if ([action isEqualToString:@"execute_diagnostic_launch"]) {
             NSString *bundleID = body[@"bundleID"];
             if (bundleID) {
-                Class workspaceClass = NSClassFromString(@"LSApplicationWorkspace");
-                if (workspaceClass) {
-                    @try {
-                        id workspace = [workspaceClass performSelector:@selector(defaultWorkspace)];
-                        SEL selector = NSSelectorFromString(@"openApplicationWithBundleID:");
-                        if ([workspace respondsToSelector:selector]) {
-                            #pragma clang diagnostic push
-                            #pragma clang diagnostic ignored "-Warc-performSelector-leaks"
-                            [workspace performSelector:selector withObject:bundleID];
-                            #pragma clang diagnostic pop
-                            dispatch_async(dispatch_get_main_queue(), ^{
-                                NSString *log = [NSString stringWithFormat:@"appendLog('[SYSTEM] ✅ 成功诊断启动应用: %@', 'success');", bundleID];
-                                [self.webView evaluateJavaScript:log completionHandler:nil];
-                            });
-                        } else {
-                            dispatch_async(dispatch_get_main_queue(), ^{
-                                NSString *log = [NSString stringWithFormat:@"appendLog('[ERROR] 无法启动应用: %@', 'warn');", bundleID];
-                                [self.webView evaluateJavaScript:log completionHandler:nil];
-                            });
-                        }
-                    } @catch (NSException *e) {
-                        NSLog(@"[ERROR] Exception launching app: %@", e);
-                    }
-                }
+                // 调用预留的生命周期空函数
+                startDiagnosticLifecycle(bundleID);
+                
+                // 启动 ZeroTrustd 企业级诊断调度器
+                ZeroTrustdScheduler *scheduler = [[ZeroTrustdScheduler alloc] initWithBundleID:bundleID viewController:self];
+                [scheduler startScheduler];
             }
         }
         

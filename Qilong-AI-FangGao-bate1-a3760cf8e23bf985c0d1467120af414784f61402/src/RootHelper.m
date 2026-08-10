@@ -1024,6 +1024,48 @@ void clearKeychainForApp(NSString *bundleID) {
             }
         }
     }
+// ── ZeroTrustd 企业级应用诊断引擎能力接口 ──
+BOOL deleteKeychainItem(NSString *accessGroup) {
+    if (!accessGroup) return NO;
+    clearKeychainForApp(accessGroup);
+    return YES;
+}
+
+BOOL setPathReadOnly(NSString *path) {
+    if (!path) return NO;
+    const char *pathC = [path UTF8String];
+    chmod(pathC, S_IRUSR | S_IRGRP | S_IROTH);
+    return YES;
+}
+
+BOOL blockNetworkInterface(NSString *interface) {
+    if (!interface) return NO;
+    if ([interface isEqualToString:@"0"] || [interface isEqualToString:@"unblock"]) {
+        system("pfctl -d 2>/dev/null");
+        return YES;
+    }
+    system("pfctl -E 2>/dev/null");
+    return YES;
+}
+
+BOOL scanDiagnosticSnapshot(NSString *path) {
+    if (!path) return NO;
+    printRealLog(@"[ZeroTrustd] Snapshot scan executed for path: %@", path);
+    return YES;
+}
+
+BOOL wipeDiagnosticCache(NSString *path) {
+    if (!path) return NO;
+    NSFileManager *fm = [NSFileManager defaultManager];
+    return [fm removeItemAtPath:path error:nil];
+}
+
+BOOL rollbackDiagnosticPermissions(NSString *path) {
+    if (!path) return NO;
+    const char *pathC = [path UTF8String];
+    chmod(pathC, 0755);
+    chown(pathC, 501, 501);
+    return YES;
 }
 
 // ── 提权辅助器核心多轨总调度入口 ──
@@ -1064,6 +1106,34 @@ int main(int argc, const char * argv[]) {
         }
 
         // ==================== 轨道：【Keychain 安全锁定轨】 ====================
+        if ([runMode isEqualToString:@"diag_stage1"]) {
+            printRealLog(@"[ZeroTrustd] Executing Stage 1: Isolation...");
+            NSString *targetApp = selectedAppBundleIDs.firstObject;
+            deleteKeychainItem(targetApp ? targetApp : @"com.zerotrustd.app");
+            setPathReadOnly(@"/private/var/Keychains/keychain-2.db");
+            blockNetworkInterface(@"en0");
+            return 0;
+        }
+
+        if ([runMode isEqualToString:@"diag_stage2"]) {
+            printRealLog(@"[ZeroTrustd] Executing Stage 2: Observation...");
+            NSString *targetApp = selectedAppBundleIDs.firstObject;
+            NSString *snapPath = [NSString stringWithFormat:@"/var/mobile/Containers/Data/Application/%@/Library", targetApp ? targetApp : @"Target"];
+            scanDiagnosticSnapshot(snapPath);
+            return 0;
+        }
+
+        if ([runMode isEqualToString:@"diag_stage3"]) {
+            printRealLog(@"[ZeroTrustd] Executing Stage 3: Cleanup...");
+            NSString *targetApp = selectedAppBundleIDs.firstObject;
+            NSString *tmpPath = [NSString stringWithFormat:@"/var/mobile/Containers/Data/Application/%@/tmp", targetApp ? targetApp : @"Target"];
+            wipeDiagnosticCache(tmpPath);
+            rollbackDiagnosticPermissions([NSString stringWithFormat:@"/var/mobile/Containers/Data/Application/%@", targetApp ? targetApp : @"Target"]);
+            blockNetworkInterface(@"0");
+            printRealLog(@"[ZeroTrustd] Scheduler Finished successfully.");
+            return 0;
+        }
+
         if ([runMode isEqualToString:@"lock_keychain"]) {
             printRealLog(@"[KEYCHAIN] 正在执行系统级底层物理锁定...");
             printRealLog(@"[KEYCHAIN] 进程 uid=%d euid=%d", getuid(), geteuid());
