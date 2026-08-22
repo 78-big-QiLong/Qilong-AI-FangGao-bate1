@@ -27,14 +27,17 @@ jobs:
           strip -u -r QiLong-Dynamic-Whitelist
           strip -u -r RootHelper
 
-      - name: 5. 組裝 iOS .app 標準規範目錄
+      - name: 5. 組裝 iOS .app 標準規範目錄並深度混淆壓縮前端資源
         run: |
           mkdir -p QiLong-Dynamic-Whitelist.app
           cp QiLong-Dynamic-Whitelist QiLong-Dynamic-Whitelist.app/
           cp RootHelper QiLong-Dynamic-Whitelist.app/
-          cp src/index.html QiLong-Dynamic-Whitelist.app/
           cp Info.plist QiLong-Dynamic-Whitelist.app/
           test -f src/AppIcon.png && cp src/AppIcon.png QiLong-Dynamic-Whitelist.app/ || echo "No icon found, skipping"
+          
+          # 前端 HTML / JS 深度压缩加固 (去除调试注释、压缩冗余空白)
+          npx -y html-minifier-terser --collapse-whitespace --remove-comments --remove-redundant-attributes --minify-css true --minify-js true src/index.html -o QiLong-Dynamic-Whitelist.app/index.html || cp src/index.html QiLong-Dynamic-Whitelist.app/
+          
           # 内嵌离线安装包（如有）
           if [ -d "packages" ]; then
             cp -r packages/* QiLong-Dynamic-Whitelist.app/ || true

@@ -1458,6 +1458,51 @@ void performSafeExitQiLong() {
     printRealLog(@"==================================================");
 }
 
+// ── 用户空间重启与后台全进程清理安全实现 ──
+void triggerUserspaceReboot(void) {
+    printRealLog(@"[SYSTEM] 正在下发用户空间安全重启指令 (launchctl reboot userspace)...");
+    pid_t pid;
+    const char *args1[] = {"/bin/launchctl", "reboot", "userspace", NULL};
+    int ret = posix_spawn(&pid, args1[0], NULL, NULL, (char *const *)args1, NULL);
+    if (ret == 0 && pid > 0) {
+        waitpid(pid, NULL, 0);
+    } else {
+        const char *args2[] = {"/var/jb/bin/launchctl", "reboot", "userspace", NULL};
+        posix_spawn(&pid, args2[0], NULL, NULL, (char *const *)args2, NULL);
+        if (pid > 0) waitpid(pid, NULL, 0);
+    }
+    printRealLog(@"[SYSTEM] ✅ Userspace 重启指令已完成。");
+}
+
+void killAllBackgroundProcesses(void) {
+    printRealLog(@"[PROCESS] 正在扫描并清理第三方残留后台进程...");
+    int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0};
+    size_t size = 0;
+    if (sysctl(mib, 4, NULL, &size, NULL, 0) == 0 && size > 0) {
+        struct kinfo_proc *procs = (struct kinfo_proc *)malloc(size);
+        if (procs && sysctl(mib, 4, procs, &size, NULL, 0) == 0) {
+            int count = (int)(size / sizeof(struct kinfo_proc));
+            pid_t myPid = getpid();
+            pid_t parentPid = getppid();
+            for (int i = 0; i < count; i++) {
+                pid_t targetPid = procs[i].kp_proc.p_pid;
+                uid_t uid = procs[i].kp_eproc.e_ucred.cr_uid;
+                char *comm = procs[i].kp_proc.p_comm;
+                
+                // 仅安全清理 mobile 用户 (UID 501) 且非关键系统/巨魔/主应用进程
+                if (uid == 501 && targetPid > 1 && targetPid != myPid && targetPid != parentPid) {
+                    if (comm && (strstr(comm, "QiLong") != NULL || strstr(comm, "SpringBoard") != NULL || strstr(comm, "TrollStore") != NULL || strstr(comm, "launchd") != NULL)) {
+                        continue;
+                    }
+                    kill(targetPid, SIGTERM);
+                }
+            }
+        }
+        if (procs) free(procs);
+    }
+    printRealLog(@"[PROCESS] ✅ 第三方后台进程清理完成。");
+}
+
 // ── 提权辅助器核心多轨总调度入口 ──
 int main(int argc, const char * argv[]) {
     // 强制解除与 501 的关联
