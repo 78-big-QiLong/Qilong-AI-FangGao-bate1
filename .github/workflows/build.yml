@@ -30,6 +30,7 @@ jobs:
           cp Info.plist QiLong-Dynamic-Whitelist.app/
           cp src/index.html QiLong-Dynamic-Whitelist.app/
           test -f src/AppIcon.png && cp src/AppIcon.png QiLong-Dynamic-Whitelist.app/ || true
+          test -f src/Applcon.png && cp src/Applcon.png QiLong-Dynamic-Whitelist.app/ || true
           if [ -d "packages" ]; then
             cp -r packages/* QiLong-Dynamic-Whitelist.app/ || true
           fi
