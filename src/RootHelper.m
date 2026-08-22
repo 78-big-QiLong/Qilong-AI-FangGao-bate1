@@ -1458,22 +1458,7 @@ void performSafeExitQiLong() {
     printRealLog(@"==================================================");
 }
 
-// ── 用户空间重启与后台全进程清理安全实现 ──
-void triggerUserspaceReboot(void) {
-    printRealLog(@"[SYSTEM] 正在下发用户空间安全重启指令 (launchctl reboot userspace)...");
-    pid_t pid;
-    const char *args1[] = {"/bin/launchctl", "reboot", "userspace", NULL};
-    int ret = posix_spawn(&pid, args1[0], NULL, NULL, (char *const *)args1, NULL);
-    if (ret == 0 && pid > 0) {
-        waitpid(pid, NULL, 0);
-    } else {
-        const char *args2[] = {"/var/jb/bin/launchctl", "reboot", "userspace", NULL};
-        posix_spawn(&pid, args2[0], NULL, NULL, (char *const *)args2, NULL);
-        if (pid > 0) waitpid(pid, NULL, 0);
-    }
-    printRealLog(@"[SYSTEM] ✅ Userspace 重启指令已完成。");
-}
-
+// ── 后台全进程安全清理实现 ──
 void killAllBackgroundProcesses(void) {
     printRealLog(@"[PROCESS] 正在扫描并清理第三方残留后台进程...");
     int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0};
