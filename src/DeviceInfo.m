@@ -20,39 +20,45 @@
 }
 
 - (void)fetchCurrentInfo {
-    self.systemVersion = [[UIDevice currentDevice] systemVersion];
-    
-    size_t size;
-    sysctlbyname("hw.machine", NULL, &size, NULL, 0);
-    char *machine = malloc(size);
-    sysctlbyname("hw.machine", machine, &size, NULL, 0);
-    NSString *platform = [NSString stringWithUTF8String:machine];
-    free(machine);
-    
-    [self mapDeviceAndProcessor:platform];
-    
-    // 安全沙盒检测：解决沙盒外 sandbox_check 未定义导致 iOS 16.3 闪退问题
-    self.isTrollStore = NO;
-    void *sandboxHandle = dlopen(NULL, RTLD_LAZY);
-    if (sandboxHandle) {
-        int (*my_sandbox_check)(pid_t, int *, int) = dlsym(sandboxHandle, "sandbox_check");
-        if (my_sandbox_check) {
-            if (my_sandbox_check(getpid(), NULL, 0) == 0) {
-                self.isTrollStore = YES;
+    @try {
+        self.systemVersion = [[UIDevice currentDevice] systemVersion] ?: @"iOS 15.0";
+        
+        char machine[256] = {0};
+        size_t size = sizeof(machine);
+        sysctlbyname("hw.machine", machine, &size, NULL, 0);
+        NSString *platform = [NSString stringWithUTF8String:machine] ?: @"iPhone";
+        
+        [self mapDeviceAndProcessor:platform];
+        
+        // 安全沙盒检测：解决沙盒外 sandbox_check 未定义导致 iOS 16.3 闪退问题
+        self.isTrollStore = NO;
+        void *sandboxHandle = dlopen(NULL, RTLD_LAZY);
+        if (sandboxHandle) {
+            int (*my_sandbox_check)(pid_t, int *, int) = dlsym(sandboxHandle, "sandbox_check");
+            if (my_sandbox_check) {
+                if (my_sandbox_check(getpid(), NULL, 0) == 0) {
+                    self.isTrollStore = YES;
+                }
+            } else {
+                // 降级策略：判断路径写入权限
+                NSString *testPath = @"/var/mobile/test_troll.txt";
+                if ([@"test" writeToFile:testPath atomically:YES encoding:NSUTF8StringEncoding error:nil]) {
+                    self.isTrollStore = YES;
+                    [[NSFileManager defaultManager] removeItemAtPath:testPath error:nil];
+                }
             }
-        } else {
-            // 降级策略：判断路径写入权限
-            NSString *testPath = @"/var/mobile/test_troll.txt";
-            if ([@"test" writeToFile:testPath atomically:YES encoding:NSUTF8StringEncoding error:nil]) {
-                self.isTrollStore = YES;
-                [[NSFileManager defaultManager] removeItemAtPath:testPath error:nil];
-            }
+            dlclose(sandboxHandle);
         }
-        dlclose(sandboxHandle);
+        
+        self.isJailbroken = [self checkJailbreakLegacy];
+        self.serialNumber = [self getInternalSerialNumber] ?: @"受沙盒限制";
+    } @catch (NSException *e) {
+        NSLog(@"[DEVICE_INFO] Error fetching info: %@", e);
+        if (!self.systemVersion) self.systemVersion = @"iOS 15.0";
+        if (!self.deviceModel) self.deviceModel = @"iPhone";
+        if (!self.processor) self.processor = @"Apple Silicon";
+        if (!self.serialNumber) self.serialNumber = @"受沙盒限制";
     }
-    
-    self.isJailbroken = [self checkJailbreakLegacy];
-    self.serialNumber = [self getInternalSerialNumber];
 }
 
 - (void)mapDeviceAndProcessor:(NSString *)platform {
@@ -81,20 +87,28 @@
 }
 
 - (NSString *)getInternalSerialNumber {
-    void *gestalt = dlopen("/usr/lib/libMobileGestalt.dylib", RTLD_LAZY);
-    if (!gestalt) return @"受沙盒限制";
-    
-    CFTypeRef (*MGCopyAnswer)(CFStringRef property) = dlsym(gestalt, "MGCopyAnswer");
-    if (!MGCopyAnswer) { dlclose(gestalt); return @"受沙盒限制"; }
-    
-    CFStringRef key = CFSTR("SerialNumber");
-    CFTypeRef answer = MGCopyAnswer(key);
-    if (answer && CFGetTypeID(answer) == CFStringGetTypeID()) {
-        NSString *sn = [NSString stringWithString:(__bridge NSString *)answer];
-        CFRelease(answer); dlclose(gestalt); return sn;
+    @try {
+        void *gestalt = dlopen("/usr/lib/libMobileGestalt.dylib", RTLD_LAZY);
+        if (!gestalt) return @"受沙盒限制";
+        
+        CFTypeRef (*MGCopyAnswer)(CFStringRef property) = dlsym(gestalt, "MGCopyAnswer");
+        if (!MGCopyAnswer) { dlclose(gestalt); return @"受沙盒限制"; }
+        
+        CFStringRef key = CFSTR("SerialNumber");
+        CFTypeRef answer = MGCopyAnswer(key);
+        if (answer) {
+            if (CFGetTypeID(answer) == CFStringGetTypeID()) {
+                NSString *sn = [NSString stringWithString:(__bridge NSString *)answer];
+                CFRelease(answer);
+                dlclose(gestalt);
+                return sn ?: @"受沙盒限制";
+            }
+            CFRelease(answer);
+        }
+        dlclose(gestalt);
+    } @catch (NSException *e) {
+        NSLog(@"[DEVICE_INFO] Serial number error: %@", e);
     }
-    if (answer) CFRelease(answer);
-    dlclose(gestalt);
     return @"受沙盒限制";
 }
 

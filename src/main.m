@@ -300,13 +300,20 @@ static pid_t global_bg_idfa_light_pid = 0;
     DeviceInfo *info = [DeviceInfo sharedInstance];
     
     // 注入 A：将硬件底牌送达前端看板
-    // ✅ 修复：将 js 变量内中文字符改为干净的英文字符
-    NSString *jsDevice = [NSString stringWithFormat:@"window.updateDevicePayload('%@', '%@', '%@', '%@', %@, %@);",
-                        info.systemVersion, info.deviceModel, info.serialNumber, info.processor,
-                        info.isTrollStore ? @"true" : @"false", info.isJailbroken ? @"true" : @"false"];
+    NSString *v = escapeForJS(info.systemVersion ?: @"iOS 15.0");
+    NSString *m = escapeForJS(info.deviceModel ?: @"iPhone");
+    NSString *sn = escapeForJS(info.serialNumber ?: @"受沙盒限制");
+    NSString *cpu = escapeForJS(info.processor ?: @"Apple Silicon");
+    NSString *troll = info.isTrollStore ? @"true" : @"false";
+    NSString *jb = info.isJailbroken ? @"true" : @"false";
+    
+    NSString *jsDevice = [NSString stringWithFormat:@"if(window.updateDevicePayload){window.updateDevicePayload('%@', '%@', '%@', '%@', %@, %@);}",
+                        v, m, sn, cpu, troll, jb];
     
     // 注入 B：动态抓取真实 App 列表并转为 JSON 字符串
-    NSString *jsAppList = [NSString stringWithFormat:@"window.updateAppList('%@');", [self fetchUserAppListJSON]];
+    NSString *rawList = [self fetchUserAppListJSON];
+    NSString *escapedList = escapeForJS(rawList ?: @"[]");
+    NSString *jsAppList = [NSString stringWithFormat:@"if(window.updateAppList){window.updateAppList('%@');}", escapedList];
     
     // 延迟 0.3 秒，配合前端开屏执行鉴权与数据注入
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
@@ -979,38 +986,48 @@ static NSString* escapeForJS(NSString *input) {
 
 @implementation AppDelegate
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-    // 【崩溃自愈状态机】开机自检：若上次锁定后遭遇崩溃或强杀，立刻自愈解锁！
-    if (readLockState()) {
-        NSLog(@"[FAILSAVE] 发现上次锁定后遭遇强杀或崩溃，正在执行底层自愈解锁...");
-        NSString *bundleHelperPath = [[NSBundle mainBundle] pathForResource:@"RootHelper" ofType:nil];
-        if (bundleHelperPath) {
-            NSString *helperPath = @"/var/mobile/RootHelper";
-            [[NSFileManager defaultManager] removeItemAtPath:helperPath error:nil];
-            if ([[NSFileManager defaultManager] copyItemAtPath:bundleHelperPath toPath:helperPath error:nil]) {
-                chmod([helperPath UTF8String], 0755);
-            } else {
-                helperPath = bundleHelperPath;
+    @try {
+        // 【崩溃自愈状态机】开机自检：若上次锁定后遭遇崩溃或强杀，立刻自愈解锁！
+        if (readLockState()) {
+            NSLog(@"[FAILSAVE] 发现上次锁定后遭遇强杀或崩溃，正在执行底层自愈解锁...");
+            NSString *bundleHelperPath = [[NSBundle mainBundle] pathForResource:@"RootHelper" ofType:nil];
+            if (bundleHelperPath) {
+                NSString *helperPath = @"/var/mobile/RootHelper";
+                [[NSFileManager defaultManager] removeItemAtPath:helperPath error:nil];
+                if ([[NSFileManager defaultManager] copyItemAtPath:bundleHelperPath toPath:helperPath error:nil]) {
+                    chmod([helperPath UTF8String], 0755);
+                } else {
+                    helperPath = bundleHelperPath;
+                }
+                pid_t pid;
+                const char *argv[] = {[helperPath UTF8String], "unlock_keychain", NULL};
+                posix_spawnattr_t attr;
+                posix_spawnattr_init(&attr);
+                posix_spawnattr_setflags(&attr, POSIX_SPAWN_START_SUSPENDED);
+                int status = posix_spawn(&pid, argv[0], NULL, &attr, (char* const*)argv, NULL);
+                posix_spawnattr_destroy(&attr);
+                if (status == 0) kill(pid, SIGCONT);
             }
-            pid_t pid;
-            const char *argv[] = {[helperPath UTF8String], "unlock_keychain", NULL};
-            posix_spawnattr_t attr;
-            posix_spawnattr_init(&attr);
-            posix_spawnattr_setflags(&attr, POSIX_SPAWN_START_SUSPENDED);
-            int status = posix_spawn(&pid, argv[0], NULL, &attr, (char* const*)argv, NULL);
-            posix_spawnattr_destroy(&attr);
-            if (status == 0) kill(pid, SIGCONT);
+            writeLockState(NO);
         }
-        writeLockState(NO);
+    } @catch (NSException *e) {
+        NSLog(@"[APP_INIT] Lock state check exception: %@", e);
     }
 
-    // 【后台永生保活】
-    self.locationManager = [[CLLocationManager alloc] init];
-    self.locationManager.delegate = self;
-    self.locationManager.desiredAccuracy = kCLLocationAccuracyKilometer; // 最低精度，极度省电
-    self.locationManager.allowsBackgroundLocationUpdates = YES;
-    self.locationManager.pausesLocationUpdatesAutomatically = NO;
-    [self.locationManager requestAlwaysAuthorization];
-    [self.locationManager startUpdatingLocation];
+    @try {
+        // 【后台永生保活】
+        self.locationManager = [[CLLocationManager alloc] init];
+        self.locationManager.delegate = self;
+        self.locationManager.desiredAccuracy = kCLLocationAccuracyKilometer; // 最低精度，极度省电
+        if ([self.locationManager respondsToSelector:@selector(setAllowsBackgroundLocationUpdates:)]) {
+            [self.locationManager setAllowsBackgroundLocationUpdates:YES];
+        }
+        self.locationManager.pausesLocationUpdatesAutomatically = NO;
+        [self.locationManager requestAlwaysAuthorization];
+        [self.locationManager startUpdatingLocation];
+    } @catch (NSException *e) {
+        NSLog(@"[LOCATION] Background location init error: %@", e);
+    }
 
     self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
     ViewController *mainVC = [[ViewController alloc] init];
@@ -1020,78 +1037,91 @@ static NSString* escapeForJS(NSString *input) {
 }
 
 - (void)applicationDidEnterBackground:(UIApplication *)application {
-    // 【退后台熔断】按 PRD 原则：严格执行“退后台即解锁”以防止重启白苹果
-    if (readLockState()) {
-        NSLog(@"[FAILSAVE] 检测到应用退入后台，执行防死锁紧急解锁 Keychain！");
-        NSString *bundleHelperPath = [[NSBundle mainBundle] pathForResource:@"RootHelper" ofType:nil];
-        if (bundleHelperPath) {
-            NSString *helperPath = @"/var/mobile/RootHelper";
-            [[NSFileManager defaultManager] removeItemAtPath:helperPath error:nil];
-            if ([[NSFileManager defaultManager] copyItemAtPath:bundleHelperPath toPath:helperPath error:nil]) {
-                chmod([helperPath UTF8String], 0755);
-            } else {
-                helperPath = bundleHelperPath;
+    @try {
+        // 【退后台熔断】按 PRD 原则：严格执行“退后台即解锁”以防止重启白苹果
+        if (readLockState()) {
+            NSLog(@"[FAILSAVE] 检测到应用退入后台，执行防死锁紧急解锁 Keychain！");
+            NSString *bundleHelperPath = [[NSBundle mainBundle] pathForResource:@"RootHelper" ofType:nil];
+            if (bundleHelperPath) {
+                NSString *helperPath = @"/var/mobile/RootHelper";
+                [[NSFileManager defaultManager] removeItemAtPath:helperPath error:nil];
+                if ([[NSFileManager defaultManager] copyItemAtPath:bundleHelperPath toPath:helperPath error:nil]) {
+                    chmod([helperPath UTF8String], 0755);
+                } else {
+                    helperPath = bundleHelperPath;
+                }
+                pid_t pid;
+                const char *argv[] = {[helperPath UTF8String], "unlock_keychain", NULL};
+                posix_spawnattr_t attr;
+                posix_spawnattr_init(&attr);
+                posix_spawnattr_setflags(&attr, POSIX_SPAWN_START_SUSPENDED);
+                #define POSIX_SPAWN_PERSONA_FLAGS_OVERRIDE 1
+                int (*set_persona_np)(const posix_spawnattr_t* __restrict, uid_t, uint32_t) = dlsym(RTLD_DEFAULT, "posix_spawnattr_set_persona_np");
+                int (*set_persona_uid_np)(const posix_spawnattr_t* __restrict, uid_t) = dlsym(RTLD_DEFAULT, "posix_spawnattr_set_persona_uid_np");
+                int (*set_persona_gid_np)(const posix_spawnattr_t* __restrict, uid_t) = dlsym(RTLD_DEFAULT, "posix_spawnattr_set_persona_gid_np");
+                if (set_persona_np && set_persona_uid_np && set_persona_gid_np) {
+                    set_persona_np(&attr, 99, POSIX_SPAWN_PERSONA_FLAGS_OVERRIDE);
+                    set_persona_uid_np(&attr, 0);
+                    set_persona_gid_np(&attr, 0);
+                }
+                int status = posix_spawn(&pid, argv[0], NULL, &attr, (char* const*)argv, NULL);
+                posix_spawnattr_destroy(&attr);
+                if (status == 0) kill(pid, SIGCONT);
             }
-            pid_t pid;
-            const char *argv[] = {[helperPath UTF8String], "unlock_keychain", NULL};
-            posix_spawnattr_t attr;
-            posix_spawnattr_init(&attr);
-            posix_spawnattr_setflags(&attr, POSIX_SPAWN_START_SUSPENDED);
-            #define POSIX_SPAWN_PERSONA_FLAGS_OVERRIDE 1
-            int (*set_persona_np)(const posix_spawnattr_t* __restrict, uid_t, uint32_t) = dlsym(RTLD_DEFAULT, "posix_spawnattr_set_persona_np");
-            int (*set_persona_uid_np)(const posix_spawnattr_t* __restrict, uid_t) = dlsym(RTLD_DEFAULT, "posix_spawnattr_set_persona_uid_np");
-            int (*set_persona_gid_np)(const posix_spawnattr_t* __restrict, uid_t) = dlsym(RTLD_DEFAULT, "posix_spawnattr_set_persona_gid_np");
-            if (set_persona_np && set_persona_uid_np && set_persona_gid_np) {
-                set_persona_np(&attr, 99, POSIX_SPAWN_PERSONA_FLAGS_OVERRIDE);
-                set_persona_uid_np(&attr, 0);
-                set_persona_gid_np(&attr, 0);
-            }
-            int status = posix_spawn(&pid, argv[0], NULL, &attr, (char* const*)argv, NULL);
-            posix_spawnattr_destroy(&attr);
-            if (status == 0) kill(pid, SIGCONT);
+            writeLockState(NO);
         }
-        writeLockState(NO);
+    } @catch (NSException *e) {
+        NSLog(@"[BACKGROUND] Failsafe error: %@", e);
     }
 }
 
 - (void)applicationWillTerminate:(UIApplication *)application {
-    // 【杀后台抢答熔断】：当用户在多任务卡片向上划掉 App 强制杀死时，抢答一波解锁！
-    if (readLockState()) {
-        NSLog(@"[FAILSAVE] 检测到应用即将被强制关闭，抢答执行紧急解锁 Keychain！");
-        NSString *bundleHelperPath = [[NSBundle mainBundle] pathForResource:@"RootHelper" ofType:nil];
-        if (bundleHelperPath) {
-            NSString *helperPath = @"/var/mobile/RootHelper";
-            [[NSFileManager defaultManager] removeItemAtPath:helperPath error:nil];
-            if ([[NSFileManager defaultManager] copyItemAtPath:bundleHelperPath toPath:helperPath error:nil]) {
-                chmod([helperPath UTF8String], 0755);
-            } else {
-                helperPath = bundleHelperPath;
+    @try {
+        // 【杀后台抢答熔断】：当用户在多任务卡片向上划掉 App 强制杀死时，抢答一波解锁！
+        if (readLockState()) {
+            NSLog(@"[FAILSAVE] 检测到应用即将被强制关闭，抢答执行紧急解锁 Keychain！");
+            NSString *bundleHelperPath = [[NSBundle mainBundle] pathForResource:@"RootHelper" ofType:nil];
+            if (bundleHelperPath) {
+                NSString *helperPath = @"/var/mobile/RootHelper";
+                [[NSFileManager defaultManager] removeItemAtPath:helperPath error:nil];
+                if ([[NSFileManager defaultManager] copyItemAtPath:bundleHelperPath toPath:helperPath error:nil]) {
+                    chmod([helperPath UTF8String], 0755);
+                } else {
+                    helperPath = bundleHelperPath;
+                }
+                pid_t pid;
+                const char *argv[] = {[helperPath UTF8String], "unlock_keychain", NULL};
+                posix_spawnattr_t attr;
+                posix_spawnattr_init(&attr);
+                posix_spawnattr_setflags(&attr, POSIX_SPAWN_START_SUSPENDED);
+                #define POSIX_SPAWN_PERSONA_FLAGS_OVERRIDE 1
+                int (*set_persona_np)(const posix_spawnattr_t* __restrict, uid_t, uint32_t) = dlsym(RTLD_DEFAULT, "posix_spawnattr_set_persona_np");
+                int (*set_persona_uid_np)(const posix_spawnattr_t* __restrict, uid_t) = dlsym(RTLD_DEFAULT, "posix_spawnattr_set_persona_uid_np");
+                int (*set_persona_gid_np)(const posix_spawnattr_t* __restrict, uid_t) = dlsym(RTLD_DEFAULT, "posix_spawnattr_set_persona_gid_np");
+                if (set_persona_np && set_persona_uid_np && set_persona_gid_np) {
+                    set_persona_np(&attr, 99, POSIX_SPAWN_PERSONA_FLAGS_OVERRIDE);
+                    set_persona_uid_np(&attr, 0);
+                    set_persona_gid_np(&attr, 0);
+                }
+                int status = posix_spawn(&pid, argv[0], NULL, &attr, (char* const*)argv, NULL);
+                posix_spawnattr_destroy(&attr);
+                if (status == 0) kill(pid, SIGCONT);
             }
-            pid_t pid;
-            const char *argv[] = {[helperPath UTF8String], "unlock_keychain", NULL};
-            posix_spawnattr_t attr;
-            posix_spawnattr_init(&attr);
-            posix_spawnattr_setflags(&attr, POSIX_SPAWN_START_SUSPENDED);
-            #define POSIX_SPAWN_PERSONA_FLAGS_OVERRIDE 1
-            int (*set_persona_np)(const posix_spawnattr_t* __restrict, uid_t, uint32_t) = dlsym(RTLD_DEFAULT, "posix_spawnattr_set_persona_np");
-            int (*set_persona_uid_np)(const posix_spawnattr_t* __restrict, uid_t) = dlsym(RTLD_DEFAULT, "posix_spawnattr_set_persona_uid_np");
-            int (*set_persona_gid_np)(const posix_spawnattr_t* __restrict, uid_t) = dlsym(RTLD_DEFAULT, "posix_spawnattr_set_persona_gid_np");
-            if (set_persona_np && set_persona_uid_np && set_persona_gid_np) {
-                set_persona_np(&attr, 99, POSIX_SPAWN_PERSONA_FLAGS_OVERRIDE);
-                set_persona_uid_np(&attr, 0);
-                set_persona_gid_np(&attr, 0);
-            }
-            int status = posix_spawn(&pid, argv[0], NULL, &attr, (char* const*)argv, NULL);
-            posix_spawnattr_destroy(&attr);
-            if (status == 0) kill(pid, SIGCONT);
+            writeLockState(NO);
         }
-        writeLockState(NO);
+    } @catch (NSException *e) {
+        NSLog(@"[TERMINATE] Failsafe error: %@", e);
     }
 }
 @end
 
 int main(int argc, char * argv[]) {
     @autoreleasepool {
-        return UIApplicationMain(argc, argv, nil, NSStringFromClass([AppDelegate class]));
+        @try {
+            return UIApplicationMain(argc, argv, nil, NSStringFromClass([AppDelegate class]));
+        } @catch (NSException *e) {
+            NSLog(@"[FATAL] Uncaught exception: %@\n%@", e.reason, e.callStackSymbols);
+            return 0;
+        }
     }
 }

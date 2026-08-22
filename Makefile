@@ -2,7 +2,6 @@ TARGET = QiLong-Dynamic-Whitelist
 HELPER = RootHelper
 CC = clang
 SYSROOT = $(shell xcrun --sdk iphoneos --show-sdk-path 2>/dev/null || echo "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk")
-# 使用与最后可正常工作版本完全一致的编译参数
 CFLAGS = -isysroot $(SYSROOT) -arch arm64 -miphoneos-version-min=15.0 -fobjc-arc
 
 all: $(TARGET) $(HELPER)
