@@ -154,14 +154,19 @@
             left: 0;
             right: 0;
             bottom: 0;
-            padding: calc(15px + env(safe-area-inset-top)) 20px calc(15px + env(safe-area-inset-bottom)) 20px;
+            width: 100%;
+            max-width: 560px;
+            margin: 0 auto;
+            padding: calc(10px + env(safe-area-inset-top)) 16px calc(10px + env(safe-area-inset-bottom)) 16px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+            gap: clamp(6px, 1.4vh, 12px);
             box-sizing: border-box;
             opacity: 0;
-            transform: scale(0.92);
-            transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform: scale(0.96);
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            overflow: hidden;
         }
 
         #homepage.active {
@@ -169,18 +174,85 @@
             transform: scale(1);
         }
 
+        /* ── 顶部标题与公告跑马灯栏 ── */
+        .top-header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .header-title {
+            font-size: 1.15rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            color: #ffffff;
+            flex-shrink: 0;
+        }
+
+        .notice-container {
+            flex: 1;
+            overflow: hidden;
+            background: rgba(255, 170, 0, 0.08);
+            border: 1px solid rgba(255, 170, 0, 0.2);
+            border-radius: 20px;
+            padding: 4px 10px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            position: relative;
+            box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.5);
+        }
+
+        .notice-icon {
+            font-size: 0.72rem;
+            margin-right: 6px;
+            color: #ffaa00;
+            flex-shrink: 0;
+        }
+
+        .notice-marquee-wrapper {
+            flex: 1;
+            overflow: hidden;
+            white-space: nowrap;
+            position: relative;
+        }
+
+        .notice-marquee-text {
+            display: inline-block;
+            font-size: 0.72rem;
+            color: #ffcc66;
+            white-space: nowrap;
+            animation: marqueeScroll 15s linear infinite;
+        }
+
+        .notice-marquee-text:hover {
+            animation-play-state: paused;
+        }
+
+        @keyframes marqueeScroll {
+            0% {
+                transform: translateX(100%);
+            }
+
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+
         /* 硬件状态自检看板 */
         .info-board {
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 16px;
-            padding: 15px;
+            border-radius: 14px;
+            padding: clamp(8px, 1.2vh, 14px);
             -webkit-backdrop-filter: blur(20px);
             backdrop-filter: blur(20px);
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            margin-top: 15px;
+            gap: clamp(6px, 1vh, 10px);
+            margin-top: clamp(4px, 0.8vh, 8px);
         }
 
         .info-item {
@@ -189,15 +261,18 @@
         }
 
         .info-label {
-            font-size: 0.75rem;
+            font-size: clamp(0.66rem, 2.1vw, 0.74rem);
             color: #888892;
             margin-bottom: 2px;
         }
 
         .info-value {
-            font-size: 0.9rem;
+            font-size: clamp(0.78rem, 2.5vw, 0.88rem);
             font-weight: 600;
             color: #ffffff;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .highlight-status {
@@ -207,23 +282,31 @@
 
         /* ── 三核心主按钮：独立流光跑马灯外边框 ── */
         .button-group {
-            display: flex;
-            gap: 10px;
-            margin: 15px 0;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: clamp(5px, 1.2vw, 8px);
+            margin: 0;
+            width: 100%;
         }
 
         .btn {
-            flex: 1;
-            padding: 14px 4px;
-            border-radius: 14px;
-            font-size: 0.82rem;
+            width: 100%;
+            min-height: clamp(36px, 5.2vh, 44px);
+            padding: clamp(5px, 0.9vh, 9px) 2px;
+            border-radius: 12px;
+            font-size: clamp(0.68rem, 2vw, 0.76rem);
             font-weight: 800;
             border: none;
             cursor: pointer;
             position: relative;
             overflow: hidden;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
             z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            line-height: 1.15;
             transition: transform 0.12s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.1s ease;
         }
 
@@ -245,7 +328,7 @@
             content: '';
             position: absolute;
             inset: 2px;
-            border-radius: 12px;
+            border-radius: 10px;
             z-index: -1;
         }
 
@@ -284,6 +367,20 @@
             background: linear-gradient(135deg, #2c1a00 0%, #140d00 100%);
         }
 
+        /* ── 无跑马灯纯净按钮 ── */
+        .btn-plain::before {
+            display: none !important;
+        }
+
+        .btn-plain {
+            border: 1px solid rgba(255, 255, 255, 0.12) !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+        }
+
+        .btn-plain::after {
+            background: linear-gradient(135deg, #1c1c24 0%, #101016 100%) !important;
+        }
+
         /* 重度机械按压物理反馈反馈 */
         .btn:active {
             transform: scale(0.88) !important;
@@ -303,19 +400,20 @@
         /* ── 终端日志面板 ── */
         .log-panel {
             flex: 1;
+            min-height: clamp(80px, 14vh, 220px);
             background: #000000;
             border: 1px solid rgba(255, 255, 255, 0.07);
             border-radius: 14px;
             padding: 0;
             font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
-            font-size: 0.78rem;
+            font-size: clamp(0.68rem, 1.8vw, 0.76rem);
             color: #a0a0b0;
             text-align: left;
-            line-height: 1.6;
+            line-height: 1.5;
             box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.9);
             display: flex;
             flex-direction: column;
-            min-height: 110px;
+            overflow: hidden;
         }
 
         /* 日志顶部标题栏 */
@@ -323,7 +421,7 @@
             display: flex;
             align-items: center;
             gap: 6px;
-            padding: 7px 12px;
+            padding: clamp(5px, 0.8vh, 8px) 12px;
             background: rgba(255, 255, 255, 0.04);
             border-bottom: 1px solid rgba(255, 255, 255, 0.06);
             border-radius: 14px 14px 0 0;
@@ -331,25 +429,25 @@
         }
 
         .log-header-dot {
-            width: 8px;
-            height: 8px;
+            width: 7px;
+            height: 7px;
             border-radius: 50%;
         }
 
         .log-header-title {
-            font-size: 0.7rem;
+            font-size: 0.68rem;
             color: #666680;
             letter-spacing: 0.5px;
             flex: 1;
         }
 
         .log-clear-btn {
-            font-size: 0.65rem;
+            font-size: 0.62rem;
             color: #555568;
             background: none;
             border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 6px;
-            padding: 2px 7px;
+            padding: 2px 6px;
             cursor: pointer;
         }
 
@@ -365,31 +463,31 @@
             -webkit-overflow-scrolling: touch;
             overscroll-behavior: contain;
             touch-action: pan-y;
-            padding: 10px 12px;
+            padding: clamp(6px, 1vh, 10px) 12px;
         }
 
         .log-line {
             display: flex;
             align-items: flex-start;
-            gap: 8px;
-            margin-bottom: 5px;
+            gap: 6px;
+            margin-bottom: 4px;
             word-break: break-all;
-            font-size: 0.77rem;
+            font-size: clamp(0.68rem, 1.8vw, 0.75rem);
         }
 
         /* 时间戳列 */
         .log-ts {
             color: #3a3a50;
-            font-size: 0.68rem;
+            font-size: 0.65rem;
             flex-shrink: 0;
             margin-top: 1px;
-            min-width: 46px;
+            min-width: 44px;
         }
 
         /* 等级图标 */
         .log-icon {
             flex-shrink: 0;
-            font-size: 0.75rem;
+            font-size: 0.72rem;
             margin-top: 1px;
         }
 
@@ -402,13 +500,13 @@
         }
 
         .log-main {
-            line-height: 1.45;
+            line-height: 1.4;
         }
 
         .log-sub {
-            font-size: 0.68rem;
+            font-size: 0.65rem;
             opacity: 0.55;
-            line-height: 1.35;
+            line-height: 1.3;
         }
 
         .log-success .log-main {
@@ -450,15 +548,16 @@
         /* 三连并发次级功能按钮组 */
         .link-group {
             display: flex;
-            gap: 8px;
-            margin-top: 15px;
+            gap: clamp(5px, 1.2vw, 8px);
+            margin: 0;
+            width: 100%;
         }
 
         .btn-link {
             flex: 1;
-            padding: 12px 5px;
+            padding: clamp(6px, 1vh, 10px) 4px;
             border-radius: 10px;
-            font-size: 0.78rem;
+            font-size: clamp(0.66rem, 1.9vw, 0.75rem);
             font-weight: 600;
             background: rgba(255, 255, 255, 0.04);
             color: #b0b0bc;
@@ -469,6 +568,7 @@
             justify-content: center;
             align-items: center;
             gap: 4px;
+            white-space: nowrap;
         }
 
         .btn-link:active {
@@ -480,12 +580,13 @@
 
         /* 底部常驻声明小字 */
         .footer-declaration {
-            font-size: 0.7rem;
+            font-size: clamp(0.58rem, 1.6vw, 0.66rem);
             color: #55555e;
             text-align: center;
-            margin-top: 12px;
-            letter-spacing: 0.5px;
-            line-height: 1.4;
+            margin: 0;
+            letter-spacing: 0.3px;
+            line-height: 1.3;
+            flex-shrink: 0;
         }
 
         /* ── 弹窗矩阵与精细列表 ── */
@@ -632,84 +733,46 @@
             transform: scale(0.92);
         }
 
-        /* ── 📱 横屏 & 平板 iPad 响应式深度适配 ── */
-        /* 注意：html/body 不设 overflow:hidden，保留 iOS 多任务手势区域（分屏三点按钮） */
-        @media (orientation: landscape) or (min-width: 768px) {
-
+        /* ── 📱 横屏比例自适应 (保持完全一致的排版结构，仅等比缩放间距与高度) ── */
+        @media (orientation: landscape) and (max-height: 560px) {
             #homepage {
-                padding: calc(8px + env(safe-area-inset-top)) 24px calc(8px + env(safe-area-inset-bottom)) 24px !important;
-                display: flex !important;
-                flex-direction: row !important;
-                flex-wrap: wrap !important;
-                align-content: space-between !important;
-                justify-content: space-between !important;
-                gap: 10px !important;
-            }
-
-            /* 左半侧：标题 + 自检看板 */
-            #homepage>div:first-child {
-                flex: 1.2;
-                min-width: 280px;
-                display: flex;
-                flex-direction: column;
-                justify-content: flex-start;
+                max-width: 620px !important;
+                gap: clamp(3px, 0.9vh, 6px) !important;
+                padding: calc(4px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(4px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left)) !important;
             }
 
             .info-board {
-                grid-template-columns: repeat(3, 1fr) !important;
-                margin-top: 8px !important;
-                gap: 8px !important;
-                padding: 10px !important;
-            }
-
-            /* 右半侧：控制按钮组 + 日志窗口 */
-            .button-group {
-                flex: 1;
-                min-width: 240px;
-                flex-direction: row !important;
-                margin: 0 !important;
-                gap: 8px !important;
-                align-items: center;
+                margin-top: 2px !important;
+                padding: 4px 10px !important;
+                gap: 3px 10px !important;
             }
 
             .btn {
-                padding: 10px 4px !important;
-                font-size: 0.76rem !important;
-                border-radius: 10px !important;
+                min-height: 30px !important;
+                padding: 3px 2px !important;
+                font-size: 0.7rem !important;
             }
 
             .log-panel {
-                flex-basis: 100% !important;
-                height: 120px !important;
-                margin-top: 4px !important;
-                font-size: 0.72rem !important;
-            }
-
-            .link-group {
-                flex-basis: 100% !important;
-                margin-top: 4px !important;
-                gap: 6px !important;
+                min-height: 55px !important;
             }
 
             .btn-link {
-                padding: 8px 4px !important;
-                font-size: 0.72rem !important;
+                padding: 4px 2px !important;
+                font-size: 0.68rem !important;
             }
 
             .footer-declaration {
-                flex-basis: 100% !important;
-                margin-top: 2px !important;
-                font-size: 0.62rem !important;
+                font-size: 0.55rem !important;
             }
 
             .modal-box {
-                max-width: 460px !important;
-                width: 75% !important;
+                max-width: 380px !important;
                 padding: 12px !important;
             }
 
             .modal-list {
-                max-height: 140px !important;
+                max-height: 120px !important;
             }
         }
     </style>
@@ -723,67 +786,28 @@
         <div
             style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%;">
             <div class="fly-in-big" id="splash-big">QiLong-Dynamic-Whitelist(beta2)</div>
-            <div class="fly-in-small" id="splash-small"
-                style="font-family: monospace; text-align: left; background: rgba(0,0,0,0.45); border: 1px solid rgba(0,255,102,0.2); padding: 12px; border-radius: 10px; max-height: 42vh; overflow-y: auto;">
-                <div
-                    style="font-size: 0.88rem; font-weight: 800; color: #00ff66; margin-bottom: 6px; border-bottom: 1px dashed rgba(0,255,102,0.3); padding-bottom: 4px;">
-                    📦 开发/测试版本详细构建报告 (v1.0.8 Build)
-                </div>
-
-                <div style="color: #bbb; font-size: 0.75rem; line-height: 1.45; margin-bottom: 6px;">
-                    🛠 <strong>构建元数据</strong>: 2026-08-10 05:00 | iOS 15.0 - 16.7 | APFS物理防写 + 闪退防爆全面重构
-                </div>
-
-                <div style="color: #ffd700; font-size: 0.78rem; font-weight: 800; margin-top: 6px;">👑 1. TrollStore
-                    Persona 99 零级提权</div>
-                <div style="color: #ccc; font-size: 0.73rem; line-height: 1.4; padding-left: 6px;">
-                    • TSRootBinaries 显式绑定，Info.plist 注入 TSRootBinaries 声明<br>
-                    • posix_spawnattr_set_persona_np (UID=0, GID=0, Persona=99) 突破 501 限制<br>
-                    • Filza canOpenURL 安全探测唤起，彻底解决 ARC Block 栈野指针闪退
-                </div>
-
-                <div style="color: #00ffff; font-size: 0.78rem; font-weight: 800; margin-top: 6px;">🔒 2. APFS 真实物理锁定机制
-                </div>
-                <div style="color: #ccc; font-size: 0.73rem; line-height: 1.4; padding-left: 6px;">
-                    • sqlite3 PRAGMA wal_checkpoint(TRUNCATE) 强制刷新落盘<br>
-                    • APFS UF_IMMUTABLE / SF_IMMUTABLE 不可变物理锁 + chown 0:0 + chmod 0400 真正剥夺写权<br>
-                    • sys/stat.h 实测物理权限与标志位，Filza 查看真实只读锁定
-                </div>
-
-                <div style="color: #ff00ff; font-size: 0.78rem; font-weight: 800; margin-top: 6px;">🛸 3. 后台永生保活
-                    (Background Keep-Alive)</div>
-                <div style="color: #ccc; font-size: 0.73rem; line-height: 1.4; padding-left: 6px;">
-                    • CLLocationManager 最低功耗定位保活，锁屏与退后台不冻结<br>
-                    • Info.plist UIBackgroundModes (location/fetch) 完整声明
-                </div>
-
-                <div style="color: #ffaa00; font-size: 0.78rem; font-weight: 800; margin-top: 6px;">🛡️ 4. 零损耗防御矩阵 & JS
-                    防破裂</div>
-                <div style="color: #ccc; font-size: 0.73rem; line-height: 1.4; padding-left: 6px;">
-                    • escapeForJS 全安全转义，杜绝换行符与反斜杠导致的 WebKit 崩溃<br>
-                    • 热熔断 (Serious/Critical) + 电量 (≤15%) / 省电模式自动熔断解锁
-                </div>
-
-                <div style="color: #ff3232; font-size: 0.78rem; font-weight: 800; margin-top: 6px;">🏥 5. 崩溃自愈状态机 (State
-                    Journaling)</div>
-                <div style="color: #ccc; font-size: 0.73rem; line-height: 1.4; padding-left: 6px;">
-                    • lock_state.json 实时持久化记账<br>
-                    • 开机 0.1 秒无条件自动自愈解锁
-                </div>
-            </div>
         </div>
         <div class="splash-disclaimer">
             项目借助骑龙定制Ai智能体制作 功能ui规则等由AI制作仅供参考<br>
-            -任何外部链接都与该工具与作者无关 任何链接与第三方产物的后果均由使用者自行承担<br>
+            -任何外部链接跳转均与本工具及作者无关 任何链接与第三方产物的后果均由使用者自行承担<br>
             -该工具仅供学习参考 使用请坚决不要违反当地法律法规与社区规则 一切后果由使用者承担<br>
-            -我们承诺不搜集不共享不存储任何不必要的数据 不正当的使用该工具有可能造成数据丢失损坏与泄露后果均由使用者承担<br>
-            -进入首页即代表同意该协议 如拒绝请退出
+            -我们承诺不搜集不共享不存储 any 不必要的数据 不正当的使用该工具有可能造成数据丢失损坏与泄露后果均由使用者承担<br>
+            -进入首页即代表同意该协议 如拒绝请退出<br>
+            https://github.com/78-big-QiLong拥有所有权与最终解释权 版本号beta3.1 此版本未在中国大陆及港澳地区发布 仅为内部测试与技术探索
         </div>
     </div>
 
     <div id="homepage">
         <div>
-            <div style="font-size: 1.2rem; font-weight: 800; letter-spacing: 1px;">QiLongAi</div>
+            <div class="top-header-row">
+                <div class="header-title">QiLongAi</div>
+                <div class="notice-container">
+                    <span class="notice-icon">📢</span>
+                    <div class="notice-marquee-wrapper">
+                        <span class="notice-marquee-text" id="top-notice-text">该版本随时可能失效 点击右下角“交流频道”获得更新地址</span>
+                    </div>
+                </div>
+            </div>
             <div class="info-board">
                 <div class="info-item">
                     <div class="info-label" id="lbl-version">系统版本(读取值)</div>
@@ -814,8 +838,7 @@
 
         <div class="button-group">
             <button class="btn btn-select" id="btn-select" onclick="clickSelect()">勾选应用</button>
-            <button class="btn btn-dynamic" id="btn-dynamic-menu"
-                onclick="toggleModal('modal-dynamic-menu', true)">启动动态白名单</button>
+            <button class="btn btn-dynamic" id="btn-dynamic-menu" onclick="clickDynamicMainMenu()">启动动态白名单</button>
             <button class="btn btn-execute" id="btn-execute" onclick="clickExecute()">清理风险残留</button>
             <button class="btn btn-keychain" id="btn-keychain-2.db"
                 onclick="clickKeychain2DB()">keychain-2.db未锁定</button>
@@ -824,11 +847,23 @@
         <div class="button-group">
             <button class="btn btn-select" id="btn-reserved-4" onclick="clickClearKeychain()"
                 style="color: #ff5555; text-shadow: 0 0 6px rgba(255, 85, 85, 0.6);">清理所选keychain</button>
-            <button class="btn btn-select" id="btn-reserved-1" onclick="clickKillAllBackground()"
-                style="color: #ffaa00; text-shadow: 0 0 6px rgba(255, 170, 0, 0.6);">清空后台</button>
+            <button class="btn btn-select" id="btn-new-device" onclick="clickOneKeyNewDevice()"
+                style="color: #ffaa00; text-shadow: 0 0 6px rgba(255, 170, 0, 0.6);">一键新机</button>
             <button class="btn btn-select" id="btn-reserved-2" onclick="clickFetchDiagnosticApps()"
-                style="color: #00ffcc; text-shadow: 0 0 6px rgba(0, 255, 204, 0.6);">应用诊断</button>
-            <button class="btn btn-select" id="btn-reserved-3">测试3</button>
+                style="color: #00ffcc; text-shadow: 0 0 6px rgba(0, 255, 204, 0.6);">屏蔽hook检测</button>
+            <button class="btn btn-select" id="btn-advanced-options" onclick="clickAdvancedOptions()"
+                style="color: #bb88ff; text-shadow: 0 0 6px rgba(187, 136, 255, 0.6);">高级选项</button>
+        </div>
+
+        <div class="button-group">
+            <button class="btn btn-plain" id="btn-fix-daemons" onclick="clickFixDaemons()"
+                style="color: #aaccff;">修复守护进程</button>
+            <button class="btn btn-plain" id="btn-safe-exit" onclick="clickSafeExitQiLong()"
+                style="color: #ff6666;">安全关闭QiLong</button>
+            <button class="btn btn-select" id="btn-env-check" onclick="clickEnvironmentCheck()"
+                style="color: #00ffcc; text-shadow: 0 0 6px rgba(0, 255, 204, 0.6);">环境检测</button>
+            <button class="btn btn-select" id="btn-free-dg" onclick="clickFreeDG()"
+                style="color: #ffaa00; text-shadow: 0 0 6px rgba(255, 170, 0, 0.6);">免费DG</button>
         </div>
 
         <div class="log-panel" id="log-container">
@@ -862,14 +897,14 @@
         </div>
 
         <div class="footer-declaration" id="text-footer">
-            https://github.com/78-big-QiLong拥有所有权与最终解释权 这是永久公益测试版本 如果是花钱买的说明是盗版或木马你被骗了
+            https://github.com/78-big-QiLong拥有所有权与最终解释权 版本号beta3.1 此版本未在中国大陆及港澳地区发布 仅为内部测试与技术探索
         </div>
     </div>
 
     <!-- ── 动态白名单二级菜单弹窗 ── -->
     <div class="modal-overlay" id="modal-dynamic-menu">
         <div class="modal-box" style="max-width: 320px; width: 85%; padding: 22px;">
-            <div class="modal-title" style="color: #ff5555; font-size: 1.15rem; font-weight: 900; margin-bottom: 20px;">
+            <div class="modal-title" id="mdl-dynamic-menu-title" style="color: #ff5555; font-size: 1.15rem; font-weight: 900; margin-bottom: 20px;">
                 选择白名单模式</div>
             <div class="modal-list"
                 style="text-align: center; display: flex; flex-direction: column; gap: 15px; padding: 10px;">
@@ -880,10 +915,10 @@
                     onclick="toggleModal('modal-dynamic-menu', false); clickDynamicRefreshSafe();"
                     style="width: 100%; color: #00ffaa; text-shadow: 0 0 6px rgba(0, 255, 170, 0.6);">动态白名单(锁定模式)keychain锁定后用这个</button>
                 <button class="btn btn-dynamic" id="btn-dynamic-light"
-                    onclick="toggleModal('modal-dynamic-menu', false); alert('轻量模式功能开发中...');"
+                    onclick="toggleModal('modal-dynamic-menu', false); clickDynamicRefreshLight();"
                     style="width: 100%; color: #00ccff; text-shadow: 0 0 6px rgba(0, 204, 255, 0.6);">动态白名单(轻量模式)为老机型减负优化</button>
             </div>
-            <button class="btn-close" style="margin-top: 20px;"
+            <button class="btn-close" id="mdl-dynamic-menu-cancel" style="margin-top: 20px;"
                 onclick="toggleModal('modal-dynamic-menu', false)">取消</button>
         </div>
     </div>
@@ -891,41 +926,41 @@
     <!-- ── 第一次打开弹窗提示 ── -->
     <div class="modal-overlay" id="modal-first-open">
         <div class="modal-box" style="max-width: 380px; width: 92%; padding: 22px;">
-            <div class="modal-title" style="color: #ffaa00; font-size: 1.15rem; font-weight: 900;">首次使用须知 & 用户协议</div>
+            <div class="modal-title" id="mdl-first-open-title" style="color: #ffaa00; font-size: 1.15rem; font-weight: 900;">首次使用须知 & 用户协议</div>
             <div class="modal-list" style="max-height: 290px; text-align: left; gap: 12px; padding: 2px;">
 
                 <div
                     style="background: rgba(255,170,0,0.06); border: 1px solid rgba(255,170,0,0.15); border-radius: 12px; padding: 12px;">
-                    <div style="font-size: 0.92rem; font-weight: 800; color: #ffaa00; margin-bottom: 6px;">1-
+                    <div style="font-size: 0.92rem; font-weight: 800; color: #ffaa00; margin-bottom: 6px;" id="mdl-first-step1-t">1-
                         前往设置关闭所有应用的 Siri “从此 App 学习”</div>
-                    <p style="font-size: 0.8rem; color: #ccc; margin: 0; line-height: 1.45;">请前往系统的“设置” - “Siri
+                    <p style="font-size: 0.8rem; color: #ccc; margin: 0; line-height: 1.45;" id="mdl-first-step1-d">请前往系统的“设置” - “Siri
                         与搜索”，关闭所有应用的“从此 App 学习”选项，以阻断残留的识别指纹与数据链路。</p>
                 </div>
 
                 <div
                     style="background: rgba(0,255,255,0.06); border: 1px solid rgba(0,255,255,0.15); border-radius: 12px; padding: 12px;">
-                    <div style="font-size: 0.92rem; font-weight: 800; color: #00ffff; margin-bottom: 6px;">2- 前往设置打开本
+                    <div style="font-size: 0.92rem; font-weight: 800; color: #00ffff; margin-bottom: 6px;" id="mdl-first-step2-t">2- 前往设置打开本
                         App “后台 App 刷新”</div>
-                    <p style="font-size: 0.8rem; color: #ccc; margin: 0; line-height: 1.45;">请前往系统的“设置” - “通用” - “后台 App
-                        刷新”，确保本 App 的后台刷新权限已打开，以便 IDFA 后台守护能在挂起时持续刷新。</p>
+                    <p style="font-size: 0.8rem; color: #ccc; margin: 0; line-height: 1.45;" id="mdl-first-step2-d">请前往系统的“设置” - “通用” - “后台 App
+                        刷新”，确保本 App 的后台刷新权限已打开，以便后台守护能在挂起时持续刷新。</p>
                 </div>
 
                 <div style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 10px;">
-                    <div style="font-size: 0.92rem; font-weight: 800; color: #ffffff; margin-bottom: 6px;">3- 仔细阅读以下用户协议
+                    <div style="font-size: 0.92rem; font-weight: 800; color: #ffffff; margin-bottom: 6px;" id="mdl-first-step3-t">3- 仔细阅读以下用户协议
                     </div>
                     <div
-                        style="font-size: 0.72rem; color: #888896; line-height: 1.5; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); border-radius: 8px; padding: 10px; max-height: 120px; overflow-y: auto;">
+                        style="font-size: 0.72rem; color: #888896; line-height: 1.5; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); border-radius: 8px; padding: 10px; max-height: 120px; overflow-y: auto;" id="mdl-first-protocol">
                         项目借助骑龙定制Ai智能体制作 功能ui规则等由AI制作仅供参考<br>
-                        -任何外部链接都与该工具与作者无关 任何链接与第三方产物的后果均由使用者自行承担<br>
+                        -任何外部链接跳转均与本工具及作者无关 任何链接与第三方产物的后果均由使用者自行承担<br>
                         -该工具仅供学习参考 使用请坚决不要违反当地法律法规与社区规则 一切后果由使用者承担<br>
                         -我们承诺不搜集不共享不存储 any 不必要的数据 不正当的使用该工具有可能造成数据丢失损坏与泄露后果均由使用者承担<br>
                         -进入首页即代表同意该协议 如拒绝请退出<br>
-                        https://github.com/78-big-QiLong拥有所有权与最终解释权 这是永久公益测试版本 如果是花钱买的说明是盗版或木马你被骗了
+                        https://github.com/78-big-QiLong拥有所有权与最终解释权 版本号beta3.1 此版本未在中国大陆及港澳地区发布 仅为内部测试与技术探索
                     </div>
                 </div>
 
             </div>
-            <button class="btn-close"
+            <button class="btn-close" id="mdl-first-agree"
                 style="background: #ffaa00; color: #141419; font-weight: 900; font-size: 0.95rem; border: none; box-shadow: 0 4px 15px rgba(255,170,0,0.3); padding: 12px 0;"
                 onclick="agreeFirstOpen()">我已知晓并同意协议</button>
         </div>
@@ -933,7 +968,7 @@
     <!-- ── 详细日志设置弹窗 ── -->
     <div class="modal-overlay" id="modal-verbose-log">
         <div class="modal-box" style="max-width: 400px; width: 92%; padding: 20px;">
-            <div class="modal-title" style="color: #bb88ff; font-size: 1.1rem; font-weight: 900;"> 详细日志 (Verbose Log)
+            <div class="modal-title" id="mdl-verbose-title" style="color: #bb88ff; font-size: 1.1rem; font-weight: 900;"> 详细日志 (Verbose Log)
             </div>
             <div class="modal-list"
                 style="max-height: 340px; text-align: left; gap: 10px; padding: 2px; overflow-y: auto;">
@@ -942,8 +977,8 @@
                 <div
                     style="background: rgba(140,80,255,0.08); border: 1px solid rgba(140,80,255,0.25); border-radius: 10px; padding: 12px; display: flex; align-items: center; justify-content: space-between;">
                     <div>
-                        <div style="font-size: 0.9rem; font-weight: 800; color: #cc99ff;">记录详细日志供测试</div>
-                        <div style="font-size: 0.72rem; color: #888; margin-top: 3px;">含文件、函数、行号、系统响应码</div>
+                        <div style="font-size: 0.9rem; font-weight: 800; color: #cc99ff;" id="mdl-verbose-sw-t">记录详细日志供测试</div>
+                        <div style="font-size: 0.72rem; color: #888; margin-top: 3px;" id="mdl-verbose-sw-d">含文件、函数、行号、系统响应码</div>
                     </div>
                     <label
                         style="position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0;">
@@ -960,8 +995,8 @@
 
                 <div
                     style="background: rgba(255,170,0,0.06); border: 1px solid rgba(255,170,0,0.2); border-radius: 8px; padding: 8px 10px;">
-                    <div style="font-size: 0.72rem; color: #ffaa00; line-height: 1.5;">
-                        ⚠️ <strong>非开发者/测试者不建议开启</strong><br>
+                    <div style="font-size: 0.72rem; color: #ffaa00; line-height: 1.5;" id="mdl-verbose-warn">
+                        ⚠️ <strong>非开发/测试不建议开启</strong><br>
                         详细日志会记录每条调用响应（含chmod 结果、stat返回码、securityd状态等）占用大量后台缓存影响性能。<br>
                         <span style="color: #888;">如需上传日志与奔溃记录请复制至QQ群或邮箱</span>
                     </div>
@@ -970,7 +1005,7 @@
                 <!-- 日志过滤选项 -->
                 <div
                     style="background: rgba(0,200,255,0.05); border: 1px solid rgba(0,200,255,0.15); border-radius: 8px; padding: 10px;">
-                    <div style="font-size: 0.8rem; font-weight: 800; color: #00ccff; margin-bottom: 6px;">📋 详细日志包含内容：
+                    <div style="font-size: 0.8rem; font-weight: 800; color: #00ccff; margin-bottom: 6px;" id="mdl-verbose-list-t">📋 详细日志包含内容：
                     </div>
                     <div style="font-size: 0.72rem; color: #bbb; line-height: 1.7;">
                         ✓ &nbsp;源文件 / 函数名 / 行号 (如 <code style="color:#00ffaa">RootHelper.m:1020 chmod()</code>)<br>
@@ -989,12 +1024,64 @@
 
             </div>
             <div style="display: flex; gap: 8px; margin-top: 12px;">
-                <button class="btn-close"
+                <button class="btn-close" id="mdl-verbose-copy"
                     style="flex: 1; background: #1a0040; color: #888; border: 1px solid rgba(140,80,255,0.2); padding: 10px 0; border-radius: 8px; margin-top:0;"
                     onclick="copyAllLogs()">📋 复制所有日志</button>
-                <button class="btn-close"
+                <button class="btn-close" id="mdl-verbose-done"
                     style="flex: 1; background: linear-gradient(135deg,#6600cc,#220066); color: #fff; border: none; padding: 10px 0; border-radius: 8px; margin-top:0; font-weight:900;"
                     onclick="toggleModal('modal-verbose-log', false)">完成</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── 高级选项二级弹窗 ── -->
+    <div class="modal-overlay" id="modal-advanced-options"
+        onclick="closeModalOnOverlay(event, 'modal-advanced-options')">
+        <div class="modal-box"
+            style="max-width: 360px; width: 90%; border: 1px solid rgba(187, 136, 255, 0.35); box-shadow: 0 0 25px rgba(187, 136, 255, 0.2);">
+            <div class="modal-title" id="mdl-adv-title" style="color: #bb88ff; font-size: 1.15rem; font-weight: 900; margin-bottom: 15px;">
+                ⚡ 高级选项</div>
+            <div class="modal-list"
+                style="text-align: center; display: flex; flex-direction: column; gap: 10px; padding: 4px;">
+                <button class="modal-item" id="btn-adv-userspace"
+                    onclick="toggleModal('modal-advanced-options', false); clickUserspaceReboot();"
+                    style="color: #ffaa00;">重启用户空间</button>
+                <button class="modal-item" id="btn-adv-filza" onclick="toggleModal('modal-advanced-options', false); clickInstallFilza();"
+                    style="color: #00ffff;">安装filza</button>
+                <button class="modal-item" id="btn-adv-filzatroll" onclick="toggleModal('modal-advanced-options', false); clickInstallFilzaTroll();"
+                    style="color: #ff9955;">安装filza巨魔版</button>
+                <button class="modal-item" id="btn-adv-inspector"
+                    onclick="toggleModal('modal-advanced-options', false); clickInstallDeviceInspector();"
+                    style="color: #ff55ff;">安装免费防查</button>
+                <button class="modal-item" id="btn-adv-dolby"
+                    onclick="toggleModal('modal-advanced-options', false); clickInstallDolbyAudio();"
+                    style="color: #33ccff;">安装杜比音效</button>
+                <button class="modal-item" id="btn-adv-shield"
+                    onclick="toggleModal('modal-advanced-options', false); clickInstallGreenShield();"
+                    style="color: #00ff88;">安装系统过绿盾</button>
+                <button class="modal-item" id="btn-adv-updates" onclick="toggleModal('modal-advanced-options', false); clickCheckUpdates();"
+                    style="color: #00ffaa;">检查更新</button>
+            </div>
+            <button class="btn-close" id="btn-adv-close" style="margin-top: 15px;"
+                onclick="toggleModal('modal-advanced-options', false)">关闭</button>
+        </div>
+    </div>
+    <!-- ── 检查更新弹窗 ── -->
+    <div class="modal-overlay" id="modal-check-update" onclick="closeModalOnOverlay(event, 'modal-check-update')">
+        <div class="modal-box"
+            style="max-width: 380px; width: 92%; border: 1px solid rgba(0, 255, 170, 0.4); box-shadow: 0 0 25px rgba(0, 255, 170, 0.2); padding: 22px;">
+            <div class="modal-title" id="mdl-update-title" style="color: #00ffaa; font-size: 1.15rem; font-weight: 900; margin-bottom: 12px;">
+                🔄 检查更新 · 版本动态</div>
+            <div class="modal-list" style="text-align: left; gap: 10px; padding: 2px;">
+                <div id="update-content-box"
+                    style="background: rgba(0, 255, 170, 0.05); border: 1px solid rgba(0, 255, 170, 0.15); border-radius: 12px; padding: 14px; color: #d0f8e8; font-size: 0.82rem; line-height: 1.6; max-height: 240px; overflow-y: auto; white-space: pre-wrap; word-break: break-word;">
+                    正在实时联网获取最新版本信息...
+                </div>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button class="btn-close" id="btn-update-close"
+                    style="flex: 1; background: #00ffaa; color: #141419; font-weight: 900; font-size: 0.92rem; border: none; box-shadow: 0 4px 15px rgba(0,255,170,0.3); padding: 10px 0; border-radius: 10px; margin-top: 0;"
+                    onclick="toggleModal('modal-check-update', false)">我知道了</button>
             </div>
         </div>
     </div>
@@ -1003,7 +1090,7 @@
     <div class="modal-overlay" id="modal-lock-result">
         <div class="modal-box"
             style="max-width: 380px; width: 92%; padding: 22px; border: 1px solid rgba(0, 255, 255, 0.35);">
-            <div class="modal-title" style="color: #00ffff; font-size: 1.15rem; font-weight: 900;">🔒
+            <div class="modal-title" id="mdl-lock-result-title" style="color: #00ffff; font-size: 1.15rem; font-weight: 900;">🔒
                 keychain-2.db锁定读取检测</div>
             <div class="modal-list" style="text-align: left; gap: 12px; padding: 2px;">
                 <div id="lock-result-status"
@@ -1011,7 +1098,7 @@
                     校验中...
                 </div>
                 <div style="font-size: 0.8rem; color: #ccc; line-height: 1.5; padding: 0 4px; margin-top: 10px;">
-                    <strong>底层执行日志：</strong>
+                    <strong id="mdl-lock-log-t">底层执行日志：</strong>
                     <div id="lock-result-log"
                         style="background: rgba(0,0,0,0.5); padding: 8px; border-radius: 6px; font-family: monospace; font-size: 0.75rem; color: #00ff66; margin-top: 6px; white-space: pre-wrap; word-wrap: break-word; max-height: 150px; overflow-y: auto;">
                         读取中...
@@ -1019,7 +1106,7 @@
                 </div>
             </div>
             <div style="display: flex; gap: 10px; margin-top: 20px; flex-direction: column;">
-                <button class="btn-close"
+                <button class="btn-close" id="btn-lock-result-close"
                     style="width: 100%; background: #00ffff; color: #141419; font-weight: 900; font-size: 0.95rem; border: none; box-shadow: 0 4px 15px rgba(0,255,255,0.3); padding: 12px 0; border-radius: 10px; margin-top: 0;"
                     onclick="toggleModal('modal-lock-result', false)">我知道了</button>
             </div>
@@ -1030,13 +1117,13 @@
     <div class="modal-overlay" id="modal-keychain-warn">
         <div class="modal-box"
             style="max-width: 380px; width: 92%; padding: 22px; border: 1px solid rgba(255, 170, 0, 0.35);">
-            <div class="modal-title" style="color: #ffaa00; font-size: 1.15rem; font-weight: 900;">⚠️ 高危操作警告</div>
+            <div class="modal-title" id="mdl-keychain-warn-title" style="color: #ffaa00; font-size: 1.15rem; font-weight: 900;">⚠️ 高危操作警告</div>
             <div class="modal-list" style="max-height: 290px; text-align: left; gap: 12px; padding: 2px;">
-                <div
+                <div id="mdl-kc-warn-desc1"
                     style="background: rgba(255,170,0,0.06); border: 1px solid rgba(255,170,0,0.15); border-radius: 12px; padding: 12px; color: #ffaa00; font-weight: 800; font-size: 0.85rem; line-height: 1.5;">
                     使用完立即取消锁定否则可能造成白苹果和崩溃 建议使用系统级锁定
                 </div>
-                <div style="font-size: 0.82rem; color: #ccc; line-height: 1.5; padding: 0 4px;">
+                <div style="font-size: 0.82rem; color: #ccc; line-height: 1.5; padding: 0 4px;" id="mdl-kc-warn-desc2">
                     先清理风险残留和keychain再开启<strong>环境依托巨魔filza</strong>。切勿在未关闭时进行以下高危操作：
                     <ul style="margin: 8px 0 0 16px; padding: 0; list-style-type: disc;">
                         <li style="margin-bottom: 6px; color: #ff8888;">关机/重启/注销/卸载</li>
@@ -1047,14 +1134,14 @@
             </div>
             <div style="display: flex; gap: 10px; margin-top: 20px; flex-direction: column;">
                 <div style="display: flex; gap: 10px;">
-                    <button class="btn-close"
+                    <button class="btn-close" id="btn-lock-filza"
                         style="flex: 1; background: #00ffff; color: #141419; font-weight: 900; font-size: 0.95rem; border: none; box-shadow: 0 4px 15px rgba(0,255,255,0.3); padding: 12px 0; border-radius: 10px; margin-top: 0;"
                         onclick="lockKeychainFilza()">借助filza锁定</button>
-                    <button class="btn-close"
+                    <button class="btn-close" id="btn-lock-system"
                         style="flex: 1; background: #ffaa00; color: #141419; font-weight: 900; font-size: 0.95rem; border: none; box-shadow: 0 4px 15px rgba(255,170,0,0.3); padding: 12px 0; border-radius: 10px; margin-top: 0;"
                         onclick="lockKeychainSystem()">系统级锁定(推荐)</button>
                 </div>
-                <button class="btn-close"
+                <button class="btn-close" id="btn-lock-cancel"
                     style="width: 100%; background: #141419; color: #888892; font-weight: 900; border: 1px solid rgba(255,255,255,0.1); padding: 12px 0; border-radius: 10px; margin-top: 0;"
                     onclick="toggleModal('modal-keychain-warn', false)">取消</button>
             </div>
@@ -1064,44 +1151,44 @@
     <!-- ── 使用教程弹窗 ── -->
     <div class="modal-overlay" id="modal-tutorial" onclick="closeModalOnOverlay(event, 'modal-tutorial')">
         <div class="modal-box" style="max-width: 380px; width: 92%; padding: 22px;">
-            <div class="modal-title" style="color: #00ffff; font-size: 1.15rem; font-weight: 900;">使用教程</div>
+            <div class="modal-title" id="mdl-tut-title" style="color: #00ffff; font-size: 1.15rem; font-weight: 900;">使用教程</div>
 
             <div class="modal-list" style="max-height: 310px; text-align: left; gap: 10px; padding: 2px;">
                 <div
                     style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 10px; font-size: 0.82rem; line-height: 1.5; color: #e0e0e6;">
-                    <div style="font-weight: 800; color: #00ffff; margin-bottom: 4px;">第一步</div>
-                    关闭所有“Siri从此app学习”
+                    <div style="font-weight: 800; color: #00ffff; margin-bottom: 4px;" id="mdl-tut-s1-t">第一步</div>
+                    <span id="mdl-tut-s1-d">关闭所有“Siri从此app学习”</span>
                 </div>
                 <div
                     style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 10px; font-size: 0.82rem; line-height: 1.5; color: #e0e0e6;">
-                    <div style="font-weight: 800; color: #00ffff; margin-bottom: 4px;">第二步</div>
-                    打开本应用后台刷新权限 (其他应用尽量关掉)
+                    <div style="font-weight: 800; color: #00ffff; margin-bottom: 4px;" id="mdl-tut-s2-t">第二步</div>
+                    <span id="mdl-tut-s2-d">打开本应用后台刷新权限 (其他应用尽量关掉)</span>
                 </div>
                 <div
                     style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 10px; font-size: 0.82rem; line-height: 1.5; color: #e0e0e6;">
-                    <div style="font-weight: 800; color: #00ffff; margin-bottom: 4px;">第三步</div>
-                    勾选目标应用 (建议尽量全部勾选效果最佳)
+                    <div style="font-weight: 800; color: #00ffff; margin-bottom: 4px;" id="mdl-tut-s3-t">第三步</div>
+                    <span id="mdl-tut-s3-d">勾选目标应用 (建议尽量全部勾选效果最佳)</span>
                 </div>
                 <div
                     style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 10px; font-size: 0.82rem; line-height: 1.5; color: #e0e0e6;">
-                    <div style="font-weight: 800; color: #00ffff; margin-bottom: 4px;">第四步</div>
-                    点击“清理风险残留”
+                    <div style="font-weight: 800; color: #00ffff; margin-bottom: 4px;" id="mdl-tut-s4-t">第四步</div>
+                    <span id="mdl-tut-s4-d">点击“清理风险残留”</span>
                 </div>
                 <div
                     style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 10px; font-size: 0.82rem; line-height: 1.5; color: #e0e0e6;">
-                    <div style="font-weight: 800; color: #00ffff; margin-bottom: 4px;">第五步</div>
-                    开启“动态白名单” (确保巨魔和越狱这时不在后台)
+                    <div style="font-weight: 800; color: #00ffff; margin-bottom: 4px;" id="mdl-tut-s5-t">第五步</div>
+                    <span id="mdl-tut-s5-d">开启“动态白名单” (确保巨魔和越狱这时不在后台)</span>
                 </div>
-                <div
+                <div id="mdl-tut-notice"
                     style="background: rgba(255,80,80,0.06); border: 1px solid rgba(255,80,80,0.15); border-radius: 10px; padding: 10px; font-size: 0.82rem; line-height: 1.5; color: #ff8080; font-weight: bold;">
                     注意：该应用后台不要划掉，否则功能会失效
                 </div>
             </div>
 
-            <button class="btn-close"
+            <button class="btn-close" id="btn-tut-video"
                 style="background: #00ffff; color: #141419; font-weight: 900; font-size: 0.92rem; border: none; box-shadow: 0 4px 15px rgba(0,255,255,0.3); margin-top: 15px; padding: 11px 0;"
                 onclick="openExternal('https://weixin.qq.com/sph/ANqOp5R71B')">▶ 视频教学</button>
-            <button class="btn-close"
+            <button class="btn-close" id="btn-tut-close"
                 style="background: rgba(255,255,255,0.08); color: #fff; border: 1px solid rgba(255,255,255,0.1); margin-top: 8px; padding: 10px 0;"
                 onclick="toggleModal('modal-tutorial', false)">关闭</button>
         </div>
@@ -1109,7 +1196,7 @@
 
     <div class="modal-overlay" id="modal-apps" onclick="closeModalOnOverlay(event, 'modal-apps')">
         <div class="modal-box" style="max-width: 360px; width: 90%;">
-            <div class="modal-title" id="mdl-apps-title">勾选要清理的应用钥匙链，请勿勾选巨魔越狱和系统应用，除非你知道你在干什么，后果自负！</div>
+            <div class="modal-title" id="mdl-apps-title">勾选执行的应用，请勿勾选巨魔越狱和系统应用，否则后果自负！</div>
             <div class="modal-list" id="apps-container">
                 <div style="color:#666; font-size:0.85rem; padding:20px 0;" id="text-loading-apps">扫描app列表中</div>
             </div>
@@ -1122,11 +1209,11 @@
         <div class="modal-box"
             style="max-width: 360px; width: 90%; border: 1px solid #00ffcc; box-shadow: 0 0 20px rgba(0, 255, 204, 0.25);">
             <div class="modal-title" id="mdl-diagnostic-title"
-                style="color: #00ffcc; text-shadow: 0 0 8px rgba(0, 255, 204, 0.4);">选择应用进行诊断启动</div>
+                style="color: #00ffcc; text-shadow: 0 0 8px rgba(0, 255, 204, 0.4);">选择应用启动拦截</div>
             <div class="modal-list" id="diagnostic-apps-container">
-                <div style="color:#666; font-size:0.85rem; padding:20px 0;">正在获取应用列表中...</div>
+                <div style="color:#666; font-size:0.85rem; padding:20px 0;" id="text-loading-diag">正在获取应用列表中...</div>
             </div>
-            <button class="btn-close" onclick="toggleModal('modal-diagnostic', false)"
+            <button class="btn-close" id="btn-diag-close" onclick="toggleModal('modal-diagnostic', false)"
                 style="background: rgba(255,255,255,0.08); color: #fff; border: 1px solid rgba(255,255,255,0.1); margin-top: 12px; padding: 10px 0;">关闭</button>
         </div>
     </div>
@@ -1135,32 +1222,59 @@
     <div class="modal-overlay" id="modal-warning">
         <div class="modal-box"
             style="max-width: 380px; width: 92%; border: 1px solid #ff3c3c; box-shadow: 0 0 25px rgba(255, 60, 60, 0.25);">
-            <div class="modal-title"
+            <div class="modal-title" id="mdl-warn-title"
                 style="color: #ff3c3c; font-size: 1.15rem; font-weight: 900; text-shadow: 0 0 8px rgba(255, 60, 60, 0.4);">
                 【安全警告 / SAFETY WARNING】</div>
             <div class="modal-list"
                 style="text-align: left; font-size: 0.8rem; line-height: 1.5; color: #e0e0e6; gap: 10px; max-height: 240px; overflow-y: auto;">
                 <div
                     style="background: rgba(255, 60, 60, 0.05); border: 1px solid rgba(255, 60, 60, 0.15); border-radius: 12px; padding: 10px;">
-                    <div style="font-weight: 800; color: #ff8080; margin-bottom: 4px;">慎重说明 / CRITICAL RULE</div>
-                    请确保没有勾选 巨魔(TrollStore),多巴胺(Dopamine),系统应用！<br>
-                    Make sure you have NOT checked TrollStore, Dopamine, or System Applications!
+                    <div style="font-weight: 800; color: #ff8080; margin-bottom: 4px;" id="mdl-warn-rule-t">慎重说明 / CRITICAL RULE</div>
+                    <span id="mdl-warn-rule-d">请确保没有勾选 巨魔(TrollStore),多巴胺(Dopamine),系统应用！<br>
+                    Make sure you have NOT checked TrollStore, Dopamine, or System Applications!</span>
                 </div>
                 <div
                     style="background: rgba(255, 170, 0, 0.05); border: 1px solid rgba(255, 170, 0, 0.15); border-radius: 12px; padding: 10px;">
-                    <div style="font-weight: 800; color: #ffaa00; margin-bottom: 4px;">操作规范 / INSTRUCTIONS</div>
-                    清理预计需要15秒 期间请勿进行任何操作 直至日志提示结束 否则后果自负！<br>
+                    <div style="font-weight: 800; color: #ffaa00; margin-bottom: 4px;" id="mdl-warn-inst-t">操作规范 / INSTRUCTIONS</div>
+                    <span id="mdl-warn-inst-d">清理预计需要15秒 期间请勿进行任何操作 直至日志提示结束 否则后果自负！<br>
                     Cleaning takes ~15s. Do not touch or operate your device until logs finish, otherwise you bear all
-                    consequences.
+                    consequences.</span>
                 </div>
             </div>
             <div style="display: flex; gap: 10px; margin-top: 15px;">
-                <button class="btn-warning-action"
+                <button class="btn-warning-action" id="btn-warn-confirm"
                     style="background: #ff3c3c; color: #ffffff; box-shadow: 0 4px 12px rgba(255,60,60,0.3);"
                     onclick="confirmCleanExecution()">我确认并清理 / CONFIRM</button>
-                <button class="btn-warning-action"
+                <button class="btn-warning-action" id="btn-warn-cancel"
                     style="background: rgba(255,255,255,0.06); color: #fff; border: 1px solid rgba(255,255,255,0.1);"
                     onclick="cancelCleanExecution()">取消 / CANCEL</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── 屏幕中间轻量 Toast 提示 ── -->
+    <div id="auth-toast"
+        style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.9); background: rgba(20, 20, 25, 0.95); border: 1px solid rgba(0, 255, 170, 0.5); box-shadow: 0 0 30px rgba(0, 255, 170, 0.35); color: #00ffaa; font-weight: 800; font-size: 0.95rem; padding: 12px 24px; border-radius: 14px; z-index: 10000000; display: none; opacity: 0; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); pointer-events: none;">
+        验证通过
+    </div>
+
+    <!-- ── 版本失效/无权访问 全屏阻断弹窗 ── -->
+    <div class="modal-overlay" id="modal-auth-failed"
+        style="background: rgba(10, 10, 12, 0.96); opacity: 1; pointer-events: auto; display: none; z-index: 9999999;">
+        <div class="modal-box"
+            style="max-width: 400px; width: 92%; border: 1px solid #ff3c3c; box-shadow: 0 0 35px rgba(255, 60, 60, 0.3); padding: 22px;">
+            <div class="modal-title"
+                style="color: #ff3c3c; font-size: 1.15rem; font-weight: 900; text-shadow: 0 0 10px rgba(255, 60, 60, 0.4); margin-bottom: 12px;">
+                ⚠️ 授权访问受限
+            </div>
+            <div style="font-size: 0.86rem; line-height: 1.6; color: #ffcccc; text-align: center; margin-bottom: 15px; font-weight: bold;">
+                该版本已失效或不支持所在地区 扣扣交流群740953263
+            </div>
+            <div id="auth-countdown-text" style="font-size: 0.78rem; color: #888896; text-align: center; margin-bottom: 15px;">
+                将于 10 秒后跳转官方项目并安全退出...
+            </div>
+            <div style="background: rgba(255, 60, 60, 0.06); border: 1px solid rgba(255, 60, 60, 0.15); border-radius: 10px; padding: 10px; text-align: center;">
+                <span style="color: #00ffff; font-size: 0.75rem; word-break: break-all;">https://github.com/78-big-QiLong/Qilong-AI-FangGao-bate1</span>
             </div>
         </div>
     </div>
@@ -1176,7 +1290,8 @@
             </div>
             <div style="font-size: 0.82rem; line-height: 1.6; color: #d0d0d8; text-align: left; margin-bottom: 18px;">
                 为确保用户的体验与数据安全，本版本已暂停服务。<br>
-                可以从以下渠道获取最新版公益与相关内容，除以下渠道外的任何本工具皆为盗版木马！
+                可以从以下渠道获取最新版公益与相关内容，除以下渠道外的任何本工具皆为盗版木马！ https://github.com/78-big-QiLong拥有所有权与最终解释权 版本号beta3.1
+                此版本未在中国大陆及港澳地区发布 仅为内部测试与技术探索
 
                 <div
                     style="margin-top: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 10px;">
@@ -1252,59 +1367,136 @@
         const langDictionary = {
             zh_CN: {
                 lblVersion: "系统版本(读取值)", lblModel: "机型名称", lblSn: "序列号(读取值)", lblCpu: "处理器型号", lblTroll: "巨魔状态(检测值)", lblJb: "越狱状态(检测值)",
-                btnSelect: "勾选应用", btnDynamicOff: "开启动态白名单", btnDynamicOn: "关闭动态白名单", btnExecute: "清理风险残留", btnTutorial: "使用教程", btnChannel: "交流频道", btnClose: "我已经全部关注了 点这里关闭",
-                btnDynamicSafeOff: "动态白名单(锁定模式)", btnDynamicSafeOn: "关闭白名单(锁定模式)",
+                btnSelect: "勾选应用", btnDynamicMenu: "启动动态白名单", btnExecute: "清理风险残留", btnTutorial: "使用教程", btnChannel: "交流频道", btnClose: "我已经全部关注了 点这里关闭",
+                btnDynamicDefault: "动态白名单(普通模式)默认", btnDynamicSafe: "动态白名单(锁定模式)keychain锁定后用这个", btnDynamicLight: "动态白名单(轻量模式)为老机型减负优化",
                 btnKeychainUnlocked: "keychain-2.db未锁定", btnKeychainLocked: "keychain-2.db已锁定",
+                btnClearKeychain: "清理所选keychain", btnNewDevice: "一键新机", btnShieldHook: "屏蔽hook检测", btnAdvOptions: "高级选项",
+                btnFixDaemons: "修复守护进程", btnSafeExit: "安全关闭QiLong", btnEnvCheck: "环境检测", btnFreeDG: "免费DG", btnVerboseLog: "🔬 详细日志",
                 mdlTitle: "加入我们的社区", mdlAppsTitle: "勾选要清理的应用钥匙链", btnSave: "确定", textLoading: "扫描app列表中",
                 logInit: "内核初始化完成 作者：QiLong-GOLD400借助骑龙定制Ai多模态智能体制作", logReady: "系统初始化完毕，设备检测已就绪。",
                 footer: "https://github.com/78-big-QiLong拥有所有权与最终解释权 这是永久公益测试版本 如果是花钱买的说明是盗版或木马你被骗了",
-                trollOn: "已解锁 (Root)", trollOff: "未激活 (沙盒限制)", jbOn: "已检测到越狱", jbOff: "未越狱"
+                trollOn: "已解锁 (Root)", trollOff: "未激活 (沙盒限制)", jbOn: "已检测到越狱", jbOff: "未越狱",
+                // 弹窗与二级菜单
+                mdlDynamicMenuTitle: "选择白名单模式", mdlDynamicMenuCancel: "取消",
+                mdlFirstTitle: "首次使用须知 & 用户协议", mdlFirstS1T: "1- 前往设置关闭所有应用的 Siri “从此 App 学习”", mdlFirstS1D: "请前往系统的“设置” - “Siri 与搜索”，关闭所有应用的“从此 App 学习”选项，以阻断残留的识别指纹与数据链路。", mdlFirstS2T: "2- 前往设置打开本 App “后台 App 刷新”", mdlFirstS2D: "请前往系统的“设置” - “通用” - “后台 App 刷新”，确保本 App 的后台刷新权限已打开，以便后台守护能在挂起时持续刷新。", mdlFirstS3T: "3- 仔细阅读以下用户协议", mdlFirstAgree: "我已知晓并同意协议",
+                mdlVerboseTitle: "详细日志 (Verbose Log)", mdlVerboseSwT: "记录详细日志供测试", mdlVerboseSwD: "含文件、函数、行号、系统响应码", mdlVerboseCopy: "📋 复制所有日志", mdlVerboseDone: "完成",
+                mdlAdvTitle: "⚡ 高级选项", btnAdvUserspace: "重启用户空间", btnAdvFilza: "安装filza", btnAdvFilzaTroll: "安装filza巨魔版", btnAdvInspector: "安装免费防查", btnAdvDolby: "安装杜比音效", btnAdvShield: "安装系统过绿盾", btnAdvUpdates: "检查更新", btnAdvClose: "关闭",
+                mdlUpdateTitle: "🔄 检查更新 · 版本动态", btnUpdateClose: "我知道了",
+                mdlLockResultTitle: "🔒 keychain-2.db锁定读取检测", btnLockResultClose: "我知道了",
+                mdlKcWarnTitle: "⚠️ 高危操作警告", btnLockFilza: "借助filza锁定", btnLockSystem: "系统级锁定(推荐)", btnLockCancel: "取消",
+                mdlTutTitle: "使用教程", mdlTutS1T: "第一步", mdlTutS1D: "关闭所有“Siri从此app学习”", mdlTutS2T: "第二步", mdlTutS2D: "打开本应用后台刷新权限 (其他应用尽量关掉)", mdlTutS3T: "第三步", mdlTutS3D: "勾选目标应用 (建议尽量全部勾选效果最佳)", mdlTutS4T: "第四步", mdlTutS4D: "点击“清理风险残留”", mdlTutS5T: "第五步", mdlTutS5D: "开启“动态白名单” (确保巨魔和越狱这时不在后台)", mdlTutNotice: "注意：该应用后台不要划掉，否则功能会失效", btnTutVideo: "▶ 视频教学", btnTutClose: "关闭",
+                mdlDiagTitle: "选择应用启动拦截", btnDiagClose: "关闭", textLoadingDiag: "正在获取应用列表中...",
+                mdlWarnTitle: "【安全警告 / SAFETY WARNING】", btnWarnConfirm: "我确认并清理 / CONFIRM", btnWarnCancel: "取消 / CANCEL"
             },
             zh_TW: {
                 lblVersion: "系統版本(讀取值)", lblModel: "機型名稱", lblSn: "序列號(讀取值)", lblCpu: "處理器型號", lblTroll: "巨魔狀態(檢測值)", lblJb: "越獄狀態(檢測值)",
-                btnSelect: "勾選應用", btnDynamicOff: "啟動動態白名單", btnDynamicOn: "關閉動態白名單", btnExecute: "清理風險殘留", btnTutorial: "使用教程", btnChannel: "交流頻道", btnClose: "我已經全部關注了 點這裡關閉",
-                btnDynamicSafeOff: "動態白名單(鎖定模式)", btnDynamicSafeOn: "關閉白名單(鎖定模式)",
+                btnSelect: "勾選應用", btnDynamicMenu: "啟動動態白名單", btnExecute: "清理風險殘留", btnTutorial: "使用教程", btnChannel: "交流頻道", btnClose: "我已經全部關注了 點這裡關閉",
+                btnDynamicDefault: "動態白名單(普通模式)預設", btnDynamicSafe: "動態白名單(鎖定模式)keychain鎖定後用這個", btnDynamicLight: "動態白名單(輕量模式)老機型優化",
                 btnKeychainUnlocked: "keychain-2.db未鎖定", btnKeychainLocked: "keychain-2.db已鎖定",
+                btnClearKeychain: "清理所選keychain", btnNewDevice: "一鍵新機", btnShieldHook: "屏蔽hook檢測", btnAdvOptions: "高級選項",
+                btnFixDaemons: "修復守護進程", btnSafeExit: "安全關閉QiLong", btnEnvCheck: "環境檢測", btnFreeDG: "免費DG", btnVerboseLog: "🔬 詳細日誌",
                 mdlTitle: "加入我們的社區", mdlAppsTitle: "勾選要清理的應用鑰匙鏈", btnSave: "確定", textLoading: "掃描app列表中",
                 logInit: "內核編譯完畢 作者：QiLong-GOLD400借助騎龍定制Ai多模態智能體製作", logReady: "系統初始化完畢，設備檢測已就緒。",
                 footer: "https://github.com/78-big-QiLong擁有所有權與最終解釋權 這是永久公益測試版本 如果是花錢買的說明是盜版或木馬你被騙了",
-                trollOn: "已解鎖 (Root)", trollOff: "未激活 (沙盒限制)", jbOn: "已檢測到越獄", jbOff: "未越獄"
+                trollOn: "已解鎖 (Root)", trollOff: "未激活 (沙盒限制)", jbOn: "已檢測到越獄", jbOff: "未越獄",
+                mdlDynamicMenuTitle: "選擇白名單模式", mdlDynamicMenuCancel: "取消",
+                mdlFirstTitle: "首次使用須知 & 用戶協議", mdlFirstS1T: "1- 前往設定關閉所有應用的 Siri “從此 App 學習”", mdlFirstS1D: "請前往系統的“設定” - “Siri 與搜尋”，關閉所有應用的“從此 App 學習”選項。", mdlFirstS2T: "2- 前往設定開啟本 App “背景 App 重新整理”", mdlFirstS2D: "請前往系統的“設定” - “一般” - “背景 App 重新整理”，確保本 App 權限已開啟。", mdlFirstS3T: "3- 仔細閱讀以下用戶協議", mdlFirstAgree: "我已知曉並同意協議",
+                mdlVerboseTitle: "詳細日誌 (Verbose Log)", mdlVerboseSwT: "記錄詳細日誌供測試", mdlVerboseSwD: "含檔案、函式、行號、系統響應碼", mdlVerboseCopy: "📋 複製所有日誌", mdlVerboseDone: "完成",
+                mdlAdvTitle: "⚡ 高級選項", btnAdvUserspace: "重啟用戶空間", btnAdvFilza: "安裝filza", btnAdvFilzaTroll: "安裝filza巨魔版", btnAdvInspector: "安裝免費防查", btnAdvDolby: "安裝杜比音效", btnAdvShield: "安裝系統過綠盾", btnAdvUpdates: "檢查更新", btnAdvClose: "關閉",
+                mdlUpdateTitle: "🔄 檢查更新 · 版本動態", btnUpdateClose: "我知道了",
+                mdlLockResultTitle: "🔒 keychain-2.db鎖定讀取檢測", btnLockResultClose: "我知道了",
+                mdlKcWarnTitle: "⚠️ 高危操作警告", btnLockFilza: "借助filza鎖定", btnLockSystem: "系統級鎖定(推薦)", btnLockCancel: "取消",
+                mdlTutTitle: "使用教程", mdlTutS1T: "第一步", mdlTutS1D: "關閉所有“Siri從此app學習”", mdlTutS2T: "第二步", mdlTutS2D: "打開本應用後台刷新權限 (其他應用盡量關閉)", mdlTutS3T: "第三步", mdlTutS3D: "勾選目標應用 (建議盡量全部勾選效果最佳)", mdlTutS4T: "第四步", mdlTutS4D: "點擊“清理風險殘留”", mdlTutS5T: "第五步", mdlTutS5D: "開啟“動態白名單” (確保巨魔和越獄這時不在後台)", mdlTutNotice: "注意：該應用後台不要劃掉，否則功能會失效", btnTutVideo: "▶ 視頻教學", btnTutClose: "關閉",
+                mdlDiagTitle: "選擇應用啟動攔截", btnDiagClose: "關閉", textLoadingDiag: "正在獲取應用列表中...",
+                mdlWarnTitle: "【安全警告 / SAFETY WARNING】", btnWarnConfirm: "我確認並清理 / CONFIRM", btnWarnCancel: "取消 / CANCEL"
             },
             en: {
                 lblVersion: "iOS Version (Read)", lblModel: "Device Model", lblSn: "Serial Number", lblCpu: "Processor Model", lblTroll: "TrollStore Status", lblJb: "Jailbreak Status",
-                btnSelect: "Select Apps", btnDynamicOff: "Enable Dynamic Whitelist", btnDynamicOn: "Disable Dynamic Whitelist", btnExecute: "Clean Risk Residues", btnTutorial: "Usage Guide", btnChannel: "Community Channel", btnClose: "I have followed all, close here",
+                btnSelect: "Select Apps", btnDynamicMenu: "Start Dynamic Whitelist", btnExecute: "Clean Risk Residues", btnTutorial: "Tutorial", btnChannel: "Community", btnClose: "I've Followed All, Close",
+                btnDynamicDefault: "Dynamic Whitelist (Default)", btnDynamicSafe: "Dynamic Whitelist (Locked Mode)", btnDynamicLight: "Dynamic Whitelist (Lightweight)",
                 btnKeychainUnlocked: "keychain-2.db Unlocked", btnKeychainLocked: "keychain-2.db Locked",
-                mdlTitle: "Join Our Community", mdlAppsTitle: "Select Apps Keychain to Clean", btnSave: "Confirm", textLoading: "Scanning application list...",
+                btnClearKeychain: "Clean Selected Keychain", btnNewDevice: "One-Key New Device", btnShieldHook: "Block Hook Detection", btnAdvOptions: "Advanced Options",
+                btnFixDaemons: "Repair Daemons", btnSafeExit: "Safe Exit QiLong", btnEnvCheck: "Environment Check", btnFreeDG: "Free DG", btnVerboseLog: "🔬 Verbose Logs",
+                mdlTitle: "Join Our Community", mdlAppsTitle: "Select App Keychains to Clean", btnSave: "Confirm", textLoading: "Scanning application list...",
                 logInit: "Kernel initialization complete. Powered by QiLong-GOLD400 & QiLong AI agent.", logReady: "System initialization completed. Device detection ready.",
                 footer: "https://github.com/78-big-QiLong holds all rights and final interpretation. This is a permanent public beta.",
-                trollOn: "Unlocked (Root)", trollOff: "Not Active (Sandbox Restricted)", jbOn: "Jailbroken", jbOff: "Not Jailbroken"
+                trollOn: "Unlocked (Root)", trollOff: "Not Active (Sandbox)", jbOn: "Jailbroken", jbOff: "Not Jailbroken",
+                mdlDynamicMenuTitle: "Select Whitelist Mode", mdlDynamicMenuCancel: "Cancel",
+                mdlFirstTitle: "Getting Started & User Agreement", mdlFirstS1T: "1- Turn off 'Learn from this App' in Siri", mdlFirstS1D: "Go to Settings - Siri & Search, and disable 'Learn from this App' for all target applications.", mdlFirstS2T: "2- Enable 'Background App Refresh'", mdlFirstS2D: "Go to Settings - General - Background App Refresh and ensure QiLong is enabled.", mdlFirstS3T: "3- Read User Terms Carefully", mdlFirstAgree: "I Understand and Agree",
+                mdlVerboseTitle: "Verbose Log Inspector", mdlVerboseSwT: "Record Verbose Logs for Debugging", mdlVerboseSwD: "Includes files, functions, lines, and system codes", mdlVerboseCopy: "📋 Copy All Logs", mdlVerboseDone: "Done",
+                mdlAdvTitle: "⚡ Advanced Options", btnAdvUserspace: "Userspace Reboot", btnAdvFilza: "Install Filza", btnAdvFilzaTroll: "Install Filza TrollStore", btnAdvInspector: "Install HideSerialNumber", btnAdvDolby: "Install Dolby Audio", btnAdvShield: "Install 3DAppVersionSpoofer", btnAdvUpdates: "Check for Updates", btnAdvClose: "Close",
+                mdlUpdateTitle: "🔄 Check Updates · Version News", btnUpdateClose: "Got It",
+                mdlLockResultTitle: "🔒 keychain-2.db Lock Inspection", btnLockResultClose: "Got It",
+                mdlKcWarnTitle: "⚠️ High-Risk Action Warning", btnLockFilza: "Lock via Filza", btnLockSystem: "System-level Lock (Recommended)", btnLockCancel: "Cancel",
+                mdlTutTitle: "User Tutorial", mdlTutS1T: "Step 1", mdlTutS1D: "Disable Siri 'Learn from this App'", mdlTutS2T: "Step 2", mdlTutS2D: "Enable Background App Refresh for QiLong", mdlTutS3T: "Step 3", mdlTutS3D: "Select target apps in App Selector", mdlTutS4T: "Step 4", mdlTutS4D: "Tap 'Clean Risk Residues'", mdlTutS5T: "Step 5", mdlTutS5D: "Enable 'Dynamic Whitelist'", mdlTutNotice: "Notice: Do not swipe away QiLong from background!", btnTutVideo: "▶ Video Tutorial", btnTutClose: "Close",
+                mdlDiagTitle: "Select App to Block Detection", btnDiagClose: "Close", textLoadingDiag: "Fetching application list...",
+                mdlWarnTitle: "【SAFETY WARNING】", btnWarnConfirm: "CONFIRM & CLEAN", btnWarnCancel: "CANCEL"
             },
             ja: {
                 lblVersion: "OSバージョン(取得値)", lblModel: "機種名", lblSn: "シリアル番号", lblCpu: "プロセッサモデル", lblTroll: "TrollStore状態", lblJb: "脱獄状態",
-                btnSelect: "アプリ選択", btnDynamicOff: "動的ホワイトリスト起動", btnDynamicOn: "動的ホワイトリスト停止", btnExecute: "リスク残留クリア", btnTutorial: "チュートリアル", btnChannel: "交流チャンネル", btnClose: "すべてフォローしました。閉じる",
+                btnSelect: "アプリ選択", btnDynamicMenu: "動的ホワイトリスト起動", btnExecute: "リスク残留クリア", btnTutorial: "チュートリアル", btnChannel: "交流チャンネル", btnClose: "すべてフォロー済 閉じる",
+                btnDynamicDefault: "動的ホワイトリスト(標準モード)", btnDynamicSafe: "動的ホワイトリスト(ロックモード)", btnDynamicLight: "動的ホワイトリスト(軽量モード)",
                 btnKeychainUnlocked: "keychain-2.db未ロック", btnKeychainLocked: "keychain-2.dbロック中",
+                btnClearKeychain: "選択キーチェーン消去", btnNewDevice: "ワンタップ新規端末化", btnShieldHook: "Hook検知遮断", btnAdvOptions: "高度なオプション",
+                btnFixDaemons: "デーモン修復", btnSafeExit: "QiLong安全終了", btnEnvCheck: "環境診断", btnFreeDG: "無料DG", btnVerboseLog: "🔬 詳細ログ",
                 mdlTitle: "コミュニティに参加", mdlAppsTitle: "クリーンアップするアプリの選択", btnSave: "決定", textLoading: "アプリリストをスキャン中...",
                 logInit: "カーネルの初期化が完了しました。QiLong-GOLD400 & QiLong AIによって作成されました。", logReady: "システム初期化完了。デバイス検出の準備が整いました。",
-                footer: "https://github.com/78-big-QiLong がすべての権利と最終解釈権を有します。永久無料テスト版です。",
-                trollOn: "アンロック済 (Root)", trollOff: "未有効化 (サンドボックス制限)", jbOn: "脱獄検出", jbOff: "未脱獄"
+                footer: "https://github.com/78-big-QiLong がすべての権利を有します。永久無料テスト版です。",
+                trollOn: "アンロック済 (Root)", trollOff: "未有効化 (サンドボックス)", jbOn: "脱獄検出", jbOff: "未脱獄",
+                mdlDynamicMenuTitle: "モード選択", mdlDynamicMenuCancel: "キャンセル",
+                mdlFirstTitle: "初回利用規約 & ガイド", mdlFirstS1T: "1- Siriの「このAppから学習」をオフにする", mdlFirstS1D: "「設定」-「Siriと検索」から全アプリの「このAppから学習」を無効化してください。", mdlFirstS2T: "2- 「Appのバックグラウンド更新」を有効化", mdlFirstS2D: "「設定」-「一般」-「Appのバックグラウンド更新」でQiLongをオンにしてください。", mdlFirstS3T: "3- 利用規約の確認", mdlFirstAgree: "同意して開始",
+                mdlVerboseTitle: "詳細ログ設定 (Verbose Log)", mdlVerboseSwT: "テスト用詳細ログの記録", mdlVerboseSwD: "ファイル、関数、行番号、システムコードを含む", mdlVerboseCopy: "📋 すべてのログをコピー", mdlVerboseDone: "完了",
+                mdlAdvTitle: "⚡ 高度なオプション", btnAdvUserspace: "ユーザ空間再起動", btnAdvFilza: "Filzaインストール", btnAdvFilzaTroll: "Filza巨魔版インストール", btnAdvInspector: "無料防査インストール", btnAdvDolby: "Dolby音響インストール", btnAdvShield: "過緑盾インストール", btnAdvUpdates: "更新を確認", btnAdvClose: "閉じる",
+                mdlUpdateTitle: "🔄 更新確認 · バージョン情報", btnUpdateClose: "了解",
+                mdlLockResultTitle: "🔒 keychain-2.dbロック検証", btnLockResultClose: "了解",
+                mdlKcWarnTitle: "⚠️ 警告：高リスク操作", btnLockFilza: "Filzaでロック", btnLockSystem: "システムロック(推奨)", btnLockCancel: "キャンセル",
+                mdlTutTitle: "使い方チュートリアル", mdlTutS1T: "ステップ1", mdlTutS1D: "Siri学習をオフ", mdlTutS2T: "ステップ2", mdlTutS2D: "バックグラウンド更新をオン", mdlTutS3T: "ステップ3", mdlTutS3D: "対象アプリを選択", mdlTutS4T: "ステップ4", mdlTutS4D: "「リスク残留クリア」を実行", mdlTutS5T: "ステップ5", mdlTutS5D: "「動的ホワイトリスト」を開始", mdlTutNotice: "注意：バックグラウンドからQiLongを終了しないでください", btnTutVideo: "▶ 動画ガイド", btnTutClose: "閉じる",
+                mdlDiagTitle: "遮断対象アプリの選択", btnDiagClose: "閉じる", textLoadingDiag: "アプリ一覧を取得中...",
+                mdlWarnTitle: "【安全上の警告 / WARNING】", btnWarnConfirm: "確認してクリア", btnWarnCancel: "キャンセル"
             },
             ru: {
-                lblVersion: "这里填Версия ОС标签", lblModel: "这里填Модель标签", lblSn: "这里填Серийный номер标签", lblCpu: "这里填Процессор标签", lblTroll: "这里填Статус Troll标签", lblJb: "这里填Джейлбрейк标签",
-                btnSelect: "这里填Выбрать按钮", btnDynamicOff: "这里填Сброс IDFA按钮", btnDynamicOn: "这里填Стоп IDFA按钮", btnExecute: "这里填Очистить按钮", btnTutorial: "这里填Инструкция按钮", btnChannel: "这里填Каналы按钮", btnClose: "这里填Закрыть按钮",
-                btnKeychainUnlocked: "keychain-2.db разблокирован", btnKeychainLocked: "keychain-2.db заблокирован",
-                mdlTitle: "这里填Каналы弹窗标题", mdlAppsTitle: "这里填Выбор приложений弹窗标题", btnSave: "这里填Подтвердить按钮", textLoading: "这里填Список пуст文字",
-                logInit: "这里填Система ожидание日志", logReady: "这里填Система готов日志",
-                footer: "这里填Предупреждение文字",
-                trollOn: "这里填Разблокировано文字", trollOff: "这里填Песочница文字", jbOn: "这里填Обнаружен文字", jbOff: "这里填Нет文字"
+                lblVersion: "Версия iOS (Чтение)", lblModel: "Модель устройства", lblSn: "Серийный номер", lblCpu: "Процессор", lblTroll: "Статус TrollStore", lblJb: "Статус Джейлбрейка",
+                btnSelect: "Выбрать приложения", btnDynamicMenu: "Запуск белого списка", btnExecute: "Очистить следы рисков", btnTutorial: "Инструкция", btnChannel: "Сообщество", btnClose: "Я подписался на всех, Закрыть",
+                btnDynamicDefault: "Белый список (Стандартный)", btnDynamicSafe: "Белый список (Безопасный)", btnDynamicLight: "Белый список (Легковесный)",
+                btnKeychainUnlocked: "keychain-2.db Не заблокирован", btnKeychainLocked: "keychain-2.db Заблокирован",
+                btnClearKeychain: "Очистить Keychain", btnNewDevice: "Новое устройство (Сброс)", btnShieldHook: "Блокировка Hook", btnAdvOptions: "Доп. опции",
+                btnFixDaemons: "Восстановить демоны", btnSafeExit: "Безопасный выход", btnEnvCheck: "Проверка среды", btnFreeDG: "Бесплатный DG", btnVerboseLog: "🔬 Подробный лог",
+                mdlTitle: "Наше сообщество", mdlAppsTitle: "Выберите связки ключей для очистки", btnSave: "Подтвердить", textLoading: "Сканирование списка приложений...",
+                logInit: "Ядро инициализировано. Создано QiLong-GOLD400 и QiLong AI.", logReady: "Система готова. Диагностика завершена.",
+                footer: "Все права принадлежат https://github.com/78-big-QiLong. Публичная бета-версия.",
+                trollOn: "Разблокирован (Root)", trollOff: "Не активен (Песочница)", jbOn: "Джейлбрейк обнаружен", jbOff: "Чистая система",
+                mdlDynamicMenuTitle: "Выберите режим", mdlDynamicMenuCancel: "Отмена",
+                mdlFirstTitle: "Руководство и Соглашение", mdlFirstS1T: "1- Отключите обучение Siri", mdlFirstS1D: "Перейдите в Настройки - Siri и отключите обучение для всех приложений.", mdlFirstS2T: "2- Включите фоновое обновление", mdlFirstS2D: "Перейдите в Настройки - Основные - Обновление контента и включите QiLong.", mdlFirstS3T: "3- Прочтите соглашение", mdlFirstAgree: "Принять и продолжить",
+                mdlVerboseTitle: "Подробный журнал", mdlVerboseSwT: "Запись подробного журнала", mdlVerboseSwD: "Включает файлы, функции, строки и коды ошибок", mdlVerboseCopy: "📋 Скопировать журнал", mdlVerboseDone: "Готово",
+                mdlAdvTitle: "⚡ Дополнительные опции", btnAdvUserspace: "Ребут Userspace", btnAdvFilza: "Установить Filza", btnAdvFilzaTroll: "Filza TrollStore", btnAdvInspector: "Скрыть серийный номер", btnAdvDolby: "Dolby Audio", btnAdvShield: "Спуфер версий", btnAdvUpdates: "Проверить обновления", btnAdvClose: "Закрыть",
+                mdlUpdateTitle: "🔄 Обновления", btnUpdateClose: "Понятно",
+                mdlLockResultTitle: "🔒 Проверка keychain-2.db", btnLockResultClose: "Понятно",
+                mdlKcWarnTitle: "⚠️ Предупреждение об опасности", btnLockFilza: "Через Filza", btnLockSystem: "Системный лок (Рекомендуется)", btnLockCancel: "Отмена",
+                mdlTutTitle: "Инструкция", mdlTutS1T: "Шаг 1", mdlTutS1D: "Отключите Siri", mdlTutS2T: "Шаг 2", mdlTutS2D: "Включите фоновое обновление", mdlTutS3T: "Шаг 3", mdlTutS3D: "Выберите приложения", mdlTutS4T: "Шаг 4", mdlTutS4D: "Очистите следы", mdlTutS5T: "Шаг 5", mdlTutS5D: "Запустите белый список", mdlTutNotice: "Не выгружайте приложение из фона!", btnTutVideo: "▶ Видео", btnTutClose: "Закрыть",
+                mdlDiagTitle: "Выбор приложений", btnDiagClose: "Закрыть", textLoadingDiag: "Загрузка списка...",
+                mdlWarnTitle: "【ПРЕДУПРЕЖДЕНИЕ】", btnWarnConfirm: "ПОДТВЕРДИТЬ И ОЧИСТИТЬ", btnWarnCancel: "ОТМЕНА"
             },
             za: {
-                lblVersion: "这里填Heitungh Banzbwnz标签", lblModel: "这里填Coengzhingz Mingz标签", lblSn: "这里填Gaengh Swhleizhao标签", lblCpu: "这里填Cuwleiqi标签", lblTroll: "这里填Gvjmoz Canghdaiz标签", lblJb: "这里填Vietngvax Canghdaiz标签",
-                btnSelect: "这里填Swjndiengz按钮", btnDynamicOff: "这里填Caiqgauh IDFA按钮", btnDynamicOn: "这里填Dinghcij IDFA按钮", btnExecute: "这里填Caegit按钮", btnTutorial: "这里填Saengqcoenz按钮", btnChannel: "这里填Bwndauz按钮", btnClose: "这里填Daengz按钮",
-                btnKeychainUnlocked: "keychain-2.db未锁定", btnKeychainLocked: "keychain-2.db已锁定",
-                mdlTitle: "这里填Gvnghfangh Bwndauz弹窗标题", mdlAppsTitle: "这里填Swjndiengz Daenghdan弹窗标题", btnSave: "这里填Dingh按钮", textLoading: "这里填Mbuj gienqgauh文字",
-                logInit: "这里填Heitungh待机日志", logReady: "这里填Heitungh完了日志",
-                footer: "这里填Swhmingz声明文字",
-                trollOn: "这里填Gvjmoz已解锁文字", trollOff: "这里填Gvjmoz未激活文字", jbOn: "这里填Vietngvax已检测文字", jbOff: "这里填Vietngvax未检测文字"
+                lblVersion: "Heitungh Banzbwnz", lblModel: "Coengzhingz Mingz", lblSn: "Gaengh Swhleizhao", lblCpu: "Cuwleiqi Moengz", lblTroll: "Gvjmoz Canghdaiz", lblJb: "Vietngvax Canghdaiz",
+                btnSelect: "Swjndiengz Yinhoeng", btnDynamicMenu: "Caiqgauh Byahdanh", btnExecute: "Caegit Gveiqlingz", btnTutorial: "Saengqcoenz Ciqlanq", btnChannel: "Gvnghfangh Bwndauz", btnClose: "Daengz / Hwpsik",
+                btnDynamicDefault: "Byahdanh (Moengzdingh)", btnDynamicSafe: "Byahdanh (Gingqsok)", btnDynamicLight: "Byahdanh (Gyawngjtiu)",
+                btnKeychainUnlocked: "keychain-2.db Maix gingqsok", btnKeychainLocked: "keychain-2.db Gingqsok liux",
+                btnClearKeychain: "Caegit Keychain", btnNewDevice: "Dingh Sin Coengzhingz", btnShieldHook: "Dangz Hook Gienqcaz", btnAdvOptions: "Gauzgiz Henxhengh",
+                btnFixDaemons: "Saeuz Bouxsouj Daemon", btnSafeExit: "Ancienz Hwpsik QiLong", btnEnvCheck: "Gienqcaz Huanzgingq", btnFreeDG: "Menjfai DG", btnVerboseLog: "🔬 Cienzbu Log",
+                mdlTitle: "Gahyboux Gvnghceh", mdlAppsTitle: "Swjndiengz Yinhoeng Keychain", btnSave: "Dingh / Coenz", textLoading: "Mbuj gienqcaz daenghdan...",
+                logInit: "Heitungh cuwseizfa hoengq liux. QiLong-GOLD400 caeuq QiLong AI guhh.", logReady: "Heitungh hoengq liux. Gienqcaz ceiqbaenz.",
+                footer: "https://github.com/78-big-QiLong aen swhmingz. Beta3.1 gungqheiq banzbwnz.",
+                trollOn: "Gvjmoz Gaijsok (Root)", trollOff: "Mbuj Fakhung (Sandbox)", jbOn: "Vietngvax Gienqbaenz", jbOff: "Mbuj Vietngvax",
+                mdlDynamicMenuTitle: "Swjndiengz Moengz", mdlDynamicMenuCancel: "Hwpsik",
+                mdlFirstTitle: "Swhmingz & Yinhoeng Yieddingh", mdlFirstS1T: "1- Hwpsik Siri Hagsib", mdlFirstS1D: "Hawj 'Set' - 'Siri' hwpsik cienzbu yinhoeng.", mdlFirstS2T: "2- Caiqgauh Haeuxroengz Fukhung", mdlFirstS2D: "Hawj 'Set' - 'Gungqyungh' caiqgauh QiLong fukhung.", mdlFirstS3T: "3- Canhciz Doeg Yieddingh", mdlFirstAgree: "Roengzdingh liux",
+                mdlVerboseTitle: "Cienzbu Log Caeux", mdlVerboseSwT: "Geiqloeg Cienzbu Log", mdlVerboseSwD: "Bauzhahm vwnzgen, hansu, hangzhao", mdlVerboseCopy: "📋 Cop Cienzbu Log", mdlVerboseDone: "Hoengq",
+                mdlAdvTitle: "⚡ Gauzgiz Henxhengh", btnAdvUserspace: "Caiqgauh Userspace", btnAdvFilza: "Caz Filza", btnAdvFilzaTroll: "Caz Filza Gvjmoz", btnAdvInspector: "Caz HideSN", btnAdvDolby: "Caz Dolby", btnAdvShield: "Caz 3DSpoofer", btnAdvUpdates: "Gienqcaz Sin banzbwnz", btnAdvClose: "Hwpsik",
+                mdlUpdateTitle: "🔄 Gienqcaz Sin banzbwnz", btnUpdateClose: "Roengzdingh",
+                mdlLockResultTitle: "🔒 keychain-2.db Gienqcaz", btnLockResultClose: "Roengzdingh",
+                mdlKcWarnTitle: "⚠️ Gveiqlingz Gingqgauq", btnLockFilza: "Filza Gingqsok", btnLockSystem: "Heitungh Gingqsok", btnLockCancel: "Hwpsik",
+                mdlTutTitle: "Saengqcoenz Ciqlanq", mdlTutS1T: "Buot 1", mdlTutS1D: "Hwpsik Siri", mdlTutS2T: "Buot 2", mdlTutS2D: "Caiqgauh Fukhung", mdlTutS3T: "Buot 3", mdlTutS3D: "Swjndiengz Yinhoeng", mdlTutS4T: "Buot 4", mdlTutS4D: "Caegit Gveiqlingz", mdlTutS5T: "Buot 5", mdlTutS5D: "Caiqgauh Byahdanh", mdlTutNotice: "Gingqgauq: Mbouj ndaej hwpsik QiLong!", btnTutVideo: "▶ Saengqcoenz", btnTutClose: "Hwpsik",
+                mdlDiagTitle: "Swjndiengz Dangz Hook", btnDiagClose: "Hwpsik", textLoadingDiag: "Gienqcaz daenghdan...",
+                mdlWarnTitle: "【ANCIENZ GINGQGAUQ】", btnWarnConfirm: "ROENGZDINGH CAEGIT", btnWarnCancel: "HWPSIK"
             }
         };
 
@@ -1312,10 +1504,22 @@
         let globalRawAppList = []; // 存储全机完整 App 名单
         let idfaLoopRunning = false; // 【自锁开关闸】IDFA 后台轮询状态
         let idfaLoopSafeRunning = false; // 【自锁开关闸】安全模式后台轮询状态
+        let idfaLoopLightRunning = false; // 【自锁开关闸】轻量模式后台轮询状态
 
         function toggleModal(modalId, show) {
             const modal = document.getElementById(modalId);
-            if (show) modal.classList.add('open');
+            if (show) {
+                modal.classList.add('open');
+                // 简洁实现：如果还没有绑定点击背景关闭，则动态绑定一次
+                if (!modal.dataset.listenerAttached) {
+                    modal.addEventListener('click', function (e) {
+                        if (e.target === modal) {
+                            toggleModal(modalId, false);
+                        }
+                    });
+                    modal.dataset.listenerAttached = "true";
+                }
+            }
             else modal.classList.remove('open');
         }
         function closeModalOnOverlay(e, modalId) {
@@ -1325,7 +1529,9 @@
         function changeLanguage(langCode) {
             currentLang = langCode;
             const dict = langDictionary[langCode];
+            if (!dict) return;
 
+            // 主面板硬件信息
             document.getElementById('lbl-version').innerText = dict.lblVersion;
             document.getElementById('lbl-model').innerText = dict.lblModel;
             document.getElementById('lbl-sn').innerText = dict.lblSn;
@@ -1333,25 +1539,107 @@
             document.getElementById('lbl-troll').innerText = dict.lblTroll;
             document.getElementById('lbl-jb').innerText = dict.lblJb;
 
+            // 主面板操作按键
             document.getElementById('btn-select').innerText = dict.btnSelect;
-            document.getElementById('btn-dynamic').innerText = idfaLoopRunning ? dict.btnDynamicOn : dict.btnDynamicOff;
+            if (document.getElementById('btn-dynamic-menu')) document.getElementById('btn-dynamic-menu').innerText = dict.btnDynamicMenu;
+            if (document.getElementById('btn-dynamic')) document.getElementById('btn-dynamic').innerText = dict.btnDynamicDefault;
+            if (document.getElementById('btn-dynamic-safe')) document.getElementById('btn-dynamic-safe').innerText = dict.btnDynamicSafe;
+            if (document.getElementById('btn-dynamic-light')) document.getElementById('btn-dynamic-light').innerText = dict.btnDynamicLight;
             document.getElementById('btn-execute').innerText = dict.btnExecute;
             if (document.getElementById('btn-keychain-2.db')) {
-                document.getElementById('btn-keychain-2.db').innerText = keychain2DBLocked ? dict.btnKeychainLocked : dict.btnKeychainUnlocked;
+                document.getElementById('btn-keychain-2.db').innerText = (typeof keychain2DBLocked !== 'undefined' && keychain2DBLocked) ? dict.btnKeychainLocked : dict.btnKeychainUnlocked;
             }
+            if (document.getElementById('btn-reserved-4')) document.getElementById('btn-reserved-4').innerText = dict.btnClearKeychain;
+            if (document.getElementById('btn-new-device')) document.getElementById('btn-new-device').innerText = dict.btnNewDevice;
+            if (document.getElementById('btn-reserved-2')) document.getElementById('btn-reserved-2').innerText = dict.btnShieldHook;
+            if (document.getElementById('btn-advanced-options')) document.getElementById('btn-advanced-options').innerText = dict.btnAdvOptions;
+
+            if (document.getElementById('btn-fix-daemons')) document.getElementById('btn-fix-daemons').innerText = dict.btnFixDaemons;
+            if (document.getElementById('btn-safe-exit')) document.getElementById('btn-safe-exit').innerText = dict.btnSafeExit;
+            if (document.getElementById('btn-env-check')) document.getElementById('btn-env-check').innerText = dict.btnEnvCheck;
+            if (document.getElementById('btn-free-dg')) document.getElementById('btn-free-dg').innerText = dict.btnFreeDG;
+
+            if (document.getElementById('btn-verbose-log')) document.getElementById('btn-verbose-log').innerText = dict.btnVerboseLog;
             document.getElementById('btn-tutorial').innerText = dict.btnTutorial;
-            document.getElementById('btn-lang').innerText = "🌐 " + (langCode === 'en' ? "Lang" : "语言");
+            document.getElementById('btn-lang').innerText = "🌐 " + (langCode === 'en' ? "Lang" : (langCode === 'ja' ? "言語" : (langCode === 'ru' ? "Язык" : "语言")));
             document.getElementById('btn-channel').innerText = dict.btnChannel;
             document.getElementById('text-footer').innerText = dict.footer;
 
-            document.getElementById('mdl-channel-title').innerText = dict.mdlTitle;
-            document.getElementById('mdl-channel-close').innerText = dict.btnClose;
+            // 1. 动态白名单二级菜单
+            if (document.getElementById('mdl-dynamic-menu-title')) document.getElementById('mdl-dynamic-menu-title').innerText = dict.mdlDynamicMenuTitle;
+            if (document.getElementById('mdl-dynamic-menu-cancel')) document.getElementById('mdl-dynamic-menu-cancel').innerText = dict.mdlDynamicMenuCancel;
 
+            // 2. 首次使用须知
+            if (document.getElementById('mdl-first-open-title')) document.getElementById('mdl-first-open-title').innerText = dict.mdlFirstTitle;
+            if (document.getElementById('mdl-first-step1-t')) document.getElementById('mdl-first-step1-t').innerText = dict.mdlFirstS1T;
+            if (document.getElementById('mdl-first-step1-d')) document.getElementById('mdl-first-step1-d').innerText = dict.mdlFirstS1D;
+            if (document.getElementById('mdl-first-step2-t')) document.getElementById('mdl-first-step2-t').innerText = dict.mdlFirstS2T;
+            if (document.getElementById('mdl-first-step2-d')) document.getElementById('mdl-first-step2-d').innerText = dict.mdlFirstS2D;
+            if (document.getElementById('mdl-first-step3-t')) document.getElementById('mdl-first-step3-t').innerText = dict.mdlFirstS3T;
+            if (document.getElementById('mdl-first-agree')) document.getElementById('mdl-first-agree').innerText = dict.mdlFirstAgree;
+
+            // 3. 详细日志弹窗
+            if (document.getElementById('mdl-verbose-title')) document.getElementById('mdl-verbose-title').innerText = dict.mdlVerboseTitle;
+            if (document.getElementById('mdl-verbose-sw-t')) document.getElementById('mdl-verbose-sw-t').innerText = dict.mdlVerboseSwT;
+            if (document.getElementById('mdl-verbose-sw-d')) document.getElementById('mdl-verbose-sw-d').innerText = dict.mdlVerboseSwD;
+            if (document.getElementById('mdl-verbose-copy')) document.getElementById('mdl-verbose-copy').innerText = dict.mdlVerboseCopy;
+            if (document.getElementById('mdl-verbose-done')) document.getElementById('mdl-verbose-done').innerText = dict.mdlVerboseDone;
+
+            // 4. 高级选项二级弹窗
+            if (document.getElementById('mdl-adv-title')) document.getElementById('mdl-adv-title').innerText = dict.mdlAdvTitle;
+            if (document.getElementById('btn-adv-userspace')) document.getElementById('btn-adv-userspace').innerText = dict.btnAdvUserspace;
+            if (document.getElementById('btn-adv-filza')) document.getElementById('btn-adv-filza').innerText = dict.btnAdvFilza;
+            if (document.getElementById('btn-adv-filzatroll')) document.getElementById('btn-adv-filzatroll').innerText = dict.btnAdvFilzaTroll;
+            if (document.getElementById('btn-adv-inspector')) document.getElementById('btn-adv-inspector').innerText = dict.btnAdvInspector;
+            if (document.getElementById('btn-adv-dolby')) document.getElementById('btn-adv-dolby').innerText = dict.btnAdvDolby;
+            if (document.getElementById('btn-adv-shield')) document.getElementById('btn-adv-shield').innerText = dict.btnAdvShield;
+            if (document.getElementById('btn-adv-updates')) document.getElementById('btn-adv-updates').innerText = dict.btnAdvUpdates;
+            if (document.getElementById('btn-adv-close')) document.getElementById('btn-adv-close').innerText = dict.btnAdvClose;
+
+            // 5. 检查更新弹窗
+            if (document.getElementById('mdl-update-title')) document.getElementById('mdl-update-title').innerText = dict.mdlUpdateTitle;
+            if (document.getElementById('btn-update-close')) document.getElementById('btn-update-close').innerText = dict.btnUpdateClose;
+
+            // 6. keychain-2.db 锁定检测
+            if (document.getElementById('mdl-lock-result-title')) document.getElementById('mdl-lock-result-title').innerText = dict.mdlLockResultTitle;
+            if (document.getElementById('btn-lock-result-close')) document.getElementById('btn-lock-result-close').innerText = dict.btnLockResultClose;
+
+            // 7. keychain-2.db 高危警告
+            if (document.getElementById('mdl-keychain-warn-title')) document.getElementById('mdl-keychain-warn-title').innerText = dict.mdlKcWarnTitle;
+            if (document.getElementById('btn-lock-filza')) document.getElementById('btn-lock-filza').innerText = dict.btnLockFilza;
+            if (document.getElementById('btn-lock-system')) document.getElementById('btn-lock-system').innerText = dict.btnLockSystem;
+            if (document.getElementById('btn-lock-cancel')) document.getElementById('btn-lock-cancel').innerText = dict.btnLockCancel;
+
+            // 8. 使用教程弹窗
+            if (document.getElementById('mdl-tut-title')) document.getElementById('mdl-tut-title').innerText = dict.mdlTutTitle;
+            if (document.getElementById('mdl-tut-s1-t')) document.getElementById('mdl-tut-s1-t').innerText = dict.mdlTutS1T;
+            if (document.getElementById('mdl-tut-s1-d')) document.getElementById('mdl-tut-s1-d').innerText = dict.mdlTutS1D;
+            if (document.getElementById('mdl-tut-s2-t')) document.getElementById('mdl-tut-s2-t').innerText = dict.mdlTutS2T;
+            if (document.getElementById('mdl-tut-s2-d')) document.getElementById('mdl-tut-s2-d').innerText = dict.mdlTutS2D;
+            if (document.getElementById('mdl-tut-s3-t')) document.getElementById('mdl-tut-s3-t').innerText = dict.mdlTutS3T;
+            if (document.getElementById('mdl-tut-s3-d')) document.getElementById('mdl-tut-s3-d').innerText = dict.mdlTutS3D;
+            if (document.getElementById('mdl-tut-s4-t')) document.getElementById('mdl-tut-s4-t').innerText = dict.mdlTutS4T;
+            if (document.getElementById('mdl-tut-s4-d')) document.getElementById('mdl-tut-s4-d').innerText = dict.mdlTutS4D;
+            if (document.getElementById('mdl-tut-s5-t')) document.getElementById('mdl-tut-s5-t').innerText = dict.mdlTutS5T;
+            if (document.getElementById('mdl-tut-s5-d')) document.getElementById('mdl-tut-s5-d').innerText = dict.mdlTutS5D;
+            if (document.getElementById('mdl-tut-notice')) document.getElementById('mdl-tut-notice').innerText = dict.mdlTutNotice;
+            if (document.getElementById('btn-tut-video')) document.getElementById('btn-tut-video').innerText = dict.btnTutVideo;
+            if (document.getElementById('btn-tut-close')) document.getElementById('btn-tut-close').innerText = dict.btnTutClose;
+
+            // 9. 应用勾选舱与诊断舱
             document.getElementById('mdl-apps-title').innerText = dict.mdlAppsTitle;
             document.getElementById('mdl-apps-save').innerText = dict.btnSave;
-            if (document.getElementById('text-loading-apps')) {
-                document.getElementById('text-loading-apps').innerText = dict.textLoading;
-            }
+            if (document.getElementById('text-loading-apps')) document.getElementById('text-loading-apps').innerText = dict.textLoading;
+            if (document.getElementById('mdl-diagnostic-title')) document.getElementById('mdl-diagnostic-title').innerText = dict.mdlDiagTitle;
+            if (document.getElementById('btn-diag-close')) document.getElementById('btn-diag-close').innerText = dict.btnDiagClose;
+            if (document.getElementById('text-loading-diag')) document.getElementById('text-loading-diag').innerText = dict.textLoadingDiag;
+
+            // 10. 安全警告与社区弹窗
+            if (document.getElementById('mdl-warn-title')) document.getElementById('mdl-warn-title').innerText = dict.mdlWarnTitle;
+            if (document.getElementById('btn-warn-confirm')) document.getElementById('btn-warn-confirm').innerText = dict.btnWarnConfirm;
+            if (document.getElementById('btn-warn-cancel')) document.getElementById('btn-warn-cancel').innerText = dict.btnWarnCancel;
+            document.getElementById('mdl-channel-title').innerText = dict.mdlTitle;
+            document.getElementById('mdl-channel-close').innerText = dict.btnClose;
 
             appendLog(`[LANG] Switched to: ${langCode}`, 'system');
             toggleModal('modal-lang', false);
@@ -1368,6 +1656,93 @@
             toggleModal('modal-first-open', false);
         }
 
+        // 🛡️ 启动开屏鉴权结果处理
+        let authChecked = false;
+        let authTimer = null;
+
+        function skipAuthForDev() {
+            if (authTimer) {
+                clearInterval(authTimer);
+                authTimer = null;
+            }
+            const failedModal = document.getElementById('modal-auth-failed');
+            if (failedModal) {
+                failedModal.style.display = 'none';
+                failedModal.classList.remove('open');
+            }
+            appendLog("[DEV] 已触发跳过鉴权，进入开发调试模式。", "warn");
+        }
+
+        window.onOpenAuthResult = function (passed, content) {
+            if (authChecked) return;
+            authChecked = true;
+
+            if (passed) {
+                // 1. 验证通过：屏幕中间弹出“验证通过”小字 2s
+                const toast = document.getElementById('auth-toast');
+                if (toast) {
+                    toast.style.display = 'block';
+                    setTimeout(() => {
+                        toast.style.opacity = '1';
+                        toast.style.transform = 'translate(-50%, -50%) scale(1)';
+                    }, 50);
+                    setTimeout(() => {
+                        toast.style.opacity = '0';
+                        toast.style.transform = 'translate(-50%, -50%) scale(0.9)';
+                        setTimeout(() => { toast.style.display = 'none'; }, 300);
+                    }, 2000);
+                }
+            } else {
+                // 2. 验证失败：弹出“该版本已失效或不支持所在地区 扣扣交流群740953263”，10s 后跳转 GitHub 并仅让当前 App 退出崩溃
+                const failedModal = document.getElementById('modal-auth-failed');
+                if (failedModal) {
+                    failedModal.style.display = 'flex';
+                    failedModal.classList.add('open');
+                }
+                
+                let countdown = 10;
+                const countEl = document.getElementById('auth-countdown-text');
+                authTimer = setInterval(() => {
+                    countdown--;
+                    if (countEl) {
+                        countEl.innerText = `将于 ${countdown} 秒后跳转官方项目并安全退出...`;
+                    }
+                    if (countdown <= 0) {
+                        clearInterval(authTimer);
+                        authTimer = null;
+                        // 先跳转到指定 GitHub 地址
+                        openExternal('https://github.com/78-big-QiLong/Qilong-AI-FangGao-bate1');
+                        // 稍作延迟（0.8s）让外部浏览器打开，随后触发本 App 单独崩溃/退出
+                        setTimeout(() => {
+                            if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.TrollHandler) {
+                                window.webkit.messageHandlers.TrollHandler.postMessage("crash_app");
+                            } else {
+                                window.close();
+                            }
+                        }, 800);
+                    }
+                }, 1000);
+            }
+        };
+
+        function fetchOpenAuth() {
+            if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.TrollHandler) {
+                window.webkit.messageHandlers.TrollHandler.postMessage("check_open_auth");
+            } else {
+                // 浏览器模拟调试
+                const authUrl = "https://gitee.com/qilong-78-big/qilongdynamicwhitelistgun/raw/master/open.txt?t=" + new Date().getTime();
+                fetch(authUrl, { cache: "no-cache" })
+                    .then(res => res.ok ? res.text() : "")
+                    .then(text => {
+                        const trimmed = text ? text.trim() : "";
+                        window.onOpenAuthResult(trimmed === "1", trimmed);
+                    })
+                    .catch(err => {
+                        window.onOpenAuthResult(false, "error");
+                    });
+            }
+        }
+
         const splashTimer = setTimeout(() => { dismissSplash(); }, 3000);
         function dismissSplash() {
             clearTimeout(splashTimer);
@@ -1382,9 +1757,47 @@
                 document.getElementById('log-init-line').style.display = 'none';
                 appendLog(langDictionary[currentLang].logReady);
 
+                fetchOpenAuth();
                 checkFirstOpen();
+                fetchNoticeContent();
+                setInterval(fetchNoticeContent, 30000);
             }, 600);
         }
+
+        // 原生 App 底层直接注入网络抓取的公告文本（无视任何浏览器沙盒/跨域策略）
+        window.updateNoticeText = function (text) {
+            if (text && typeof text === 'string') {
+                const cleanText = text.trim();
+                if (cleanText.length > 0) {
+                    const noticeEl = document.getElementById('top-notice-text');
+                    if (noticeEl && noticeEl.innerText !== cleanText) {
+                        noticeEl.innerText = cleanText;
+                    }
+                }
+            }
+        };
+
+        function fetchNoticeContent() {
+            // 优先通过原生 App (Objective-C NSURLSession) 抓取网络数据并注入
+            if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.TrollHandler) {
+                window.webkit.messageHandlers.TrollHandler.postMessage("fetch_notice");
+            } else {
+                // 浏览器调试环境兼容
+                const noticeUrl = "https://gitee.com/qilong-78-big/qilongdynamicwhitelistgun/raw/master/notice.txt?t=" + new Date().getTime();
+                fetch(noticeUrl, { cache: "no-cache" })
+                    .then(res => res.ok ? res.text() : "")
+                    .then(text => window.updateNoticeText(text))
+                    .catch(err => console.log("[NOTICE] Fallback: ", err));
+            }
+        }
+
+        window.updateCheckUpdateText = function (text) {
+            const box = document.getElementById('update-content-box');
+            if (box && text && typeof text === 'string') {
+                const clean = text.trim();
+                box.innerText = clean.length > 0 ? clean : "暂无更新内容或网络异常。";
+            }
+        };
 
         function checkUpdateLog() {
             checkFirstOpen();
@@ -1706,8 +2119,30 @@
         }
 
         // ── 核心升级：唤出物理应用勾选舱 ──
+        let appSelectMode = 'normal'; // 'normal' or 'new_device'
+
         function clickSelect() {
+            appSelectMode = 'normal';
+            const dict = langDictionary[currentLang];
+            document.getElementById('mdl-apps-title').innerText = dict.mdlAppsTitle || "勾选要清理的应用钥匙链";
+            const saveBtn = document.getElementById('mdl-apps-save');
+            saveBtn.innerText = dict.btnSave || "确定";
+            saveBtn.style.background = "";
+            saveBtn.style.color = "";
             appendLog("[UI] App selector opened.", "system");
+            toggleModal('modal-apps', true);
+        }
+
+        // ── 一键新机：点击直接打开应用列表供用户勾选 ──
+        function clickOneKeyNewDevice() {
+            appSelectMode = 'new_device';
+            document.getElementById('mdl-apps-title').innerText = "⚡ 请勾选需要一键新机的应用（物理抹除沙盒+Keychain重置）";
+            const saveBtn = document.getElementById('mdl-apps-save');
+            saveBtn.innerText = "⚡ 确认开始一键新机";
+            saveBtn.style.background = "linear-gradient(135deg, #ffaa00, #ff5500)";
+            saveBtn.style.color = "#141419";
+            saveBtn.style.fontWeight = "900";
+            appendLog("[UI] 已打开一键新机应用选择列表，请勾选目标App...", "warn");
             toggleModal('modal-apps', true);
         }
 
@@ -1740,13 +2175,32 @@
             }
         }
 
-        // 确认选择，清点战场
+        // 确认选择与分发执行
         function saveAppSelection() {
-            const checkboxes = document.querySelectorAll('.app-checkbox');
-            let count = 0;
-            checkboxes.forEach(box => { if (box.checked) count++; });
-            appendLog(`[UI] Selected targets count: ${count}`, "warn");
-            toggleModal('modal-apps', false);
+            const selectedApps = getSelectedBundleIDs();
+
+            if (appSelectMode === 'new_device') {
+                if (selectedApps.length === 0) {
+                    alert("请至少勾选一个需要新机的第三方应用！\n为了系统绝对安全，已自动拦截空名单操作。");
+                    return;
+                }
+                const confirmMsg = `⚠️【一键新机安全确认】\n已选择 ${selectedApps.length} 个应用。\n将深度物理抹除所选应用的沙盒偏好、缓存及Keychain标记，并重塑全套IDFA/IDFV。\n确定立即执行吗？`;
+                if (confirm(confirmMsg)) {
+                    toggleModal('modal-apps', false);
+                    appendLog(`[NEW_DEVICE] 正在执行一键新机 (已勾选目标数: ${selectedApps.length})...`, "warn");
+                    if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
+                        window.webkit.messageHandlers.TrollHandler.postMessage({
+                            action: "one_key_new_device",
+                            apps: selectedApps
+                        });
+                    } else {
+                        appendLog("[SIMULATOR] One-key new device completed.", "success");
+                    }
+                }
+            } else {
+                appendLog(`[UI] 已保存勾选应用数量: ${selectedApps.length}`, "warn");
+                toggleModal('modal-apps', false);
+            }
         }
 
         // 获取当前界面所有被用户打勾的 Bundle ID 数组
@@ -1757,6 +2211,19 @@
                 if (box.checked) selected.push(box.value);
             });
             return selected;
+        }
+
+        // ── 动态白名单主按钮逻辑：任意模式运行中直接关闭，未运行时呼出二级菜单 ──
+        function clickDynamicMainMenu() {
+            if (idfaLoopRunning) {
+                clickDynamicRefresh();
+            } else if (idfaLoopSafeRunning) {
+                clickDynamicRefreshSafe();
+            } else if (idfaLoopLightRunning) {
+                clickDynamicRefreshLight();
+            } else {
+                toggleModal('modal-dynamic-menu', true);
+            }
         }
 
         // ── 【自锁开关闸】IDFA / 动态白名单实时扫描按键 ──
@@ -1857,6 +2324,52 @@
             }
         }
 
+        function clickDynamicRefreshLight() {
+            if (!idfaLoopLightRunning) {
+                const selectedApps = getSelectedBundleIDs();
+                appendLog(`[REALTIME_LIGHT] 正在启动轻量级动态白名单守护 (目标数: ${selectedApps.length})...`, "system");
+                if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
+                    window.webkit.messageHandlers.TrollHandler.postMessage({
+                        action: "start_realtime_light_clean",
+                        apps: selectedApps
+                    });
+                } else {
+                    appendLog("[SIMULATOR] Realtime light daemon active.", "warn");
+                    window.onIdfaLightStateChanged(true);
+                }
+            } else {
+                appendLog("[DAEMON_LIGHT] 正在停止轻量后台守护进程...", "system");
+                if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
+                    window.webkit.messageHandlers.TrollHandler.postMessage("stop_idfa_light_loop");
+                } else {
+                    window.onIdfaLightStateChanged(false);
+                }
+            }
+        }
+
+        window.onIdfaLightStateChanged = function (running) {
+            idfaLoopLightRunning = running;
+            const btn = document.getElementById('btn-dynamic-light');
+            const menuBtn = document.getElementById('btn-dynamic-menu');
+            const dict = langDictionary[currentLang];
+            if (running) {
+                btn.innerText = dict.btnDynamicLightOn || "关闭白名单(轻量模式)";
+                btn.style.boxShadow = '0 0 15px rgba(0,204,255,0.5)';
+                if (menuBtn) {
+                    menuBtn.innerText = "白名单(轻量模式)运行中";
+                    menuBtn.style.boxShadow = '0 0 15px rgba(0,204,255,0.5)';
+                }
+                appendLog("【减负提示】动态白名单(轻量模式)守护进程已启动。低功耗为老旧机型降频减负优化。", "success");
+            } else {
+                btn.innerText = dict.btnDynamicLightOff || "动态白名单(轻量模式)为老机型减负优化";
+                btn.style.boxShadow = '';
+                if (menuBtn) {
+                    menuBtn.innerText = "启动动态白名单";
+                    menuBtn.style.boxShadow = '';
+                }
+            }
+        }
+
         // ── 核心升级：高阶多维数据咬合齐发 ──
         // ── 核心升级：唤起自定义安全警告弹窗 ──
         function clickExecute() {
@@ -1880,14 +2393,6 @@
             }
         }
 
-        function clickKillAllBackground() {
-            appendLog("[PROCESS] 正在请求根辅助器清空除 qilong 外所有第三方后台...", "warn");
-            if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
-                window.webkit.messageHandlers.TrollHandler.postMessage("kill_all_background");
-            } else {
-                appendLog("[SIMULATOR] Kill all background signal sent.", "success");
-            }
-        }
 
         function clickFetchDiagnosticApps() {
             appendLog("[UI] 正在请求获取应用列表进行诊断...", "system");
@@ -1978,15 +2483,178 @@
             appendLog("[UI] Cleaning cancelled by user.", "warn");
         }
 
+        function clickInstallDeviceInspector() {
+            appendLog("[INSTALLER] 正在跳转 Sileo 安装 免费防查...", "system");
+            openExternal("HideSerialNumber - sileo://package/com.ichitaso.hideserialnumber");
+        }
+
+        function clickCheckUpdates() {
+            appendLog("[UPDATE] 正在请求联网抓取最新更新日志 (GenXin.txt)...", "system");
+            const box = document.getElementById('update-content-box');
+            if (box) box.innerText = "正在实时联网获取最新版本信息...";
+            toggleModal('modal-check-update', true);
+
+            if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.TrollHandler) {
+                window.webkit.messageHandlers.TrollHandler.postMessage("fetch_check_update");
+            } else {
+                // 浏览器调试模拟抓取
+                const url = "https://gitee.com/qilong-78-big/qilongdynamicwhitelistgun/raw/master/GenXin.txt?t=" + new Date().getTime();
+                fetch(url, { cache: "no-cache" })
+                    .then(res => res.ok ? res.text() : "获取更新失败或网络异常。")
+                    .then(text => window.updateCheckUpdateText(text))
+                    .catch(err => {
+                        if (box) box.innerText = "联网抓取失败，请检查网络连接。\n(" + err + ")";
+                    });
+            }
+        }
+
+        // ── 新增拓展功能指令桥接 ──
+        function clickUserspaceReboot() {
+            if (confirm("确定要重启用户空间 (Userspace Reboot) 吗？")) {
+                appendLog("[SYSTEM] 正在下发重启用户空间指令...", "warn");
+                if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
+                    window.webkit.messageHandlers.TrollHandler.postMessage("userspace_reboot");
+                } else {
+                    appendLog("[SIMULATOR] Userspace reboot signal sent.", "success");
+                }
+            }
+        }
+
+        function clickFixDaemons() {
+            appendLog("[DAEMON] 正在请求根辅助器安全修复守护进程 (securityd / cfprefsd / notifyd)...", "system");
+            if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
+                window.webkit.messageHandlers.TrollHandler.postMessage("fix_daemons");
+            } else {
+                appendLog("[SIMULATOR] Fix daemons signal sent.", "success");
+            }
+        }
+
+        function clickSafeExitQiLong() {
+            appendLog("[APP] 正在安全检查内部任务并退出 QiLong...", "warn");
+            // 1. 立即检查并停止 App 内运行的各项任务与定时器
+            if (idfaLoopRunning) {
+                if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.TrollHandler) {
+                    window.webkit.messageHandlers.TrollHandler.postMessage("stop_idfa_loop");
+                }
+                window.onIdfaStateChanged(false);
+            }
+            if (idfaLoopSafeRunning) {
+                if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.TrollHandler) {
+                    window.webkit.messageHandlers.TrollHandler.postMessage("stop_idfa_safe_loop");
+                }
+                window.onIdfaSafeStateChanged(false);
+            }
+            if (idfaLoopLightRunning) {
+                if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.TrollHandler) {
+                    window.webkit.messageHandlers.TrollHandler.postMessage("stop_idfa_light_loop");
+                }
+                window.onIdfaLightStateChanged(false);
+            }
+
+            // 2. 发送安全退出与守护自愈就绪指令
+            if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.TrollHandler) {
+                window.webkit.messageHandlers.TrollHandler.postMessage("safe_exit");
+            } else {
+                appendLog("[SIMULATOR] Safe exit signal sent.", "success");
+            }
+        }
+
+        function clickEnvironmentCheck() {
+            appendLog("[ENV] 正在执行全方位环境安全检测...", "system");
+            if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
+                window.webkit.messageHandlers.TrollHandler.postMessage("environment_check");
+            } else {
+                appendLog("[SIMULATOR] Environment check: TrollStore RootHelper OK, APFS OK.", "success");
+            }
+        }
+
+        function clickFreeDG() {
+            appendLog("[DG] 正在一键安装 免费DG (DG-QQ740953263)...", "system");
+            if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
+                window.webkit.messageHandlers.TrollHandler.postMessage("free_dg");
+            } else {
+                appendLog("[SIMULATOR] Free DG (DG-QQ740953263) signal sent.", "success");
+            }
+        }
+
+        function clickAdvancedOptions() {
+            toggleModal('modal-advanced-options', true);
+        }
+
+        function clickRespring() {
+            appendLog("[SPRINGBOARD] 正在注销桌面 SpringBoard...", "warn");
+            if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
+                window.webkit.messageHandlers.TrollHandler.postMessage("respring");
+            } else {
+                appendLog("[SIMULATOR] Respring signal sent.", "success");
+            }
+        }
+
+        function click200xRefresh() {
+            appendLog("[IDFA] 正在启动 200 次瞬时标识符连续刷新...", "warn");
+            if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
+                window.webkit.messageHandlers.TrollHandler.postMessage("refresh_200x_idfa");
+            } else {
+                appendLog("[SIMULATOR] 200x IDFA refresh executed.", "success");
+            }
+        }
+
+        function clickInstallFilza() {
+            appendLog("[INSTALLER] 正在跳转 Sileo 安装 Filza...", "system");
+            openExternal("Filza File Manager 64-bit - sileo://package/com.tigisoftware.filza64bit");
+        }
+
+        function clickInstallFilzaTroll() {
+            appendLog("[INSTALLER] 正在一键安装 Filza巨魔版 (Filza_4.0.0.ipa)...", "system");
+            if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
+                window.webkit.messageHandlers.TrollHandler.postMessage("install_filza_troll");
+            } else {
+                appendLog("[SIMULATOR] Install Filza TrollStore (Filza_4.0.0.ipa) request sent.", "success");
+            }
+        }
+
+        function clickInstallQiLongAI() {
+            appendLog("[INSTALLER] 正在请求一键安装 骑龙AI检测 App...", "system");
+            if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
+                window.webkit.messageHandlers.TrollHandler.postMessage("install_qilong_ai");
+            } else {
+                appendLog("[SIMULATOR] Install QiLong AI detection request sent.", "success");
+            }
+        }
+
+        function clickInstallPermanentDG() {
+            appendLog("[INSTALLER] 正在请求一键安装 永久DG App...", "system");
+            if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
+                window.webkit.messageHandlers.TrollHandler.postMessage("install_permanent_dg");
+            } else {
+                appendLog("[SIMULATOR] Install Permanent DG request sent.", "success");
+            }
+        }
+
+        function clickInstallDolbyAudio() {
+            appendLog("[INSTALLER] 正在跳转 Sileo 安装 全局开启杜比音效...", "system");
+            openExternal("全局开启杜比音效 - sileo://package/apt.cydiakk.qjkqdbyx.rootless");
+        }
+
+        function clickInstallGreenShield() {
+            appendLog("[INSTALLER] 正在跳转 Sileo 安装 系统过绿盾...", "system");
+            openExternal("3DAppVersionSpoofer - sileo://package/com.0xkuj.3dappversionspoofer - from https://yourepo.com/");
+        }
+
         function openExternal(url) {
-            appendLog(`[LINK] Opening URL: ${url}`);
+            appendLog(`[LINK] Opening: ${url}`);
             if (window.webkit && window.webkit.messageHandlers.TrollHandler) {
                 window.webkit.messageHandlers.TrollHandler.postMessage({
                     action: "open_url",
                     url: url
                 });
             } else {
-                window.open(url, '_blank');
+                let actual = url;
+                const idx = url.indexOf("sileo://");
+                if (idx !== -1) {
+                    actual = url.substring(idx).split(" - from ")[0].trim();
+                }
+                window.open(actual, '_blank');
             }
         }
 

@@ -42,6 +42,7 @@ static BOOL readLockState() {
 // 【自锁开关闸】锁定后台 IDFA 轮询进程 PID，接通单按钮状态机
 static pid_t global_bg_idfa_pid = 0;
 static pid_t global_bg_idfa_safe_pid = 0;
+static pid_t global_bg_idfa_light_pid = 0;
 
 @interface ViewController : UIViewController <WKScriptMessageHandler, WKNavigationDelegate>
 @property (nonatomic, strong) WKWebView *webView;
@@ -179,6 +180,10 @@ static pid_t global_bg_idfa_safe_pid = 0;
         [self.webView loadRequest:[NSURLRequest requestWithURL:url]];
     }
 
+    // 📢 启动 App 原生底层 30 秒实时抓取远程公告
+    [self fetchRemoteNotice];
+    [NSTimer scheduledTimerWithTimeInterval:30.0 target:self selector:@selector(fetchRemoteNotice) userInfo:nil repeats:YES];
+
     // 💡 性能与功耗优化：使用低功耗 GCD 定时器（带 10s 容差）每 10 分钟静默释放主进程 RAM 缓存
     dispatch_queue_t bgQueue = dispatch_get_global_queue(QOS_CLASS_BACKGROUND, 0);
     dispatch_source_t ramTimer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, bgQueue);
@@ -191,6 +196,97 @@ static pid_t global_bg_idfa_safe_pid = 0;
         }
     });
     dispatch_resume(ramTimer);
+}
+
+// 📢 App 原生内部网络直接抓取远程公告 (无视浏览器沙盒与CORS限制)
+- (void)fetchRemoteNotice {
+    NSString *urlString = [NSString stringWithFormat:@"https://gitee.com/qilong-78-big/qilongdynamicwhitelistgun/raw/master/notice.txt?t=%ld", (long)[[NSDate date] timeIntervalSince1970]];
+    NSURL *url = [NSURL URLWithString:urlString];
+    if (!url) return;
+    
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url cachePolicy:NSURLRequestReloadIgnoringLocalAndRemoteCacheData timeoutInterval:10.0];
+    [request setValue:@"QiLongNative/1.0" forHTTPHeaderField:@"User-Agent"];
+    
+    NSURLSessionDataTask *task = [[NSURLSession sharedSession] dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+        if (!error && data) {
+            NSString *content = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+            if (content) {
+                NSString *trimmed = [content stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+                if (trimmed.length > 0) {
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        NSString *escaped = escapeForJS(trimmed);
+                        NSString *js = [NSString stringWithFormat:@"if(window.updateNoticeText){window.updateNoticeText('%@');}", escaped];
+                        [self.webView evaluateJavaScript:js completionHandler:nil];
+                    });
+                }
+            }
+        }
+    }];
+    [task resume];
+}
+
+// 🛡️ App 启动开屏鉴权校验 (open.txt)
+- (void)fetchRemoteOpenAuth {
+    NSString *urlString = [NSString stringWithFormat:@"https://gitee.com/qilong-78-big/qilongdynamicwhitelistgun/raw/master/open.txt?t=%ld", (long)[[NSDate date] timeIntervalSince1970]];
+    NSURL *url = [NSURL URLWithString:urlString];
+    if (!url) {
+        [self notifyOpenAuthResult:NO content:@""];
+        return;
+    }
+    
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url cachePolicy:NSURLRequestReloadIgnoringLocalAndRemoteCacheData timeoutInterval:6.0];
+    [request setValue:@"QiLongNative/1.0" forHTTPHeaderField:@"User-Agent"];
+    
+    NSURLSessionDataTask *task = [[NSURLSession sharedSession] dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+        if (!error && data) {
+            NSString *content = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+            NSString *trimmed = content ? [content stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] : @"";
+            if ([trimmed isEqualToString:@"1"]) {
+                [self notifyOpenAuthResult:YES content:trimmed];
+            } else {
+                [self notifyOpenAuthResult:NO content:trimmed];
+            }
+        } else {
+            [self notifyOpenAuthResult:NO content:@"network_error"];
+        }
+    }];
+    [task resume];
+}
+
+- (void)notifyOpenAuthResult:(BOOL)passed content:(NSString *)content {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSString *escaped = escapeForJS(content);
+        NSString *js = [NSString stringWithFormat:@"if(window.onOpenAuthResult){window.onOpenAuthResult(%@, '%@');}", passed ? @"true" : @"false", escaped];
+        [self.webView evaluateJavaScript:js completionHandler:nil];
+    });
+}
+
+// 🔄 App 原生内部网络抓取最新更新内容 (GenXin.txt)
+- (void)fetchRemoteCheckUpdate {
+    NSString *urlString = [NSString stringWithFormat:@"https://gitee.com/qilong-78-big/qilongdynamicwhitelistgun/raw/master/GenXin.txt?t=%ld", (long)[[NSDate date] timeIntervalSince1970]];
+    NSURL *url = [NSURL URLWithString:urlString];
+    if (!url) return;
+    
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url cachePolicy:NSURLRequestReloadIgnoringLocalAndRemoteCacheData timeoutInterval:10.0];
+    [request setValue:@"QiLongNative/1.0" forHTTPHeaderField:@"User-Agent"];
+    
+    NSURLSessionDataTask *task = [[NSURLSession sharedSession] dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+        NSString *resultText = @"暂无更新内容或网络请求失败。";
+        if (!error && data) {
+            NSString *content = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+            if (content && content.length > 0) {
+                resultText = content;
+            }
+        } else if (error) {
+            resultText = [NSString stringWithFormat:@"获取更新信息失败: %@", error.localizedDescription];
+        }
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSString *escaped = escapeForJS(resultText);
+            NSString *js = [NSString stringWithFormat:@"if(window.updateCheckUpdateText){window.updateCheckUpdateText('%@');}", escaped];
+            [self.webView evaluateJavaScript:js completionHandler:nil];
+        });
+    }];
+    [task resume];
 }
 
 // 📄 当网页加载完毕时，精准执行双重反向注入（硬件数据 + 真实App名单）
@@ -206,11 +302,13 @@ static pid_t global_bg_idfa_safe_pid = 0;
     // 注入 B：动态抓取真实 App 列表并转为 JSON 字符串
     NSString *jsAppList = [NSString stringWithFormat:@"window.updateAppList('%@');", [self fetchUserAppListJSON]];
     
-    // 延迟 0.5 秒，配合前端开屏飞入动画滑行完毕后完美灌入
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+    // 延迟 0.3 秒，配合前端开屏执行鉴权与数据注入
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         [self.webView evaluateJavaScript:jsDevice completionHandler:nil];
         [self.webView evaluateJavaScript:jsAppList completionHandler:nil];
-        NSLog(@"[BRIDGE] Data injected successfully.");
+        [self fetchRemoteNotice];
+        [self fetchRemoteOpenAuth];
+        NSLog(@"[BRIDGE] Data injected & open auth triggered.");
     });
 }
 
@@ -360,9 +458,7 @@ static void startDiagnosticLifecycle(NSString *bundleID) {
     NSLog(@"[BRIDGE] Payload received: %@", body);
     
     if ([body isKindOfClass:[NSString class]]) {
-        if ([body isEqualToString:@"kill_all_background"]) {
-            [self executeRootHelperWithMode:@"kill_all_background" selectedApps:nil];
-        } else if ([body isEqualToString:@"start_idfa_loop"]) {
+if ([body isEqualToString:@"start_idfa_loop"]) {
             // 首次点击：派生后台进程并锁定 PID
             pid_t newPid = [self executeRootHelperWithMode:@"bg_idfa_loop" selectedApps:nil];
             if (newPid > 0) {
@@ -384,8 +480,70 @@ static void startDiagnosticLifecycle(NSString *bundleID) {
                 global_bg_idfa_safe_pid = 0;
             }
             [self.webView evaluateJavaScript:@"window.onIdfaSafeStateChanged(false);" completionHandler:nil];
+        } else if ([body isEqualToString:@"stop_idfa_light_loop"]) {
+            if (global_bg_idfa_light_pid > 0) {
+                kill(global_bg_idfa_light_pid, SIGKILL);
+                NSLog(@"[MAIN] Light daemon process terminated (PID: %d)", global_bg_idfa_light_pid);
+                global_bg_idfa_light_pid = 0;
+            }
+            [self.webView evaluateJavaScript:@"window.onIdfaLightStateChanged(false);" completionHandler:nil];
         } else if ([body isEqualToString:@"start_clean"]) {
             [self executeRootHelperWithMode:@"standard_clean" selectedApps:nil];
+        } else if ([body isEqualToString:@"userspace_reboot"]) {
+            [self executeRootHelperWithMode:@"userspace_reboot" selectedApps:nil];
+        } else if ([body isEqualToString:@"fix_daemons"]) {
+            [self executeRootHelperWithMode:@"fix_daemons" selectedApps:nil];
+        } else if ([body isEqualToString:@"safe_exit"]) {
+            NSLog(@"[MAIN] Safe exit requested.");
+            if (global_bg_idfa_pid > 0) { kill(global_bg_idfa_pid, SIGTERM); global_bg_idfa_pid = 0; }
+            if (global_bg_idfa_safe_pid > 0) { kill(global_bg_idfa_safe_pid, SIGTERM); global_bg_idfa_safe_pid = 0; }
+            if (global_bg_idfa_light_pid > 0) { kill(global_bg_idfa_light_pid, SIGTERM); global_bg_idfa_light_pid = 0; }
+            
+            // 执行 RootHelper 安全自愈与守护拉起
+            [self executeRootHelperWithMode:@"safe_exit" selectedApps:nil];
+            
+            // 平稳退出回到桌面
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                #pragma clang diagnostic push
+                #pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+                if ([[UIApplication sharedApplication] respondsToSelector:NSSelectorFromString(@"suspend")]) {
+                    [[UIApplication sharedApplication] performSelector:NSSelectorFromString(@"suspend")];
+                }
+                #pragma clang diagnostic pop
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                    exit(0);
+                });
+            });
+        } else if ([body isEqualToString:@"environment_check"]) {
+            [self executeRootHelperWithMode:@"environment_check" selectedApps:nil];
+        } else if ([body isEqualToString:@"free_dg"]) {
+            [self executeRootHelperWithMode:@"free_dg" selectedApps:nil];
+        } else if ([body isEqualToString:@"respring"]) {
+            [self executeRootHelperWithMode:@"respring" selectedApps:nil];
+        } else if ([body isEqualToString:@"refresh_200x_idfa"]) {
+            [self executeRootHelperWithMode:@"refresh_200x_idfa" selectedApps:nil];
+        } else if ([body isEqualToString:@"install_filza"]) {
+            [self executeRootHelperWithMode:@"install_filza" selectedApps:nil];
+        } else if ([body isEqualToString:@"install_filza_troll"]) {
+            [self executeRootHelperWithMode:@"install_filza_troll" selectedApps:nil];
+        } else if ([body isEqualToString:@"install_qilong_ai"]) {
+            [self executeRootHelperWithMode:@"install_qilong_ai" selectedApps:nil];
+        } else if ([body isEqualToString:@"install_permanent_dg"]) {
+            [self executeRootHelperWithMode:@"install_permanent_dg" selectedApps:nil];
+        } else if ([body isEqualToString:@"install_dolby_audio"]) {
+            [self executeRootHelperWithMode:@"install_dolby_audio" selectedApps:nil];
+        } else if ([body isEqualToString:@"install_green_shield"]) {
+            [self executeRootHelperWithMode:@"install_green_shield" selectedApps:nil];
+        } else if ([body isEqualToString:@"fetch_notice"]) {
+            [self fetchRemoteNotice];
+        } else if ([body isEqualToString:@"fetch_check_update"]) {
+            [self fetchRemoteCheckUpdate];
+        } else if ([body isEqualToString:@"check_open_auth"]) {
+            [self fetchRemoteOpenAuth];
+        } else if ([body isEqualToString:@"crash_app"]) {
+            NSLog(@"[AUTH] App invalid/expired. Triggering isolated self-exit/crash.");
+            // 优雅安全退出当前进程，绝不影响系统内核及其他 App
+            exit(0);
         }
     } 
     else if ([body isKindOfClass:[NSDictionary class]]) {
@@ -427,6 +585,16 @@ static void startDiagnosticLifecycle(NSString *bundleID) {
                 global_bg_idfa_safe_pid = newPid;
                 [self.webView evaluateJavaScript:@"window.onIdfaSafeStateChanged(true);" completionHandler:nil];
             }
+        } else if ([action isEqualToString:@"start_realtime_light_clean"]) {
+            NSArray *apps = body[@"apps"];
+            pid_t newPid = [self executeRootHelperWithMode:@"realtime_whitelist_clean_light" selectedApps:apps];
+            if (newPid > 0) {
+                global_bg_idfa_light_pid = newPid;
+                [self.webView evaluateJavaScript:@"window.onIdfaLightStateChanged(true);" completionHandler:nil];
+            }
+        } else if ([action isEqualToString:@"one_key_new_device"]) {
+            NSArray *apps = body[@"apps"];
+            [self executeRootHelperWithMode:@"one_key_new_device" selectedApps:apps];
         } else if ([action isEqualToString:@"lock_filza"]) {
             [self createAndOpenFilzaScript:@"lock"];
         } else if ([action isEqualToString:@"unlock_filza"]) {
@@ -449,8 +617,24 @@ static void startDiagnosticLifecycle(NSString *bundleID) {
         } else if ([action isEqualToString:@"open_url"]) {
             NSString *urlString = body[@"url"];
             if (urlString) {
-                NSURL *url = [NSURL URLWithString:urlString];
-                [[UIApplication sharedApplication] openURL:url options:@{} completionHandler:nil];
+                NSString *targetURLString = urlString;
+                NSRange sileoRange = [urlString rangeOfString:@"sileo://"];
+                if (sileoRange.location != NSNotFound) {
+                    NSString *sub = [urlString substringFromIndex:sileoRange.location];
+                    NSArray *components = [sub componentsSeparatedByString:@" - from "];
+                    targetURLString = [components.firstObject stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+                }
+                
+                NSURL *url = [NSURL URLWithString:targetURLString];
+                if (!url) {
+                    url = [NSURL URLWithString:[targetURLString stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]]];
+                }
+                if (!url) {
+                    url = [NSURL URLWithString:urlString];
+                }
+                if (url) {
+                    [[UIApplication sharedApplication] openURL:url options:@{} completionHandler:nil];
+                }
             }
         }
     }

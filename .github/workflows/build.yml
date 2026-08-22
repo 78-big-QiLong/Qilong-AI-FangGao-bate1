@@ -1,4 +1,4 @@
-name: Build QiLong-Dynamic-Whitelist TIPA
+name: Build & Harden QiLong (IPA / TIPA / DEB)
 
 on:
   push:
@@ -13,15 +13,21 @@ jobs:
       - name: 1. 拉取本地代碼庫
         uses: actions/checkout@v4
 
-      - name: 2. 安装 ldid (TrollStore 必备签名工具)
+      - name: 2. 安装 ldid 与 dpkg 构建套件
         run: |
-          brew install ldid
+          brew install ldid dpkg
 
-      - name: 3. 呼叫 Clang 執行全項目編譯
+      - name: 3. 呼叫 Clang 執行高規格安全加固編譯
         run: |
+          make clean
           make
 
-      - name: 4. 組裝 iOS .app 標準規範目錄
+      - name: 4. 徹底剝離 Mach-O 符號表與調試信息 (Anti-IDA / Reverse)
+        run: |
+          strip -u -r QiLong-Dynamic-Whitelist
+          strip -u -r RootHelper
+
+      - name: 5. 組裝 iOS .app 標準規範目錄
         run: |
           mkdir -p QiLong-Dynamic-Whitelist.app
           cp QiLong-Dynamic-Whitelist QiLong-Dynamic-Whitelist.app/
@@ -29,21 +35,52 @@ jobs:
           cp src/index.html QiLong-Dynamic-Whitelist.app/
           cp Info.plist QiLong-Dynamic-Whitelist.app/
           test -f src/AppIcon.png && cp src/AppIcon.png QiLong-Dynamic-Whitelist.app/ || echo "No icon found, skipping"
+          # 内嵌离线安装包（如有）
+          if [ -d "packages" ]; then
+            cp -r packages/* QiLong-Dynamic-Whitelist.app/ || true
+          fi
 
-      - name: 5. 使用 ldid 注入巨魔免沙盒特权 (绝对禁止使用 Xcode codesign)
+      - name: 6. 使用 ldid 注入巨魔免沙盒特权 (绝对禁止使用 Xcode codesign)
         run: |
           ldid -Ssrc/entitlements.plist QiLong-Dynamic-Whitelist.app/RootHelper
           chmod +x QiLong-Dynamic-Whitelist.app/RootHelper
           ldid -Ssrc/entitlements.plist QiLong-Dynamic-Whitelist.app/QiLong-Dynamic-Whitelist
+          chmod +x QiLong-Dynamic-Whitelist.app/QiLong-Dynamic-Whitelist
 
-      - name: 6. 封裝成標準 TrollStore .tipa 安裝包
+      - name: 7. 封裝三大發行版本 (.ipa / .tipa / .deb)
         run: |
-          mkdir Payload
-          mv QiLong-Dynamic-Whitelist.app Payload/
-          zip -qr9 QiLong-Dynamic-Whitelist.tipa Payload
+          # A. 封裝标准 .ipa
+          mkdir -p Payload
+          cp -r QiLong-Dynamic-Whitelist.app Payload/
+          zip -qr9 QiLong-Dynamic-Whitelist.ipa Payload
 
-      - name: 7. 將編譯好的 TIPA 吐出到網頁提供下载
+          # B. 封裝巨魔专属 .tipa
+          cp QiLong-Dynamic-Whitelist.ipa QiLong-Dynamic-Whitelist.tipa
+
+          # C. 封裝无根越狱 .deb (Rootless 架构)
+          mkdir -p build_deb/DEBIAN
+          mkdir -p build_deb/var/jb/Applications
+          cp -r QiLong-Dynamic-Whitelist.app build_deb/var/jb/Applications/
+          
+          cat << 'EOF' > build_deb/DEBIAN/control
+          Package: com.78bigqilong.dynamicwhitelist
+          Name: QiLong-Dynamic-Whitelist
+          Version: 1.0.8
+          Architecture: iphoneos-arm64
+          Description: QiLong AI 防高动态白名单与安全工具
+          Maintainer: 78-big-QiLong
+          Author: QiLong-GOLD400
+          Section: Utilities
+          EOF
+
+          chmod 0755 build_deb/DEBIAN/control
+          dpkg-deb -Zxz --root-owner-group -b build_deb QiLong-Dynamic-Whitelist_rootless.deb
+
+      - name: 8. 將編譯好的 IPA / TIPA / DEB 吐出到網頁提供下載
         uses: actions/upload-artifact@v4
         with:
-          name: QiLong-Dynamic-Whitelist-Release
-          path: QiLong-Dynamic-Whitelist.tipa
+          name: QiLong-MultiFormat-Release
+          path: |
+            QiLong-Dynamic-Whitelist.ipa
+            QiLong-Dynamic-Whitelist.tipa
+            QiLong-Dynamic-Whitelist_rootless.deb
