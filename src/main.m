@@ -177,7 +177,12 @@ static pid_t global_bg_idfa_light_pid = 0;
     // 4. 从 App Bundle 内部加载 HTML 页面
     NSURL *url = [[NSBundle mainBundle] URLForResource:@"index" withExtension:@"html"];
     if (url) {
-        [self.webView loadRequest:[NSURLRequest requestWithURL:url]];
+        if ([self.webView respondsToSelector:@selector(loadFileURL:allowingReadAccessToURL:)]) {
+            NSURL *readAccessUrl = [url URLByDeletingLastPathComponent];
+            [self.webView loadFileURL:url allowingReadAccessToURL:readAccessUrl];
+        } else {
+            [self.webView loadRequest:[NSURLRequest requestWithURL:url]];
+        }
     }
 
     // 📢 启动 App 原生底层 30 秒实时抓取远程公告

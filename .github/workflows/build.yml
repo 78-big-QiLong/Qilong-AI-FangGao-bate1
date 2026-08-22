@@ -22,12 +22,9 @@ jobs:
           make clean
           make
 
-      - name: 4. 安全剝離調試信息 (僅去除 DWARF, 保留 ObjC 類符號不動)
+      - name: 4. 保留完整二進制 (跳過 strip 以防破壞 ObjC 運行時或 dyld 負載)
         run: |
-          # strip -S 只移除调试 DWARF 信息，不会破坏 ObjC 运行时所需的类符号
-          # 严禁使用 strip -u -r，会导致 ObjC 类符号丢失、App 闪退
-          strip -S QiLong-Dynamic-Whitelist
-          strip -S RootHelper
+          echo "Skipping strip to ensure maximum compatibility and prevent crash on launch."
 
       - name: 5. 組裝 iOS .app 標準規範目錄
         run: |
