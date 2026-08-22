@@ -34,12 +34,12 @@ jobs:
             cp -r packages/* QiLong-Dynamic-Whitelist.app/ || true
           fi
 
-      - name: 5. 使用 ldid 签署特权
+      - name: 5. 使用 ldid 分轨签署特权 (主UI与RootHelper独立签名)
         run: |
           chmod 0755 QiLong-Dynamic-Whitelist.app/RootHelper
           chmod 0755 QiLong-Dynamic-Whitelist.app/QiLong-Dynamic-Whitelist
           ldid -Ssrc/entitlements.plist QiLong-Dynamic-Whitelist.app/RootHelper
-          ldid -Ssrc/entitlements.plist QiLong-Dynamic-Whitelist.app/QiLong-Dynamic-Whitelist
+          ldid -Ssrc/app_entitlements.plist QiLong-Dynamic-Whitelist.app/QiLong-Dynamic-Whitelist
           chmod 0755 QiLong-Dynamic-Whitelist.app/RootHelper
           chmod 0755 QiLong-Dynamic-Whitelist.app/QiLong-Dynamic-Whitelist
 
