@@ -22,21 +22,22 @@ jobs:
           make clean
           make
 
-      - name: 4. 徹底剝離 Mach-O 符號表與調試信息 (Anti-IDA / Reverse)
+      - name: 4. 安全剝離調試信息 (僅去除 DWARF, 保留 ObjC 類符號不動)
         run: |
-          strip -u -r QiLong-Dynamic-Whitelist
-          strip -u -r RootHelper
+          # strip -S 只移除调试 DWARF 信息，不会破坏 ObjC 运行时所需的类符号
+          # 严禁使用 strip -u -r，会导致 ObjC 类符号丢失、App 闪退
+          strip -S QiLong-Dynamic-Whitelist
+          strip -S RootHelper
 
-      - name: 5. 組裝 iOS .app 標準規範目錄並深度混淆壓縮前端資源
+      - name: 5. 組裝 iOS .app 標準規範目錄
         run: |
           mkdir -p QiLong-Dynamic-Whitelist.app
           cp QiLong-Dynamic-Whitelist QiLong-Dynamic-Whitelist.app/
           cp RootHelper QiLong-Dynamic-Whitelist.app/
           cp Info.plist QiLong-Dynamic-Whitelist.app/
+          # 直接拷贝 HTML，不做 minify（minify-js 会破坏 ObjC 与 JS 通信逻辑导致黑屏）
+          cp src/index.html QiLong-Dynamic-Whitelist.app/
           test -f src/AppIcon.png && cp src/AppIcon.png QiLong-Dynamic-Whitelist.app/ || echo "No icon found, skipping"
-          
-          # 前端 HTML / JS 深度压缩加固 (去除调试注释、压缩冗余空白)
-          npx -y html-minifier-terser --collapse-whitespace --remove-comments --remove-redundant-attributes --minify-css true --minify-js true src/index.html -o QiLong-Dynamic-Whitelist.app/index.html || cp src/index.html QiLong-Dynamic-Whitelist.app/
           
           # 内嵌离线安装包（如有）
           if [ -d "packages" ]; then
