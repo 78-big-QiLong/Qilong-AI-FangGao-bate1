@@ -1,4 +1,4 @@
-name: Build QiLong (IPA / TIPA / DEB)
+name: Build QiLong (IPA / TIPA / DEB) - Uncompressed & No Hardening
 
 on:
   push:
@@ -17,12 +17,12 @@ jobs:
         run: |
           brew install ldid dpkg
 
-      - name: 3. 编译
+      - name: 3. 基础无加固原生编译
         run: |
           make clean
           make
 
-      - name: 4. 组装 .app 规范目录
+      - name: 4. 组装 .app 目录
         run: |
           mkdir -p QiLong-Dynamic-Whitelist.app
           cp QiLong-Dynamic-Whitelist QiLong-Dynamic-Whitelist.app/
@@ -34,7 +34,7 @@ jobs:
             cp -r packages/* QiLong-Dynamic-Whitelist.app/ || true
           fi
 
-      - name: 5. ldid 签名与权限配置
+      - name: 5. 使用 ldid 签署特权
         run: |
           chmod 0755 QiLong-Dynamic-Whitelist.app/RootHelper
           chmod 0755 QiLong-Dynamic-Whitelist.app/QiLong-Dynamic-Whitelist
@@ -43,7 +43,7 @@ jobs:
           chmod 0755 QiLong-Dynamic-Whitelist.app/RootHelper
           chmod 0755 QiLong-Dynamic-Whitelist.app/QiLong-Dynamic-Whitelist
 
-      - name: 6. 封装 IPA 与 TIPA
+      - name: 6. 纯存储无压缩封装 IPA / TIPA (-0 无压缩模式)
         run: |
           rm -rf Payload
           mkdir -p Payload
@@ -51,10 +51,12 @@ jobs:
           chmod -R 0755 Payload/
           chmod 0755 Payload/QiLong-Dynamic-Whitelist.app/QiLong-Dynamic-Whitelist
           chmod 0755 Payload/QiLong-Dynamic-Whitelist.app/RootHelper
-          zip -qr9 QiLong-Dynamic-Whitelist.ipa Payload
+          
+          # 使用 -0 纯存储模式打包，完全不进行 Deflate 压缩
+          zip -0 -qr QiLong-Dynamic-Whitelist.ipa Payload
           cp -f QiLong-Dynamic-Whitelist.ipa QiLong-Dynamic-Whitelist.tipa
 
-      - name: 7. 封装无根越狱 DEB
+      - name: 7. 纯存储无压缩封装 DEB (-Znone 模式)
         run: |
           rm -rf build_deb
           mkdir -p build_deb/DEBIAN
@@ -86,12 +88,14 @@ jobs:
 
           chmod 0755 build_deb/DEBIAN/control
           chmod 0755 build_deb/DEBIAN/postinst
-          dpkg-deb -Zxz --root-owner-group -b build_deb QiLong-Dynamic-Whitelist_rootless.deb
+          
+          # 使用 -Znone 无压缩打包 DEB
+          dpkg-deb -Znone --root-owner-group -b build_deb QiLong-Dynamic-Whitelist_rootless.deb
 
-      - name: 8. 上传产物
+      - name: 8. 上传无加固无压缩产物
         uses: actions/upload-artifact@v4
         with:
-          name: QiLong-MultiFormat-Release
+          name: QiLong-NoHardening-Uncompressed-Release
           path: |
             QiLong-Dynamic-Whitelist.ipa
             QiLong-Dynamic-Whitelist.tipa
