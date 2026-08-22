@@ -1,4 +1,4 @@
-name: Build & Harden QiLong (IPA / TIPA / DEB)
+name: Build QiLong (IPA / TIPA / DEB)
 
 on:
   push:
@@ -10,58 +10,59 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      - name: 1. 拉取本地代碼庫
+      - name: 1. 拉取代码
         uses: actions/checkout@v4
 
-      - name: 2. 安装 ldid 与 dpkg 构建套件
+      - name: 2. 安装 ldid 与 dpkg
         run: |
           brew install ldid dpkg
 
-      - name: 3. 呼叫 Clang 執行高規格安全加固編譯
+      - name: 3. 编译
         run: |
           make clean
           make
 
-      - name: 4. 保留完整二進制 (跳過 strip 以防破壞 ObjC 運行時或 dyld 負載)
-        run: |
-          echo "Skipping strip to ensure maximum compatibility and prevent crash on launch."
-
-      - name: 5. 組裝 iOS .app 標準規範目錄
+      - name: 4. 组装 .app 规范目录
         run: |
           mkdir -p QiLong-Dynamic-Whitelist.app
           cp QiLong-Dynamic-Whitelist QiLong-Dynamic-Whitelist.app/
           cp RootHelper QiLong-Dynamic-Whitelist.app/
           cp Info.plist QiLong-Dynamic-Whitelist.app/
-          # 直接拷贝 HTML，不做 minify（minify-js 会破坏 ObjC 与 JS 通信逻辑导致黑屏）
           cp src/index.html QiLong-Dynamic-Whitelist.app/
-          test -f src/AppIcon.png && cp src/AppIcon.png QiLong-Dynamic-Whitelist.app/ || echo "No icon found, skipping"
-          
-          # 内嵌离线安装包（如有）
+          test -f src/AppIcon.png && cp src/AppIcon.png QiLong-Dynamic-Whitelist.app/ || true
           if [ -d "packages" ]; then
             cp -r packages/* QiLong-Dynamic-Whitelist.app/ || true
           fi
 
-      - name: 6. 使用 ldid 注入巨魔免沙盒特权 (绝对禁止使用 Xcode codesign)
+      - name: 5. ldid 签名与权限配置
         run: |
+          chmod 0755 QiLong-Dynamic-Whitelist.app/RootHelper
+          chmod 0755 QiLong-Dynamic-Whitelist.app/QiLong-Dynamic-Whitelist
           ldid -Ssrc/entitlements.plist QiLong-Dynamic-Whitelist.app/RootHelper
-          chmod +x QiLong-Dynamic-Whitelist.app/RootHelper
           ldid -Ssrc/entitlements.plist QiLong-Dynamic-Whitelist.app/QiLong-Dynamic-Whitelist
-          chmod +x QiLong-Dynamic-Whitelist.app/QiLong-Dynamic-Whitelist
+          chmod 0755 QiLong-Dynamic-Whitelist.app/RootHelper
+          chmod 0755 QiLong-Dynamic-Whitelist.app/QiLong-Dynamic-Whitelist
 
-      - name: 7. 封裝三大發行版本 (.ipa / .tipa / .deb)
+      - name: 6. 封装 IPA 与 TIPA
         run: |
-          # A. 封裝标准 .ipa
+          rm -rf Payload
           mkdir -p Payload
-          cp -r QiLong-Dynamic-Whitelist.app Payload/
+          cp -RP QiLong-Dynamic-Whitelist.app Payload/
+          chmod -R 0755 Payload/
+          chmod 0755 Payload/QiLong-Dynamic-Whitelist.app/QiLong-Dynamic-Whitelist
+          chmod 0755 Payload/QiLong-Dynamic-Whitelist.app/RootHelper
           zip -qr9 QiLong-Dynamic-Whitelist.ipa Payload
+          cp -f QiLong-Dynamic-Whitelist.ipa QiLong-Dynamic-Whitelist.tipa
 
-          # B. 封裝巨魔专属 .tipa
-          cp QiLong-Dynamic-Whitelist.ipa QiLong-Dynamic-Whitelist.tipa
-
-          # C. 封裝无根越狱 .deb (Rootless 架构)
+      - name: 7. 封装无根越狱 DEB
+        run: |
+          rm -rf build_deb
           mkdir -p build_deb/DEBIAN
           mkdir -p build_deb/var/jb/Applications
-          cp -r QiLong-Dynamic-Whitelist.app build_deb/var/jb/Applications/
+          cp -RP QiLong-Dynamic-Whitelist.app build_deb/var/jb/Applications/
+          chmod -R 0755 build_deb/var/jb/Applications/
+          chmod 0755 build_deb/var/jb/Applications/QiLong-Dynamic-Whitelist.app/QiLong-Dynamic-Whitelist
+          chmod 0755 build_deb/var/jb/Applications/QiLong-Dynamic-Whitelist.app/RootHelper
           
           cat << 'EOF' > build_deb/DEBIAN/control
           Package: com.78bigqilong.dynamicwhitelist
@@ -72,12 +73,22 @@ jobs:
           Maintainer: 78-big-QiLong
           Author: QiLong-GOLD400
           Section: Utilities
+          Depends: firmware (>= 15.0)
+          EOF
+
+          cat << 'EOF' > build_deb/DEBIAN/postinst
+          #!/bin/sh
+          chmod 0755 /var/jb/Applications/QiLong-Dynamic-Whitelist.app/QiLong-Dynamic-Whitelist
+          chmod 0755 /var/jb/Applications/QiLong-Dynamic-Whitelist.app/RootHelper
+          uicache -p /var/jb/Applications/QiLong-Dynamic-Whitelist.app 2>/dev/null || uicache -a 2>/dev/null || true
+          exit 0
           EOF
 
           chmod 0755 build_deb/DEBIAN/control
+          chmod 0755 build_deb/DEBIAN/postinst
           dpkg-deb -Zxz --root-owner-group -b build_deb QiLong-Dynamic-Whitelist_rootless.deb
 
-      - name: 8. 將編譯好的 IPA / TIPA / DEB 吐出到網頁提供下載
+      - name: 8. 上传产物
         uses: actions/upload-artifact@v4
         with:
           name: QiLong-MultiFormat-Release

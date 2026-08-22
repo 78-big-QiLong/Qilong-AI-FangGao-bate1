@@ -14,9 +14,6 @@
 #import <sys/resource.h>
 #import <pthread/qos.h>
 #import <pwd.h>
-
-extern int proc_pidpath(int pid, void * buffer, uint32_t buffersize);
-
 // 💡 优化项 1 & 4：低频合并休眠试探，以 5 秒步进替代 1 秒高频唤醒，大幅减少 CPU 唤醒次数与发热
 static BOOL staggeredSleepWithParentCheck(int totalSeconds, pid_t parentPid) {
     int interval = 5;
