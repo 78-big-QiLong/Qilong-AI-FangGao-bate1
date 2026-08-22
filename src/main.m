@@ -6,6 +6,7 @@
 #import <unistd.h>
 #import <malloc/malloc.h>
 #import <CoreLocation/CoreLocation.h>
+#import <dlfcn.h>
 #import "DeviceInfo.h"
 
 // ── 状态机：持久化记录锁定状态，用于崩溃自愈 ──
@@ -715,13 +716,15 @@ static NSString* escapeForJS(NSString *input) {
     
     // 【TrollStore 核心提权骑捷】利用 persona-mgmt entitlement 强制覆盖 UID 0
     #define POSIX_SPAWN_PERSONA_FLAGS_OVERRIDE 1
-    extern int posix_spawnattr_set_persona_np(const posix_spawnattr_t* __restrict, uid_t, uint32_t);
-    extern int posix_spawnattr_set_persona_uid_np(const posix_spawnattr_t* __restrict, uid_t);
-    extern int posix_spawnattr_set_persona_gid_np(const posix_spawnattr_t* __restrict, uid_t);
+    int (*set_persona_np)(const posix_spawnattr_t* __restrict, uid_t, uint32_t) = dlsym(RTLD_DEFAULT, "posix_spawnattr_set_persona_np");
+    int (*set_persona_uid_np)(const posix_spawnattr_t* __restrict, uid_t) = dlsym(RTLD_DEFAULT, "posix_spawnattr_set_persona_uid_np");
+    int (*set_persona_gid_np)(const posix_spawnattr_t* __restrict, uid_t) = dlsym(RTLD_DEFAULT, "posix_spawnattr_set_persona_gid_np");
     
-    posix_spawnattr_set_persona_np(&attr, 99, POSIX_SPAWN_PERSONA_FLAGS_OVERRIDE);
-    posix_spawnattr_set_persona_uid_np(&attr, 0);
-    posix_spawnattr_set_persona_gid_np(&attr, 0);
+    if (set_persona_np && set_persona_uid_np && set_persona_gid_np) {
+        set_persona_np(&attr, 99, POSIX_SPAWN_PERSONA_FLAGS_OVERRIDE);
+        set_persona_uid_np(&attr, 0);
+        set_persona_gid_np(&attr, 0);
+    }
     pid_t pid;
     int status = posix_spawn(&pid, argv[0], &actions, &attr, (char* const*)argv, NULL);
     
@@ -1035,12 +1038,14 @@ static NSString* escapeForJS(NSString *input) {
             posix_spawnattr_init(&attr);
             posix_spawnattr_setflags(&attr, POSIX_SPAWN_START_SUSPENDED);
             #define POSIX_SPAWN_PERSONA_FLAGS_OVERRIDE 1
-            extern int posix_spawnattr_set_persona_np(const posix_spawnattr_t* __restrict, uid_t, uint32_t);
-            extern int posix_spawnattr_set_persona_uid_np(const posix_spawnattr_t* __restrict, uid_t);
-            extern int posix_spawnattr_set_persona_gid_np(const posix_spawnattr_t* __restrict, uid_t);
-            posix_spawnattr_set_persona_np(&attr, 99, POSIX_SPAWN_PERSONA_FLAGS_OVERRIDE);
-            posix_spawnattr_set_persona_uid_np(&attr, 0);
-            posix_spawnattr_set_persona_gid_np(&attr, 0);
+            int (*set_persona_np)(const posix_spawnattr_t* __restrict, uid_t, uint32_t) = dlsym(RTLD_DEFAULT, "posix_spawnattr_set_persona_np");
+            int (*set_persona_uid_np)(const posix_spawnattr_t* __restrict, uid_t) = dlsym(RTLD_DEFAULT, "posix_spawnattr_set_persona_uid_np");
+            int (*set_persona_gid_np)(const posix_spawnattr_t* __restrict, uid_t) = dlsym(RTLD_DEFAULT, "posix_spawnattr_set_persona_gid_np");
+            if (set_persona_np && set_persona_uid_np && set_persona_gid_np) {
+                set_persona_np(&attr, 99, POSIX_SPAWN_PERSONA_FLAGS_OVERRIDE);
+                set_persona_uid_np(&attr, 0);
+                set_persona_gid_np(&attr, 0);
+            }
             int status = posix_spawn(&pid, argv[0], NULL, &attr, (char* const*)argv, NULL);
             posix_spawnattr_destroy(&attr);
             if (status == 0) kill(pid, SIGCONT);
@@ -1068,12 +1073,14 @@ static NSString* escapeForJS(NSString *input) {
             posix_spawnattr_init(&attr);
             posix_spawnattr_setflags(&attr, POSIX_SPAWN_START_SUSPENDED);
             #define POSIX_SPAWN_PERSONA_FLAGS_OVERRIDE 1
-            extern int posix_spawnattr_set_persona_np(const posix_spawnattr_t* __restrict, uid_t, uint32_t);
-            extern int posix_spawnattr_set_persona_uid_np(const posix_spawnattr_t* __restrict, uid_t);
-            extern int posix_spawnattr_set_persona_gid_np(const posix_spawnattr_t* __restrict, uid_t);
-            posix_spawnattr_set_persona_np(&attr, 99, POSIX_SPAWN_PERSONA_FLAGS_OVERRIDE);
-            posix_spawnattr_set_persona_uid_np(&attr, 0);
-            posix_spawnattr_set_persona_gid_np(&attr, 0);
+            int (*set_persona_np)(const posix_spawnattr_t* __restrict, uid_t, uint32_t) = dlsym(RTLD_DEFAULT, "posix_spawnattr_set_persona_np");
+            int (*set_persona_uid_np)(const posix_spawnattr_t* __restrict, uid_t) = dlsym(RTLD_DEFAULT, "posix_spawnattr_set_persona_uid_np");
+            int (*set_persona_gid_np)(const posix_spawnattr_t* __restrict, uid_t) = dlsym(RTLD_DEFAULT, "posix_spawnattr_set_persona_gid_np");
+            if (set_persona_np && set_persona_uid_np && set_persona_gid_np) {
+                set_persona_np(&attr, 99, POSIX_SPAWN_PERSONA_FLAGS_OVERRIDE);
+                set_persona_uid_np(&attr, 0);
+                set_persona_gid_np(&attr, 0);
+            }
             int status = posix_spawn(&pid, argv[0], NULL, &attr, (char* const*)argv, NULL);
             posix_spawnattr_destroy(&attr);
             if (status == 0) kill(pid, SIGCONT);
